@@ -18,6 +18,9 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Chemistry",
 ]
 
+[project.scripts]
+irspec = "irspec.cli:main"
+
 [project.optional-dependencies]
 matplotlib = ["matplotlib"]
 
