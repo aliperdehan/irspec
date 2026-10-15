@@ -1,0 +1,1852 @@
+% =============================================================================
+% irspec-ir.sty -- GENERATED, do not edit.
+% An excerpt of nulabreport.sty v1.28.9 (2026/10/15): the figure macros
+% \irspectrum, \irspectrumstack, \irspectrumoverlay, \irspectrumcompare,
+% \irspectrumpage, \labplot and friends, cut out at the `irspec-excerpt'
+% markers by nulabreport's dependencies/make-irspec-excerpt.py.
+% Content sha256 prefix e0aa9d7f8093.
+%
+% THE FULL PACKAGE IS THE REFERENCE. This excerpt may lag behind it and may
+% not render identically. When nulabreport.sty is installed, prefer it:
+%     \usepackage{nulabreport}
+%     \labsetup{furniture=false, captions=bare}
+% Supported \labsetup keys here: furniture (ignored), captions.
+% =============================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{irspec-ir}[2026/10/15 excerpt of nulabreport v1.28.9]
+\PackageInfo{irspec-ir}{Using the bundled excerpt of nulabreport v1.28.9, not the full package}
+\RequirePackage{keyval}
+\RequirePackage{xcolor}
+\RequirePackage{etoolbox}
+\RequirePackage{graphicx}
+\RequirePackage{caption}
+\RequirePackage{eso-pic}
+\makeatletter
+% --- nugold
+\definecolor{nugold}{HTML}{E0B154}     % official shield
+% --- labsetup
+\newcommand{\labsetup}[1]{\setkeys{labsetup}{#1}}
+\define@key{labsetup}{furniture}{}%  no furniture in this excerpt: accepted, ignored
+% --- landscape
+%  6. True landscape pages
+%     LR4's own wide GC page has MediaBox [0 0 842 595.25] and NO /Rotate
+%     entry: Word used a genuinely wider sheet and drew the header and footer on
+%     it upright. pdflscape does the opposite (portrait sheet + /Rotate 90),
+%     which lays the logo and footer on their side. So swap the physical page
+%     registers instead. Two traps:
+%       - geometry's \newgeometry flatly refuses paperwidth/paperheight keys, so
+%         it cannot do this at all (and calls \clearpage internally on the way
+%         in and out, which made the old fancyhdr footer vanish);
+%       - the register is spelled differently per engine. pdfTeX and XeTeX want
+%         \pdfpagewidth; LuaTeX renamed it to \pagewidth and merely warns at the
+%         old spelling, while corrupting the page count.
+%     Margins are absolute offsets from the page edge and survive the swap
+%     untouched; \textwidth/\textheight — and \hsize, \vsize and \columnwidth,
+%     which are what paragraphs, the page builder and float environments
+%     actually measure against and which do NOT follow \textwidth — must be
+%     reset by hand.
+% ---------------------------------------------------------------------------
+\RequirePackage{float}   % for [H]; see the warning at the end of the environment
+\newlength{\LabPortraitW}\newlength{\LabPortraitH}
+\newlength{\LabHMargins}\newlength{\LabVMargins}
+\newlength{\LabSaveTW}\newlength{\LabSaveTH}
+\AtBeginDocument{%
+  \setlength{\LabPortraitW}{\paperwidth}%
+  \setlength{\LabPortraitH}{\paperheight}%
+}
+\newenvironment{landscape}{%
+  \clearpage
+  \setlength{\LabHMargins}{\dimexpr\paperwidth-\textwidth\relax}%
+  \setlength{\LabVMargins}{\dimexpr\paperheight-\textheight\relax}%
+  \setlength{\LabSaveTW}{\textwidth}%
+  \setlength{\LabSaveTH}{\textheight}%
+  \ifluatex
+    \pagewidth=\LabPortraitH \pageheight=\LabPortraitW
+  \else
+    \pdfpagewidth=\LabPortraitH \pdfpageheight=\LabPortraitW
+  \fi
+  \setlength{\paperwidth}{\LabPortraitH}%
+  \setlength{\paperheight}{\LabPortraitW}%
+  \setlength{\textwidth}{\dimexpr\LabPortraitH-\LabHMargins\relax}%
+  \setlength{\linewidth}{\textwidth}%
+  \setlength{\columnwidth}{\textwidth}%
+  \setlength{\hsize}{\textwidth}%
+  \setlength{\textheight}{\dimexpr\LabPortraitW-\LabVMargins\relax}%
+  \setlength{\vsize}{\textheight}%
+}{%
+  \clearpage
+  \ifluatex
+    \pagewidth=\LabPortraitW \pageheight=\LabPortraitH
+  \else
+    \pdfpagewidth=\LabPortraitW \pdfpageheight=\LabPortraitH
+  \fi
+  \setlength{\paperwidth}{\LabPortraitW}%
+  \setlength{\paperheight}{\LabPortraitH}%
+  \setlength{\textwidth}{\LabSaveTW}%
+  \setlength{\linewidth}{\textwidth}%
+  \setlength{\columnwidth}{\textwidth}%
+  \setlength{\hsize}{\textwidth}%
+  \setlength{\textheight}{\LabSaveTH}%
+  \setlength{\vsize}{\textheight}%
+  % IMPORTANT: floats inside this environment must use [H] (float package),
+  % never [p]/[t]/[!ht]. A deferred float is laid out whenever the page builder
+  % next flushes it, which can be AFTER the portrait \linewidth has been
+  % restored — the figure then lands on the wide page at the narrow width.
+}
+% --- captionskip-length
+\newlength{\LabCaptionSkip}
+% --- captionskip-default
+\setlength{\LabCaptionSkip}{0.3\baselineskip} % table/caption already used
+% --- labifset
+\ExplSyntaxOn
+\NewDocumentCommand{\LabIfSet}{+m+m}{ \tl_if_blank:oF {#1} {#2} }
+\ExplSyntaxOff
+% --- bare-captions
+% \labsetup{captions=bare} — for a peer-share handout with no report
+% apparatus at all (see \labsetup{furniture=false} in sec. 5): a figure
+% caption that keeps the same footnotesize-italic-centred look as an
+% ordinary numbered caption, but is neither numbered nor labelled "Figure
+% N." — just the text given, verbatim ("Unknown 1", for instance). Used by
+% \irspectrum/\irspectrumcompare (sec. 15) via \Lab@figcaption below; every
+% other caption in the package (tables, the grid Chemicals table) is
+% untouched and keeps using \caption/\LabCaptionBegin as before regardless
+% of this switch — bare mode is opt-in per figure call, not global surgery
+% on \caption itself.
+\newif\ifLab@barecaptions \Lab@barecaptionsfalse
+\define@key{labsetup}{captions}{%
+  \ifstrequal{#1}{bare}{\Lab@barecaptionstrue}{\Lab@barecaptionsfalse}}
+
+% RESTORED 2026-09-16 (v1.14.1): this used to be a shipout-time footer
+% overlay (see docs/CHANGELOG.md v1.9.0/v1.9.1 -- \LabBareFooterGap,
+% \Lab@barefootertext, \gdef not \global\renewcommand, same eso-pic
+% mechanism as the furniture footer in sec. 5) and was found silently
+% replaced by a plain inline \par/\vspace{2pt} paragraph -- a real
+% regression, not a rewrite anyone documented deciding on: it typeset the
+% caption directly under the plot instead of pinned to the page's bottom
+% edge, leaving a slab of empty space at the true bottom of the page,
+% exactly the "unbalanced" look v1.9.0's own CHANGELOG entry describes
+% rejecting the first time. Confirmed by pixel-measuring a build against
+% A reference report (an earlier IR-unknowns report, LR3):
+% the reference caption's baseline sits ~0.35-0.45in above the true page
+% bottom edge; the regressed inline version left ~0.65in of dead space
+% below it instead. Whatever session simplified \Lab@figcaption to the
+% inline form did not update this comment or the CHANGELOG, so there is no
+% record of why -- if a future session finds an actual reason bare mode
+% needs to be inline, that decision belongs here and in the CHANGELOG, not
+% a silent drop.
+\newcommand{\Lab@barefootertext}{}
+\newlength{\LabBareFooterGap}
+% Measured, not guessed, against a reference build
+% (LR3/ir_unknowns/IR_unknowns_lab2.pdf): a 300dpi render of its page 1
+% ("Unknown 1", no caption descenders) has the caption's bottom edge
+% 0.350in above the true page bottom edge (pixel row measured directly,
+% not eyeballed -- see CLAUDE.md sec. 4's own PIL/numpy recipe). Trying
+% \LabHeaderTop (0.49in, the value the ordinary furniture footer's own
+% bottom edge uses) first landed measurably higher than the reference
+% (0.490in vs 0.350in dist-to-bottom, ~0.14in off) -- close enough to look
+% plausible, wrong enough that the author caught it immediately, which is exactly
+% why this package's own rule is measure the actual page, not reuse a
+% same-ballpark constant from a different element. 0.350in below.
+\setlength{\LabBareFooterGap}{0.350in}
+\newsavebox{\Lab@barefooterbox}
+\AddToShipoutPictureFG{%
+  \LabIfSet{\Lab@barefootertext}{%
+    \sbox{\Lab@barefooterbox}{\footnotesize\itshape\Lab@barefootertext}%
+    \AtPageLowerLeft{%
+      \makebox[\paperwidth][c]{%
+        \raisebox{\dimexpr\LabBareFooterGap+\dp\Lab@barefooterbox\relax}[0pt][0pt]{%
+          \usebox{\Lab@barefooterbox}}}}%
+    \gdef\Lab@barefootertext{}%
+  }%
+}
+
+\newcommand{\Lab@figcaption}[1]{%
+  \ifLab@barecaptions
+    \gdef\Lab@barefootertext{#1}%
+  \else
+    \caption{#1}%
+  \fi}
+
+% A numbered, centred caption whose body is ordinary markdown, so [@citations]
+% inside it are processed by citeproc. The Lua filter emits these around every
+% markdown table caption; you can also write them by hand -- but the opening
+% call and the caption text MUST share one markdown line:
+%
+%     \LabCaptionBegin{table} Data about the chemicals used [@palleros2000]
+%     \LabCaptionEnd
+%
+% NEVER split that into "\LabCaptionBegin{table}" alone on its own line with
+% the caption text starting on the next: pandoc's raw_tex extension parses a
+% complete, balanced-brace macro call alone on a markdown line as its own
+% RawBlock, and its LaTeX writer always inserts a blank line between distinct
+% blocks -- which compiles to a real \par, splitting "Table N."/"Figure N."
+% from the caption text onto two visibly separate lines. This exact comment
+% used to show the broken two-line form (LR1-2, corrected here 2026-09-16
+% after it recurred in a later orgchem report) -- CLAUDE.md \S7 has the full
+% writeup and the `pandoc -t latex` test that confirms it either way.
+\newcommand{\LabCaptionBegin}[1]{%
+  \par\vspace{\LabCaptionSkip}\begingroup\refstepcounter{#1}%
+  \footnotesize\itshape\centering
+  \csname #1name\endcsname~\csname the#1\endcsname.\ \ignorespaces}
+\newcommand{\LabCaptionEnd}{\par\endgroup\vspace{\LabCaptionSkip}}
+% --- ir-spectra
+% ---------------------------------------------------------------------------
+% 15. IR spectra — native vector figures read straight from CSV
+%
+%     Replaces the old workflow (matplotlib PNG/SVG built outside LaTeX) for
+%     the ordinary case, single spectrum AND comparison alike: pgfplots reads
+%     the CSV pair produced by the .SPA parser documented in
+%     SPA_PROCESSING_INSTRUCTIONS.md directly, no external plotting step.
+%       - the ARCHIVAL csv (semicolon, decimal comma) is the author's own export,
+%         full range, untouched by anything here;
+%       - the PLAIN csv (comma, dot-decimal, header "wavenumber,intensity")
+%         is what these macros read, and is clipped to >=650 cm^-1 at write
+%         time (the iS5's detector noise below that is never plotted, per the
+%         house rule — see SPA_PROCESSING_INSTRUCTIONS.md sec. 4).
+%       - the y-axis label (Transmittance % / Absorbance) is an explicit
+%         argument here, not a heuristic this package runs: the .SPA parser
+%         guesses a sensible default when it writes the CSV, but the report
+%         author sees and can override the guess right here in the call,
+%         rather than only by re-running the parsing script.
+%
+%     Peak coordinates are supplied by whoever built the CSV, not looked up
+%     here: the same Python step that identifies a peak already has the
+%     array in memory, so it emits the numbers once, verified, rather than
+%     this package re-deriving y from x via a fragile nearest-neighbour
+%     search over a few thousand unevenly-visited TeX comparisons. This is
+%     the same "verify with code" rule the rest of the package already runs
+%     on every calculation (INSTRUCTIONS_for_future_claude_LR.md sec. 8).
+%     Concretely: whatever future session identifies a peak from the raw
+%     .SPA data for the Discussion is the SAME script step that emits that
+%     peak's x/label_y pair for the figure call below — one source of truth,
+%     so a peak discussed in prose is never left unlabelled on its own figure.
+%
+%     Peak labels sit BELOW the trough, between the curve and the x-axis —
+%     the OMNIC/Spectragryph/literature convention — with a short grey
+%     leader tick, rotated 90 degrees. Each peak is given as x/label_y —
+%     the wavenumber and the label's already-chosen y-position (i.e.
+%     trough_y minus whatever gap avoids the neighbours), not x/y/offset:
+%     see \Lab@irpeaklist below for why, and for the real, reproduced
+%     pgfplots bug that ruled out both \foreach and \pgfplotsforeachungrouped
+%     for firing that loop. Collisions in the fingerprint region are handled
+%     the same way the rest of the package handles a stubborn layout: render,
+%     look at the PNG, nudge the number, rerun — not automatic collision
+%     avoidance.
+%
+%     Choosing label_y itself is the part worth doing by measurement rather
+%     than by eye (found wrong on LR1-2 p12 fig. 4, 2026-09-09: several
+%     fingerprint-region labels sat 10-22 units below their own trough, with
+%     the short 3-unit tick left dangling in blank space well short of the
+%     curve, while the SAME figure's other labels — chosen closer to their
+%     troughs — read fine). The reliable recipe: read the actual CSV, take
+%     the minimum y within a small window of the target wavenumber (+/-15
+%     cm-1 is plenty), and set label_y to that trough minus about 5-8 units
+%     — enough for the tick to visibly reach the curve without the label
+%     text touching it. Only stagger a label further below that floor when
+%     two peaks sit close enough in x for their (vertically rotated) label
+%     text to collide otherwise, as the existing carbonyl/C-H cluster above
+%     already does.
+%
+%     Sizing that gap: keep it SMALL by default — label_y = trough_y minus
+%     roughly 5 (just past the 3-unit tick, plus a sliver of clearance) —
+%     the label should read as sitting just under its own trough, not
+%     floating halfway down the axis. Only push a label further down, in
+%     increments of about 5 more, when its wavenumber is close enough to a
+%     neighbour that their rotated text would otherwise overlap (the
+%     fingerprint region, mostly); an isolated peak never needs more than
+%     the default ~5. Confirmed by eye on real data — the author flagged a first
+%     pass that used gaps of 10-26 as "far below the line".
+%
+%     Because peak labels are placed BELOW the data minimum by an amount
+%     that has nothing to do with the data's own range, pgfplots' automatic
+%     y-scaling (enlarge y limits) generally will NOT leave enough headroom
+%     for the lowest label once a real spectrum's fingerprint region is
+%     labelled — this was confirmed while prototyping, not a guess. Pass an
+%     explicit ymin low enough for the lowest label_y in the call, e.g.
+%     \irspectrum[ymin=30]{...}: this is the same "explicit, overridable"
+%     approach as the y-axis label above, decided once by whoever built the
+%     peak list rather than guessed silently in here.
+%
+%     Scaling: width/height are ordinary pgfplots options, overridable via
+%     the optional argument, so the SAME macro serves a normal inline
+%     portrait figure and a full-magnification figure inside \landscape
+%     (\irspectrum[width=\linewidth,height=0.62\linewidth]{...} typically
+%     wants a wider aspect than the portrait default) — see manual sec. 4.5
+%     for the [H]-inside-landscape rule, which still applies here.
+%
+%     \irspectrumcompare stacks two spectra in independent panels with their
+%     OWN y-scales (a groupplots column), rather than overlaying them on one
+%     shared axis: real reports here have one trace bottoming out around
+%     44 %T against another sitting on a 95 % baseline, and overlaid on one
+%     axis the weaker trace reads as noise. The depth difference is itself
+%     part of the finding, so each panel is scaled to show its own trace
+%     properly, not squashed to share the other's range.
+% ---------------------------------------------------------------------------
+\RequirePackage{pgfplots}
+\RequirePackage{tikz}
+\usetikzlibrary{pgfplots.groupplots}
+% positioning: `below=of <node>` placement, as in the prelab flowcharts
+% (LR6 prelab6). Without it TikZ parses `of n1` as maths and stops with
+% "PGF Math Error: Unknown function `of'".
+\usetikzlibrary{positioning}
+\pgfplotsset{compat=1.18}
+\definecolor{nuirred}{HTML}{B03A2E}  % SPA_PROCESSING_INSTRUCTIONS.md sec. 5 house colour
+
+% \irspectrumcompare's [tbp] change (immediately below) fixed a real
+% mid-text blank-hole bug (see docs/CHANGELOG.md v1.14.3) but exposed a
+% SEPARATE, standard LaTeX default: a page made up ENTIRELY of float
+% material (nothing else fits beside a ~half-page-tall \irspectrumcompare,
+% so it lands alone) is, by plain LaTeX kernel default, VERTICALLY CENTRED
+% on that page -- \@fptop/\@fpsep/\@fpbot (the skip glue inserted
+% above/between/below floats on such a page) are all `0pt plus 1fil` out
+% of the box, i.e. equal infinite stretch on both sides. Found on LR3,
+% 2026-09-18, immediately after the [H]->[tbp] change: the figure read as
+% centred with ~161pt above it and ~170pt below, not pinned to the top
+% with slack only at the bottom as expected. Confirmed independent of
+% \flushbottom/\raggedbottom (identical pixel measurements under both --
+% this is the float-page mechanism, not the page-filling one \S1's
+% \flushbottom comment documents; do not conflate the two). Fix is the
+% standard one (LaTeX Companion / comp.text.tex FAQ): zero the TOP skip so
+% floats start right at the top of a float-only page, and leave the
+% BOTTOM skip stretchable so leftover space collects only below --
+% \@fptop/\@fpbot are skip REGISTERS (\newskip in the kernel), set with
+% \setlength, NOT macros -- a first attempt with \renewcommand faulted
+% "Missing number, treated as zero." Verified by direct pixel
+% measurement, not assumed: the ~161pt leading gap above the figure on its
+% own page dropped to ~10pt (ordinary top margin) after this, with the
+% full leftover collecting below the caption as expected.
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
+
+% @-names below need catcode 11 for @: automatic while nulabreport.sty itself
+% loads (package files get this for free), but this snippet is also \input
+% directly for prototyping, where it is NOT automatic — hence the explicit
+% \makeatletter/\makeatother, harmless either way.
+\makeatletter
+
+% Fixed leader-tick length, in y-axis data units (Transmittance %/Absorbance).
+% A short tick pointing up from the label toward the curve reads the same as
+% Spectragryph's own ticks without needing the label's exact vertical gap
+% from the trough (that gap is a free per-peak choice, made in Python).
+\newcommand{\Lab@irtickval}{3}
+
+% Colours of the trace and its labels (v1.25.0). Three macros, set once per
+% trace by \Lab@pickcolors (below) and read by whatever draws it:
+%   \Lab@tc        the trace colour (the \addplot line)
+%   \Lab@tickcol   the leader tick of every label
+%   \Lab@labkeys   extra node keys for the label text: empty, or text=<colour>
+% The defaults here are what every figure drew before v1.25.0 -- a nuirred
+% line, grey ticks, labels in the document's own text colour -- so a call that
+% names no colour renders exactly as it did (pixel-diffed, CHANGELOG v1.25.0).
+% A label colour, when given, colours the text AND its tick: a red label on
+% a grey tick next to a red line reads as two things.
+%
+% THESE MUST BE EXPANDED WHERE THEY ARE USED (\expanded below), never left
+% as macro names inside a \draw/\node/\addplot. pgfplots postpones all of
+% those until \end{axis}; a macro name is then read AFTER the last trace was
+% set up, so on an overlay every trace and label came out in the LAST trace's
+% colour (found building the overlay: two traces, both red). And a macro in
+% a pgfkeys list is read as one key name, so \Lab@labkeys cannot be a
+% bare entry either -- expanded it is the two tokens text=<colour>.
+\newcommand{\Lab@tc}{nuirred}
+\newcommand{\Lab@tickcol}{gray!65}
+\newcommand{\Lab@labkeys}{}
+
+% Internal: one peak label + leader tick, placed BELOW the trough.
+% #1 = x (wavenumber), #2 = label_y (the label's chosen y-position, already
+% below the trough by whatever gap avoids its neighbours)
+\newcommand{\Lab@irpeak}[2]{%
+  \expanded{\noexpand\draw[\Lab@tickcol, thin]}
+    (axis cs:#1,#2) -- (axis cs:#1,#2+\Lab@irtickval);
+  \expanded{\noexpand\node[rotate=90, anchor=east, font=\noexpand\scriptsize,
+        inner sep=1pt, fill=white, fill opacity=0.85, text opacity=1,
+        \Lab@labkeys]}
+    at (axis cs:#1,#2) {#1};
+}
+
+% Fires \Lab@irpeak per x/label_y pair. Deliberately NOT \foreach and NOT
+% \pgfplotsforeachungrouped: both were tried and both are broken for this
+% exact job, reproduced in isolation while prototyping, not hypothetical:
+%   - plain \foreach (pgffor) opens a TeX group per iteration, which
+%     collides with the axis/tikzpicture environment's own group bookkeeping
+%     and throws "Missing \endgroup inserted" / "ended by \end{document}"
+%     past the first iteration (also true of LaTeX's \@for — same cause,
+%     since it also groups its loop body).
+%   - \pgfplotsforeachungrouped avoids THAT error — every iteration's macro
+%     body genuinely runs (confirmed with \typeout) — but something in its
+%     own "ungrouped" replay mechanism (\pgfplotsapplistXX* feeding
+%     \pgfplotsforeachentryinCSVisterminated) discards every \fill/\node
+%     issued before the LAST iteration: only the final peak ever reaches the
+%     page, silently, with no error and no warning. Reproduced with plain
+%     \fill circles (no \node, no rotation, no anchor) on TeX Live 2023's
+%     pgfplots, so it is a property of that replay mechanism itself, not a
+%     node-anchoring or coordinate-system quirk.
+% The fix is a hand-rolled, ungrouped, purely-recursive delimited-argument
+% loop: no \begingroup/\endgroup anywhere, so nothing for the axis to choke
+% on, and no dependence on pgfplots' own (buggy, for this use) replay queue.
+% Terminates on a \relax/\relax sentinel appended to the list at call time.
+% Guards the empty-list case (a spectrum with nothing worth labelling):
+% without this, an empty #1 feeds the delimited scanner a bare comma before
+% it expects one and mis-splits the sentinel itself.
+\def\Lab@irpeaklist#1{%
+  \def\Lab@irpeaklist@chk{#1}%
+  \ifx\Lab@irpeaklist@chk\@empty
+  \else
+    \Lab@irpeaklist@i#1,\relax/\relax,%
+  \fi
+}
+\def\Lab@irpeaklist@i#1/#2,{%
+  \ifx\relax#1%
+  \else
+    \Lab@irpeak{#1}{#2}%
+    \expandafter\Lab@irpeaklist@i
+  \fi
+}
+
+% Apex labels (v1.19.0) -- the other label style, for data whose features
+% point UP (chromatograms). One entry per peak:
+%     x/apex_y/label_y/name
+% A horizontal two-line label (name over x) whose bottom edge sits at
+% label_y, joined to the peak by a thin leader from just above apex_y. The
+% leader is what keeps a label that had to be raised clear of a neighbour
+% (a crowded cluster) attached to its own peak; for an uncrowded peak it is
+% only a short tick, the same visual as \Lab@irpeak's. Empty name: x alone.
+% label_y is chosen by the script that found the peak (gc_tool.py
+% integrate), never by this macro -- the same division of labour as the
+% trough labels above. Wrap a name containing a comma or slash in braces.
+\newcommand{\Lab@apexpeak}[4]{%
+  \expanded{\noexpand\draw[\Lab@tickcol, thin]}
+    ([yshift=1.5pt]axis cs:#1,#2) -- (axis cs:#1,#3);
+  \expanded{\noexpand\node[anchor=south, font=\noexpand\scriptsize, align=center,
+        inner sep=1pt, fill=white, fill opacity=0.85, text opacity=1,
+        \Lab@labkeys]}
+    at (axis cs:#1,#3) {\ifblank{#4}{#1}{#4\\#1}};
+}
+% Same hand-rolled ungrouped recursion as \Lab@irpeaklist, for the same
+% reasons (see the comment above it) -- four fields instead of two.
+\def\Lab@apexpeaklist#1{%
+  \def\Lab@apexpeaklist@chk{#1}%
+  \ifx\Lab@apexpeaklist@chk\@empty
+  \else
+    \Lab@apexpeaklist@i#1,\relax/\relax/\relax/\relax,%
+  \fi
+}
+\def\Lab@apexpeaklist@i#1/#2/#3/#4,{%
+  \ifx\relax#1%
+  \else
+    \Lab@apexpeak{#1}{#2}{#3}{#4}%
+    \expandafter\Lab@apexpeaklist@i
+  \fi
+}
+% Fanned labels (v1.28.0) -- the third label style, for NMR, where lines
+% stand a fraction of a millimetre apart (methyl cinnamate's 130.5, 129.1,
+% 128.3 ppm are 1.6 mm apart on a 14.5 cm, 200 ppm axis; even a rotated
+% label is 2.6 mm across). The labels are spread along the top, as a
+% spectrometer prints them, each joined to its line by a leader that rises
+% from the line, bends at the knee, and runs to the label. One entry:
+%     x/apex_y/knee_y/label_x/label_y/text
+% Everything except the drawing is decided by the script that found the
+% peaks (spectrum_digitize.py nmr), never here -- the same division of
+% labour as the other two styles. Empty text: x itself.
+% Empty knee_y (v1.28.1): a callout instead, as the book marks its solvent
+% line ("solvent" with an arrow): an arrow from (label_x, label_y) to the
+% line's top and the text upright, centred above the arrow's tail, so it
+% reads the same whichever side of the line the script put it.
+\newcommand{\Lab@fanpeak}[6]{%
+  \ifblank{#3}{%
+    \expanded{\noexpand\draw[\Lab@tickcol, thin, ->]}
+      (axis cs:#4,#5) -- ([yshift=1.5pt]axis cs:#1,#2);
+    \expanded{\noexpand\node[anchor=south, font=\noexpand\scriptsize,
+          inner sep=1pt, \Lab@labkeys]}
+      at (axis cs:#4,#5) {\ifblank{#6}{#1}{#6}};
+  }{%
+    \expanded{\noexpand\draw[\Lab@tickcol, thin]}
+      ([yshift=1.5pt]axis cs:#1,#2) -- (axis cs:#1,#3) -- (axis cs:#4,#5);
+    \expanded{\noexpand\node[rotate=90, anchor=west, font=\noexpand\scriptsize,
+          inner sep=1pt, \Lab@labkeys]}
+      at (axis cs:#4,#5) {\ifblank{#6}{#1}{#6}};
+  }%
+}
+% Same hand-rolled ungrouped recursion as \Lab@irpeaklist (see the comment
+% above it for why neither \foreach nor \pgfplotsforeachungrouped will do).
+\def\Lab@fanpeaklist#1{%
+  \def\Lab@fanpeaklist@chk{#1}%
+  \ifx\Lab@fanpeaklist@chk\@empty
+  \else
+    \Lab@fanpeaklist@i#1,\relax/\relax/\relax/\relax/\relax/\relax,%
+  \fi
+}
+\def\Lab@fanpeaklist@i#1/#2/#3/#4/#5/#6,{%
+  \ifx\relax#1%
+  \else
+    \Lab@fanpeak{#1}{#2}{#3}{#4}{#5}{#6}%
+    \expandafter\Lab@fanpeaklist@i
+  \fi
+}
+\let\Lab@peaks@trough\Lab@irpeaklist
+\let\Lab@peaks@apex\Lab@apexpeaklist
+\let\Lab@peaks@fan\Lab@fanpeaklist
+
+% ---------------------------------------------------------------------------
+% Plot kinds (v1.19.0). Everything \irspectrum/\irspectrumstack used to
+% hardcode that is specific to IR -- the axis defaults, the CSV's column
+% names, and which way peak labels hang -- is now one named "kind", and the
+% float/stack/placement machinery below is shared by every kind. Asked for
+% when the GC tool was written: "can we make that kind of feature
+% universal? not only ir specific". A new kind of data (UV-Vis, HPLC, ...)
+% is one \labdefineplotkind line, in a report's preamble or here:
+%
+%   \labdefineplotkind{name}{x column}{y column}{trough|apex|fan}{axis keys}
+%
+% `trough`: x/label_y lists, rotated labels hanging below (IR, %T).
+% `apex`:   x/apex_y/label_y/name lists, labels above (chromatograms, MS).
+% `fan`:    x/apex_y/knee_y/label_x/label_y/text lists, rotated labels
+%           spread along the top on bent leaders (NMR; v1.28.0).
+% Axis keys are ordinary pgfplots keys; a call's own options come after
+% them, so any default is overridable per figure.
+% ---------------------------------------------------------------------------
+\newcommand{\labdefineplotkind}[5]{%
+  \pgfplotsset{nulab kind #1/.style={#5},
+               nulab kind #1 table/.style={x=#2,y=#3},
+               nulab kind #1 stack/.style={}}%
+  \expandafter\let\csname Lab@kind@#1@peaks\expandafter\endcsname
+    \csname Lab@peaks@#4\endcsname
+}
+% ir: the exact keys \irspectrum/\irspectrumstack hardcoded up to v1.18.1
+% (moved here unchanged; the pixel diff in docs/CHANGELOG.md v1.19.0
+% confirms they still render identically).
+\labdefineplotkind{ir}{wavenumber}{intensity}{trough}{%
+  x dir=reverse, xmin=650, xmax=4000,
+  enlarge y limits={upper=0.08,lower=0.15},
+  xlabel={Wavenumber / cm\textsuperscript{-1}},
+  axis lines=box, tick align=outside,
+  xtick={4000,3500,3000,2500,2000,1500,1000},
+  minor x tick num=4,
+}
+% Extra keys for a kind when it is drawn as a stack (\labstack and
+% everything built on it), empty unless a kind sets them (v1.20.0).
+% ir: every panel's y label at ONE fixed distance from the axis line. By
+% default pgfplots places it just outside that panel's own widest tick label,
+% so a panel whose top tick reads "100" had its "Transmittance %" further
+% left than one topping out at "80" -- a visibly ragged column of labels
+% down the stack (the author, LR4-5 review). The fixed offset is the
+% default position for a "100" panel (outside tick length + the tick
+% label's two inner seps + the width of "100"), so those labels stay put and
+% the others move out to meet them. Singles (\irspectrum) are unchanged.
+% The shift is `yshift`, not `xshift`: the label is already rotated 90
+% degrees by then, and its own y axis points away from the plot (an xshift
+% slid it along the axis instead, onto the tick labels).
+\pgfplotsset{nulab kind ir stack/.style={
+  every axis y label/.append style={
+    at={(rel axis cs:0,0.5)}, anchor=south,
+    yshift={\pgfkeysvalueof{/pgfplots/major tick length}+0.6667em+width("100")}},
+}}
+% gc: gc_tool.py's plain CSV (time,signal). The raw FID signal sits on a
+% ~600 000-count offset, so tick labels are fixed-point with thin-space
+% thousands (600 000, not pgfplots' default "6 . 10^5" rescaling, which
+% reads badly when the whole plot spans 6-11 x 10^5). `unbounded coords=
+% jump` makes the nan rows `gc_tool.py crop --exclude` writes into a GAP
+% in the trace, not a line drawn across the removed region. No x padding:
+% the run's own start/end, or xmin/xmax for a crop, are the edges.
+% `clip mode=individual`: clip the TRACE to the axis box, not the labels --
+% with the default (global) clip, a peak label near xmin/xmax had its text
+% cut off at the frame (found on an axis-cropped group 1, "Methanol" at
+% xmin=2.6 printed as "lethanol").
+\labdefineplotkind{gc}{time}{signal}{apex}{%
+  clip mode=individual,
+  xlabel={Retention time / min},
+  ylabel={Signal / counts},
+  axis lines=box, tick align=outside,
+  enlarge x limits=false,
+  enlarge y limits={upper=0.02,lower=0.04},
+  minor x tick num=1,
+  unbounded coords=jump,
+  scaled y ticks=false,
+  yticklabel style={/pgf/number format/fixed, /pgf/number format/1000 sep={\,}},
+}
+% titration: a CSV-driven volume/pH curve (v1.22.0) -- the shape a real
+% CHEM220L QCA report was hand-rolling as a raw tikzpicture/axis pair
+% instead of a plot kind (found scanning real reports for the v1.21.2
+% manual/examples pass; added once the author confirmed it separately, not
+% folded into that docs-only pass). `apex` labelling reads naturally here
+% for the equivalence point (a label above the curve), even though a
+% titration curve has no real trough/apex peaks of its own. ymin/ymax fixed
+% to the full pH scale by default, since 0-14 is the meaningful range
+% regardless of what one run's own data spans -- override per call
+% (`\labplot[kind=titration, ymax=...]`) for a non-aqueous or narrower-range
+% titration.
+\labdefineplotkind{titration}{volume}{ph}{apex}{%
+  xlabel={Volume of titrant / mL}, ylabel={pH},
+  axis lines=box, tick align=outside,
+  enlarge x limits=false, ymin=0, ymax=14,
+}
+% ms (v1.28.0): a stick mass spectrum, spectrum_digitize.py ms's CSV
+% (mz,intensity: one row per stick, relative abundance in %). The sticks are
+% the kind's own business: `ycomb` on every plot of the axis draws each row
+% as a line from 0 up to its value, so the shared drawing code (\Lab@plotbody,
+% the stacks) is untouched. Labels: the `apex` style, m/z alone (empty name).
+% ymin=0 fixed: a stick stands on the axis.
+\labdefineplotkind{ms}{mz}{intensity}{apex}{%
+  every axis plot post/.append style={ycomb, line cap=butt},
+  xlabel={\textit{m/z}}, ylabel={Relative abundance / \%},
+  axis lines=box, tick align=outside,
+  ymin=0, enlarge y limits={upper=0.10},
+  enlarge x limits=0.03,
+  minor x tick num=1,
+  clip mode=individual,
+}
+% nmr (v1.28.0): a 1H or 13C spectrum, spectrum_digitize.py nmr's CSV
+% (shift,intensity; intensity in % of the trace's tallest point -- only
+% relative heights mean anything in a digitized NMR figure, so there is no y
+% axis, as on the spectrometer's own plots). Shift runs right to left.
+% Labels: the `fan` style (\Lab@fanpeak). clip mode=individual for the same
+% reason as gc: a label near xmin/xmax must not be cut at the frame.
+\labdefineplotkind{nmr}{shift}{intensity}{fan}{%
+  x dir=reverse,
+  xlabel={$\delta$ / ppm},
+  axis x line*=bottom, axis y line=none, ytick=\empty,
+  tick align=outside,
+  enlarge x limits=false,
+  enlarge y limits={upper=0.05,lower=0.01},
+  minor x tick num=1,
+  clip mode=individual,
+}
+% xsize / ysize (v1.28.4): a plot's width / height as a fraction of what it
+% would otherwise be -- the 14.5 x 9.5 cm default, or the call's own width=/
+% height= -- e.g. \labplot[kind=ms, xsize=0.9, ysize=0.3]: 90 % as wide, 30 %
+% as tall. Asked for as "y-30% x-90%"; a % cannot be typed (it starts a TeX
+% comment), so a fraction. Short names for pgfplots' own x/y post scale,
+% which scale the axis after its size is worked out (the tick labels and
+% text stay their size), the same for every kind and for stacks, overlays
+% and insets. Unset, nothing changes. A size relative to the page is
+% pgfplots' own width=0.9\linewidth, height=0.3\textheight.
+\pgfplotsset{
+  xsize/.style={x post scale=#1},
+  ysize/.style={y post scale=#1},
+}
+
+% Split `kind=` (alias `technique=`, what \chromatogram documents) out of a
+% call's option list; everything else passes through to pgfplots verbatim.
+% l3keys, because it can hand back the keys it doesn't know, which pgfkeys'
+% own .unknown handlers cannot do cleanly inside an option list meant for a
+% later \begin{axis}. Then calls #2{kind}{remaining keys}.
+\ExplSyntaxOn
+\tl_new:N \l__nulab_plot_kind_tl
+\tl_new:N \l__nulab_plot_rest_tl
+\tl_new:N \l__nulab_plot_tcol_tl
+\tl_new:N \l__nulab_plot_lcol_tl
+\clist_new:N \l__nulab_plot_ovcols_clist
+\keys_define:nn { nulab/plot }
+  {
+    kind      .tl_set:N = \l__nulab_plot_kind_tl ,
+    technique .tl_set:N = \l__nulab_plot_kind_tl ,
+    % v1.25.0: colours. `trace color` is the line (default nuirred),
+    % `label color` the peak labels and their ticks (default: unchanged);
+    % `overlay colors` the palette an overlay hands out, one entry per
+    % trace in call order (default black, nuirred -- the reference report's
+    % pair). All three are taken out here so pgfplots never sees them.
+    trace~color    .tl_set:N    = \l__nulab_plot_tcol_tl ,
+    label~color    .tl_set:N    = \l__nulab_plot_lcol_tl ,
+    overlay~colors .clist_set:N = \l__nulab_plot_ovcols_clist ,
+    % v1.28.2: inset={...}, repeatable, \labplot only (see \Lab@insets below)
+    inset          .code:n      = \tl_put_right:Nn \l__nulab_plot_insets_tl { {#1} } ,
+    % v1.28.4: integrals={csv}, \labplot only: a 1H figure's integral curves
+    % (spectrum_digitize.py's _integrals CSV), drawn over the trace
+    integrals      .tl_set:N    = \l__nulab_plot_integrals_tl ,
+  }
+\tl_new:N \l__nulab_plot_insets_tl
+\cs_new_protected:Npn \Lab@plotsplit #1 #2
+  {
+    \tl_clear:N \l__nulab_plot_kind_tl
+    \tl_clear:N \l__nulab_plot_tcol_tl
+    \tl_clear:N \l__nulab_plot_lcol_tl
+    \tl_clear:N \l__nulab_plot_insets_tl
+    \tl_clear:N \l__nulab_plot_integrals_tl
+    \clist_set:Nn \l__nulab_plot_ovcols_clist { black , nuirred }
+    \keys_set_known:nnN { nulab/plot } {#1} \l__nulab_plot_rest_tl
+    \tl_if_blank:VT \l__nulab_plot_kind_tl
+      { \msg_error:nn { nulabreport } { plot-no-kind } }
+    \cs_if_exist:cF { Lab@kind@ \l__nulab_plot_kind_tl @peaks }
+      {
+        \msg_error:nnV { nulabreport } { plot-unknown-kind } \l__nulab_plot_kind_tl
+        \tl_set:Nn \l__nulab_plot_kind_tl { ir }
+      }
+    \use:e
+      {
+        \exp_not:n {#2}
+        { \exp_not:V \l__nulab_plot_kind_tl }
+        { \exp_not:V \l__nulab_plot_rest_tl }
+      }
+  }
+\msg_new:nnn { nulabreport } { plot-no-kind }
+  { \token_to_str:N \labplot / \token_to_str:N \labstack ~ need ~ kind=... ~
+    (ir, ~ gc, ~ or ~ one ~ made ~ with ~ \token_to_str:N \labdefineplotkind). }
+\msg_new:nnn { nulabreport } { plot-unknown-kind }
+  { Unknown ~ plot ~ kind ~ `#1'. ~ Define ~ it ~ first: ~
+    \token_to_str:N \labdefineplotkind {#1}{x ~ column}{y ~ column}{trough|apex|fan}{axis ~ keys}. }
+
+% Per-panel colours (v1.25.0): the same two keys, taken out of ONE panel's
+% option list ( \labpanel{csv}{panel options}{peaks} ), so a stack panel or
+% an overlay trace can override the call-level choice. A key the panel does
+% not set stays blank, which \Lab@pickcolors reads as "fall back".
+% GLOBAL assignments: in a stack, \nextgroupplot (which a panel calls after
+% its keys are split) closes the previous panel's TeX group, and a local
+% value set before it was reverted to the previous panel's -- panel 2
+% silently inherited panel 1's colours.
+\tl_new:N \l__nulab_panel_tcol_tl
+\tl_new:N \l__nulab_panel_lcol_tl
+\tl_new:N \l__nulab_panel_rest_tl
+\tl_new:N \l__nulab_pick_l_tl
+\keys_define:nn { nulab/panel }
+  {
+    trace~color .tl_gset:N = \l__nulab_panel_tcol_tl ,
+    label~color .tl_gset:N = \l__nulab_panel_lcol_tl ,
+  }
+% \Lab@panelsplit{panel options}{callback}: calls callback{remaining keys},
+% with the panel's own colours left in \l__nulab_panel_{t,l}col_tl.
+\cs_new_protected:Npn \Lab@panelsplit #1 #2
+  {
+    \tl_gclear:N \l__nulab_panel_tcol_tl
+    \tl_gclear:N \l__nulab_panel_lcol_tl
+    \keys_set_known:nnN { nulab/panel } {#1} \l__nulab_panel_rest_tl
+    \use:e
+      {
+        \exp_not:n {#2}
+        { \exp_not:V \l__nulab_panel_rest_tl }
+      }
+  }
+% Insets (v1.28.2): an expansion drawn INSIDE a \labplot, where the book's
+% figure has it (an NMR figure's zoomed boxes). Each `inset={...}` key of the
+% call is one inset:
+%     inset={csv=file.csv, box={left,bottom,right,top}, peaks={...},
+%            options={xmin=..., xmax=..., ymin=..., ymax=..., xtick={...}}}
+% box: the corners of the inset's plot rectangle in the MAIN axis' own
+% coordinates (x as the main axis reads it, so 8.8,...,5.0,... on a reversed
+% ppm axis), which spectrum_digitize.py takes from the figure; options: the
+% inset axis' own pgfplots keys (its x and y range). The inset is a second
+% axis of the same kind, laid on the plot rectangle the box spans (scale
+% only axis), with no x label and \scriptsize tick labels; peaks as the
+% kind's labels. The corners are written into the main axis as literal
+% numbers (pgfplots replays an axis' coordinates at \end{axis}, after a
+% macro holding them may have moved on), with a catcode-12 colon: under
+% \ExplSyntaxOn `:` is a letter and TikZ does not see `axis cs:` in it
+% ("Unknown function `axis'"). The inset axes are drawn after the main one.
+% \labplot only: a \labstack given inset= warns (\Lab@labstack@i).
+\tl_new:N \l__nulab_in_csv_tl
+\tl_new:N \l__nulab_in_peaks_tl
+\tl_new:N \l__nulab_in_box_tl
+\tl_new:N \l__nulab_in_opts_tl
+\clist_new:N \l__nulab_in_box_clist
+\int_new:N \l__nulab_in_int
+\tl_new:N \Lab@inmarks
+\tl_new:N \Lab@inaxes
+\tl_new:N \Lab@inintegrals
+\keys_define:nn { nulab/inset }
+  {
+    csv     .tl_set:N = \l__nulab_in_csv_tl ,
+    peaks   .tl_set:N = \l__nulab_in_peaks_tl ,
+    box     .tl_set:N = \l__nulab_in_box_tl ,
+    options .tl_set:N = \l__nulab_in_opts_tl ,
+  }
+% \Lab@insets@build{kind}: \Lab@inmarks (the corner coordinates, for inside
+% the main axis) and \Lab@inaxes (the inset axes, for after it) from the
+% call's inset= keys; both empty without any, so a plot without insets is
+% drawn exactly as before.
+\cs_new_protected:Npn \Lab@insets@build #1
+  {
+    \tl_clear:N \Lab@inmarks
+    \tl_clear:N \Lab@inaxes
+    % v1.28.4: the integrals= curves, black over the trace as the book draws
+    % them; one CSV, the curves separated by nan rows (unbounded coords=jump
+    % makes each a gap). The file name is expanded in now, as the corners are.
+    \tl_clear:N \Lab@inintegrals
+    \tl_if_blank:VF \l__nulab_plot_integrals_tl
+      {
+        \tl_set:Nx \Lab@inintegrals
+          {
+            \exp_not:N \addplot [ black , line~join=round , unbounded~coords=jump , forget~plot ]
+              table [ nulab~kind~#1~table , col~sep=comma ] { \exp_not:V \l__nulab_plot_integrals_tl } ;
+          }
+      }
+    \int_zero:N \l__nulab_in_int
+    \tl_map_inline:Nn \l__nulab_plot_insets_tl
+      {
+        \int_incr:N \l__nulab_in_int
+        \tl_clear:N \l__nulab_in_csv_tl
+        \tl_clear:N \l__nulab_in_peaks_tl
+        \tl_clear:N \l__nulab_in_box_tl
+        \tl_clear:N \l__nulab_in_opts_tl
+        \keys_set:nn { nulab/inset } {##1}
+        \clist_set:NV \l__nulab_in_box_clist \l__nulab_in_box_tl
+        \int_compare:nNnTF { \clist_count:N \l__nulab_in_box_clist } = { 4 }
+          {
+            \tl_put_right:Nx \Lab@inmarks
+              {
+                \exp_not:N \coordinate ( Lab@in \int_use:N \l__nulab_in_int sw ) ~ at ~
+                  ( axis~cs \c_colon_str \clist_item:Nn \l__nulab_in_box_clist { 1 } ,
+                             \clist_item:Nn \l__nulab_in_box_clist { 2 } ) ;
+                \exp_not:N \coordinate ( Lab@in \int_use:N \l__nulab_in_int ne ) ~ at ~
+                  ( axis~cs \c_colon_str \clist_item:Nn \l__nulab_in_box_clist { 3 } ,
+                             \clist_item:Nn \l__nulab_in_box_clist { 4 } ) ;
+              }
+            \tl_put_right:Nx \Lab@inaxes
+              {
+                \exp_not:N \Lab@insetaxis { #1 } { \int_use:N \l__nulab_in_int }
+                  { \exp_not:V \l__nulab_in_csv_tl }
+                  { \exp_not:V \l__nulab_in_opts_tl }
+                  { \exp_not:V \l__nulab_in_peaks_tl }
+              }
+          }
+          { \msg_error:nnx { nulabreport } { inset-box } { \int_use:N \l__nulab_in_int } }
+      }
+  }
+\msg_new:nnn { nulabreport } { inset-box }
+  { inset ~ #1 ~ needs ~ box={left,bottom,right,top} ~ (four ~ numbers, ~ the ~ main ~ axis' ~
+    coordinates); ~ it ~ is ~ left ~ out. }
+\msg_new:nnn { nulabreport } { inset-stack }
+  { #1= ~ is ~ for ~ \token_to_str:N \labplot \c_space_tl only; ~ a ~
+    \token_to_str:N \labstack \c_space_tl ignores ~ it. }
+% \Lab@pickcolors{default trace colour}{labels follow the trace? true|false}
+% sets \Lab@tc, \Lab@tickcol and \Lab@labkeys for the panel about to be drawn.
+%   trace  = the panel's `trace color`, else the default passed in;
+%   labels = the panel's `label color`, else the call's, else (if the second
+%            argument is true) the trace's own colour, else the unchanged
+%            look. An overlay passes true: its labels match their line.
+\cs_new_protected:Npn \Lab@pickcolors #1 #2
+  {
+    \tl_set_eq:NN \Lab@tc \l__nulab_panel_tcol_tl
+    \tl_if_blank:VT \Lab@tc { \tl_set:Nn \Lab@tc {#1} }
+    \tl_set_eq:NN \l__nulab_pick_l_tl \l__nulab_panel_lcol_tl
+    \tl_if_blank:VT \l__nulab_pick_l_tl
+      { \tl_set_eq:NN \l__nulab_pick_l_tl \l__nulab_plot_lcol_tl }
+    \bool_if:nT {#2}
+      {
+        \tl_if_blank:VT \l__nulab_pick_l_tl
+          { \tl_set_eq:NN \l__nulab_pick_l_tl \Lab@tc }
+      }
+    \tl_if_blank:VTF \l__nulab_pick_l_tl
+      {
+        \tl_set:Nn \Lab@tickcol { gray!65 }
+        \tl_clear:N \Lab@labkeys
+      }
+      {
+        \tl_set_eq:NN \Lab@tickcol \l__nulab_pick_l_tl
+        \tl_set:Nx \Lab@labkeys { text = \exp_not:V \l__nulab_pick_l_tl }
+      }
+  }
+% Non-overlay default for the trace: the call's `trace color`, else nuirred.
+\cs_new_protected:Npn \Lab@pickstd
+  {
+    \tl_if_blank:VTF \l__nulab_plot_tcol_tl
+      { \Lab@pickcolors { nuirred } { \c_false_bool } }
+      { \exp_args:NV \Lab@pickcolors \l__nulab_plot_tcol_tl { \c_false_bool } }
+  }
+% A single \irspectrum / \labplot has no panel options of its own.
+\cs_new_protected:Npn \Lab@pickstd@single
+  {
+    \tl_gclear:N \l__nulab_panel_tcol_tl
+    \tl_gclear:N \l__nulab_panel_lcol_tl
+    \Lab@pickstd
+  }
+% Overlay: trace i takes entry i of `overlay colors` (cycling, with a
+% warning from \Lab@ovcheckpalette, if there are more traces than colours).
+\cs_new_protected:Npn \Lab@ovpick #1
+  {
+    \tl_set:Nx \l__nulab_pick_l_tl
+      {
+        \clist_item:Nn \l__nulab_plot_ovcols_clist
+          { \int_eval:n { 1 + \int_mod:nn { #1 - 1 } { \clist_count:N \l__nulab_plot_ovcols_clist } } }
+      }
+    \exp_args:NV \Lab@pickcolors \l__nulab_pick_l_tl { \c_true_bool }
+  }
+\cs_new_protected:Npn \Lab@ovcheckpalette #1
+  {
+    \int_compare:nT { #1 > \clist_count:N \l__nulab_plot_ovcols_clist }
+      { \msg_warning:nn { nulabreport } { overlay-palette-short } }
+  }
+\msg_new:nnn { nulabreport } { overlay-palette-short }
+  { An ~ overlay ~ has ~ more ~ traces ~ than ~ `overlay ~ colors' ~ entries; ~
+    the ~ colours ~ repeat. ~ Give ~ a ~ longer ~ list, ~ e.g. ~
+    overlay ~ colors={black,nuirred,nugold}, ~ or ~ `trace ~ color=' ~ per ~ panel. }
+\ExplSyntaxOff
+
+% Internal: the tikzpicture/axis body of a single plot, shared by every
+% kind and by both render paths (float and [none]). #1 kind, #2 the call's
+% own pgfplots keys, #3 csv, #4 peak list. Up to v1.18.1 this was
+% \Lab@irspectrumplot with the ir keys inline; the key order is unchanged
+% (size, kind defaults, line width, then the call's own keys, last wins).
+% line join=round (v1.21.1), here and in \Lab@stack's \labpanel: TikZ's
+% default miter join draws a sharp trough tip as a spike past the data
+% point, up to the miter limit (10 x half the line width). Measured on a
+% 600 dpi render of a digitized SDBS spectrum (LR6): red ink up to 17 px
+% (~1 %T) below the true minimum at sharp tips with miter; max 3 px with
+% round, every CSV point on the line. Troughs read too deep otherwise.
+\newcommand{\Lab@plotbody}[4]{%
+  \Lab@pickstd@single
+  \Lab@insets@build{#1}%
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=14.5cm, height=9.5cm,
+      nulab kind #1,
+      every axis plot/.append style={line width=0.5pt},
+      #2,
+    ]
+    \addplot[color=\Lab@tc, line join=round] table[nulab kind #1 table,col sep=comma] {#3};
+    \Lab@inintegrals
+    \csname Lab@kind@#1@peaks\endcsname{#4}
+    \Lab@inmarks
+    \end{axis}
+    \Lab@inaxes
+  \end{tikzpicture}%
+}
+% Internal: one inset axis (v1.28.2). #1 kind, #2 its number (the corner
+% coordinates Lab@in<n>sw/ne set in the main axis), #3 csv, #4 its own
+% pgfplots keys, #5 peaks. scale only axis: the plot rectangle, not the tick
+% labels under it, fills the box; south west is that rectangle's corner.
+\newcommand{\Lab@insetaxis}[5]{%
+  \pgfpointdiff{\pgfpointanchor{Lab@in#2sw}{center}}{\pgfpointanchor{Lab@in#2ne}{center}}%
+  \pgfgetlastxy{\Lab@inw}{\Lab@inh}%
+  \begin{axis}[
+    at={(Lab@in#2sw)}, anchor=south west, scale only axis,
+    width=\Lab@inw, height=\Lab@inh,
+    nulab kind #1,
+    every axis plot/.append style={line width=0.5pt},
+    xlabel={}, enlarge x limits=false, enlarge y limits=false,
+    tick label style={font=\scriptsize},
+    #4,
+  ]
+  \addplot[color=\Lab@tc, line join=round] table[nulab kind #1 table,col sep=comma] {#3};
+  \csname Lab@kind@#1@peaks\endcsname{#5}
+  \end{axis}%
+}
+% Internal: [none] -> non-floating, anything else -> a float with that
+% placement. The line breaks (spaces) around #2 reproduce exactly what
+% \irspectrum's two inline copies of this had, so nothing moves.
+\newcommand{\Lab@placeplot}[3]{%
+  \ifstrequal{#1}{none}{%
+    \begin{center}
+    #2
+    \captionof{figure}{#3}
+    \end{center}
+  }{%
+    \begin{figure}[#1]
+    \centering
+    #2
+    \Lab@figcaption{#3}
+    \end{figure}%
+  }%
+}
+% \labplot[kind=..., pgfplots keys][placement]{csv}{peaks}{caption}
+%   The generic single plot. Placement as \irspectrum's (default H, or
+%   none). Give the y label as ylabel={...} in the options when the kind's
+%   default isn't right.
+\newcommand{\Lab@labplot}[5]{%
+  \Lab@plotsplit{#1}{\Lab@labplot@i{#2}{#3}{#4}{#5}}}
+\newcommand{\Lab@labplot@i}[6]{%
+  \Lab@placeplot{#1}{\Lab@plotbody{#5}{#6}{#2}{#3}}{#4}}
+\NewDocumentCommand{\labplot}{O{} O{H} m m m}{\Lab@labplot{#1}{#2}{#3}{#4}{#5}}
+
+% \irspectrum[pgfplots options][placement]{csv}{y-axis label}{peaks}{caption}
+%   peaks = comma list of x/label_y pairs: 3320.8/70.9,3160.8/61.6,...
+%   (pass ymin=<n> in the first optional argument once real peaks are
+%   labelled — see the headroom note above)
+%
+%   Second optional argument (added 2026-09-18, v1.14.6): the LaTeX float
+%   placement spec, default "H" -- every call before this version, in every
+%   report, passes only the first bracket, so xparse's own default (its
+%   `O{H}` below) reproduces the old hardcoded `[H]` exactly; nothing
+%   existing changes behaviour. [H] remains the default because it is
+%   still the right choice for the common case: a single \irspectrum
+%   (9.5cm) surrounded by its own subsection's discussion essentially
+%   always fits where it's called, and \irspectrum is sometimes used
+%   inside `landscape`, where only [H] can be trusted (a real float cannot
+%   move sensibly across that macro's page-dimension swap, sec. above).
+%
+%   A real LaTeX placement letter (t/b/p, in any combination) makes this a
+%   genuine float -- tried first for LR3's appendix, WRONG for that case
+%   and reverted: a float can reorder relative to the surrounding text, so
+%   several \irspectrum calls each sitting right after their own bullet
+%   point came out with the bullets and figures in different relative
+%   order than the source (four bullets in a row, their figures reshuffled
+%   onto a different page) -- exactly the "analysis -> spectrum, analysis
+%   -> spectrum" pairing a report using this is likely to want defeated.
+%   Real floats remain available for cases that DO want the float
+%   algorithm's reordering (nothing in this codebase uses one yet).
+%
+%   `[none]` (the value, not a placement letter) instead renders NON-
+%   floating -- \begin{center}...\captionof{figure}{...}...\end{center},
+%   the same pattern sec. 7c above already validates and fixes the topsep/
+%   partopsep/parsep spacing for. A non-floating block can never reorder
+%   relative to source position (so strict interleaving holds, like [H]),
+%   but unlike [H] it is never inserted through the float-placement
+%   system at all -- when it doesn't fit the remaining page, normal TeX
+%   page-breaking just starts a fresh page for it, the same as any other
+%   oversized paragraph-level box, WITHOUT the "doesn't fit here, wastes
+%   the remaining space instead of moving on" failure [H] (a genuine,
+%   if pinned, float) has. This is what LR3's appendix uses. Trade-off:
+%   loses [H]'s one advantage over a non-float, safety inside `landscape`
+%   (untested here) -- keep using [H] there.
+%
+%   Since v1.19.0 a wrapper: \labplot with kind=ir and the y-axis label
+%   argument turned into ylabel={...} ahead of the call's own keys.
+\NewDocumentCommand{\irspectrum}{O{} O{H} m m m m}{%
+  \Lab@labplot{kind=ir,ylabel={#4},#1}{#2}{#3}{#5}{#6}%
+}
+
+% \chromatogram[pgfplots options][placement]{csv}{peaks}{caption}  (v1.19.0)
+%   A chromatogram from gc_tool.py's plain (or cropped) CSV. \labplot with
+%   technique=gc by default; `technique=` names the plot kind, so another
+%   chromatography (HPLC, ...) is \chromatogram[technique=hplc] once an
+%   hplc kind has been defined with \labdefineplotkind -- none is yet,
+%   deliberately: its defaults should come from a real instrument file,
+%   not a guess. peaks = x/apex_y/label_y/name entries (see \Lab@apexpeak),
+%   printed ready to paste by `gc_tool.py integrate`, together with the
+%   ymax that leaves room for the labels -- pass it, as \irspectrum's ymin.
+\NewDocumentCommand{\chromatogram}{O{} O{H} m m m}{%
+  \Lab@labplot{technique=gc,#1}{#2}{#3}{#4}{#5}%
+}
+
+% \irspectrumcompare[pgfplots options][placement]{csv-top}{csv-bottom}{panel-opts-top}{panel-opts-bottom}{peaks-top}{peaks-bottom}{caption}
+%   Two stacked panels, independent y-scales, shared x-axis (wavenumber) on
+%   the bottom panel only. #1 applies to BOTH panels (shared x-range, house
+%   colour, etc). #4/#5 are each a full pgfplots key list for THAT panel
+%   alone — always include ylabel there, and ymin once that panel's peaks
+%   are labelled (see the headroom note above; independent y-scales is the
+%   whole point of this macro, so there is no shared default to fall back
+%   on): {ylabel={Transmittance \%}, ymin=30}. Top panel is typically
+%   "before" (reagent), bottom "after" (product), matching how the
+%   Discussion narrates the reaction.
+%
+%   Second optional argument (added 2026-09-21, v1.16.0, LR4-5 prelab5):
+%   same convention \irspectrum's own second optional argument already
+%   uses (sec. above) -- a real LaTeX placement spec (default "t", so
+%   every call before this version reproduces the old hardcoded [t]
+%   exactly), or the literal value `none` for a NON-floating render:
+%   `\begin{center}...\captionof{figure}{...}...\end{center}`, printed
+%   exactly at the call site, never reordered relative to surrounding
+%   text by the float algorithm. Added after real-document evidence, not
+%   speculatively: prelab5.md placed this call deliberately (right after
+%   a procedure's "Cleaning up" paragraph, immediately before a
+%   `\pagebreak` into the next section) specifically to fill that
+%   section's own trailing blank space on its page -- but plain [t]
+%   pulled the float to the TOP of that page instead, ahead of the
+%   `\procstep` text that precedes the call in the source, leaving the
+%   figure floating disconnected from its own context with dead space
+%   between its caption and the text below (confirmed by rendering both
+%   ways and comparing, not guessed). `[none]` fixes this the same way it
+%   already fixes the analogous case for \irspectrum: strict source-order
+%   placement, and on overflow, ordinary TeX page-breaking (not the float
+%   algorithm) starts a fresh page for it. Trade-off is the same one
+%   \irspectrum's own comment already documents: a non-floating call can
+%   never reorder to a page with more room, so IT is now the caller's job
+%   to size/place it so it actually fits (see the "stretch height, don't
+%   leave a gap" note below) -- and it loses whatever margin the [t]/[tbp]
+%   investigation below fought hard to win back, so prefer plain
+%   `\irspectrumcompare[...]{...}` (still the default) for the ordinary
+%   case of "put this figure somewhere in the flow, let it move if it
+%   doesn't fit"; reach for `[none]` only when the call is deliberately
+%   placed to fill a SPECIFIC, already-measured gap, the way prelab5.md's
+%   is. Sizing that gap is an ordinary pgfplots `height` override in #1
+%   (applies to both panels, same as any other pgfplots key there) --
+%   measure the actual available space (e.g. pixel-measure a render of
+%   the page as-is, the way CLAUDE.md sec. 3 already asks for any geometry
+%   claim) rather than guessing a height and hoping it's close; prelab5.md
+%   uses `height=8.5cm` (the same value LR3 already uses for its own
+%   `\irspectrumcompare` calls) against a measured 6.97in gap, landing at
+%   a computed ~6.7in total block height with a small intentional margin
+%   left over rather than cutting it exactly to the edge.
+%
+% PLACEMENT: [t], not [H] -- changed 2026-09-18 (v1.14.3/.5), LR3. Two panels
+% at height=6.2cm each + 8pt sep + caption is close to a full text page, and
+% [H] ("print exactly here, float.sty, never move") turned "doesn't fit the
+% remaining page" into a large FIXED blank region earlier in the page flow
+% (before the paragraphs/table preceding the call in the source), not a
+% clean move to the next page. Confirmed by direct experiment, not guessed:
+% forcing \raggedbottom left the blank region unchanged (ruling out
+% \flushbottom's page-filling stretch, sec. above, as the cause), while
+% removing the \irspectrumcompare call outright removed the blank region
+% completely. [H]'s one documented reason (the "[H]-inside-landscape" rule
+% on \irspectrum, sec. above) does not apply to \irspectrumcompare in any
+% report that's used it so far -- none has ever put it inside `landscape`.
+% \irspectrum itself is untouched: its own [H] has not shown this failure
+% (it's ~9.5cm tall, comfortably under a full page) and appears
+% deliberately inside `landscape` in some reports, where a real float
+% cannot be trusted to move sensibly across the page-dimension swap -- do
+% not "fix" both macros at once on the strength of only one being reported
+% broken.
+%
+% [t], NOT [tbp]: v1.14.3 first shipped [tbp] (allowing a dedicated "float
+% page" as a fallback). That fallback is a DIFFERENT LaTeX code path that
+% unconditionally forces a page break right after the float (confirmed via
+% \tracingpages: a p=-10000 penalty ships the page immediately once a float
+% lands via the floats-only-page route), which is why every comparison
+% figure landed alone on its own page even though each is only ~50% of
+% \textheight and should comfortably share a page with ordinary text.
+% Dropping `p` (and `b`, which never mattered here) forces the kernel to
+% keep retrying [t] on later pages instead of ever taking that route.
+% Confirmed by real measurement, not assumed: after this change two of the
+% three comparison figures in LR3 (the ones following propiophenone/
+% acetophenone and cinnamaldehyde) DO now share their page with the table/
+% prose that follows, and the document is a full page shorter. Verified
+% this is not a \flushbottom artifact either -- identical under
+% \raggedbottom.
+%
+% ONE known, unresolved exception: LR3's FIRST comparison figure (2-
+% butanone vs 2-pentanone, following Table 5) still lands alone even under
+% [t], and neither \topfraction/\textfraction/\floatpagefraction tuning,
+% \raggedbottom, a \FloatBarrier right after the preceding table, nor
+% shrinking this figure to as little as 4.8cm/panel (a real readability
+% cost, and still didn't work) changed that -- all tested directly, not
+% guessed. \tracingpages shows \pagegoal already anomalously reduced
+% (283.6pt instead of the normal ~688pt) at the exact point this specific
+% float is retried, which the other two comparison figures do NOT show --
+% something about what precedes THIS one (Table 5 itself spans a page
+% break, unlike Table 7 before the cinnamaldehyde figure) leaves the page
+% builder in a different state, but the exact mechanism was not isolated
+% before this was shipped. If you pick this back up: a minimal standalone
+% reproduction (a `labtabularbt` table forced to span a page break,
+% followed by a few paragraphs, followed by an `\irspectrumcompare`-sized
+% float) outside the full 28-page report would isolate this far faster
+% than testing against the real document -- not done here for lack of
+% time, flagged for whoever next has reason to chase it. See LR3's own
+% `backups/review/findings.md` (2026-09-18) for the full experimental
+% record (every test tried, exact measurements, exact commands).
+% \irspectrumstack[pgfplots options][placement]{panels}{caption}   (v1.17.0)
+%   N >= 2 stacked panels, the generalisation of \irspectrumcompare (which is
+%   now a thin wrapper around it, below). panels = one \irpanel per panel,
+%   top to bottom:
+%     \irpanel{csv}{panel options}{peaks}
+%   `panel options` and `peaks` mean exactly what \irspectrumcompare's
+%   per-panel arguments mean (ylabel/ymin per panel; x/label_y peak list).
+%   #1 applies to every panel, #2 is the same placement convention as
+%   \irspectrumcompare's: a float spec, default [t], or [none] for a
+%   non-floating render at the call site. Everything above about [t] versus
+%   [H]/[tbp] applies unchanged -- the float machinery is the same code path.
+%
+%   Default panel height: a stack is tall, and a [t] float that cannot go
+%   in the top area of a text page is never placed at all (no `p`, by
+%   design, see above): it and every [t] float after it are held to the end
+%   of the document. The top area is capped TWICE: by \topfraction, and by
+%   \textfraction, the share of the page that must still be left for text
+%   (default 0.2, so a float can never exceed 0.8 \textheight however high
+%   \topfraction is raised). The second cap is what LR3's preamble.tex
+%   records as an unexplained ceiling near 8.7cm/panel, and what sent all
+%   four of LR4-5's figures from its first 3-panel stack onwards to the end
+%   when this default used \topfraction alone (0.95 there): found
+%   2026-09-23 by measuring the unplaced float at 20.1cm against a
+%   0.8 x 22.43cm = 17.9cm cap. So unless #1 sets `height`, each panel gets
+%       (min(\topfraction, 1 - \textfraction) x \textheight
+%          - \Lab@irstack@overhead) / N.
+%   Give `height` in #1 to override, as for \irspectrumcompare.
+\newcount\Lab@irstack@n
+% Measured 2026-09-23 (LR4-5 p. 25, 300 dpi, xelatex): a 3-panel stack at
+% pgfplots height=6.44cm inked 20.14cm from the top y-tick label to the last
+% caption line, with a four-line caption, i.e. 3h + 0.82cm (pgfplots'
+% `height` already includes each panel's own tick/axis labels). Add
+% \textfloatsep (~0.7cm here) below the float, and ~0.5cm for a longer
+% caption: 2.0cm.
+\newcommand{\Lab@irstack@overhead}{2.0cm}
+\newdimen\Lab@irstack@budget
+%
+% Since v1.19.0 the stack body is kind-generic (\labstack; #1 kind, #2 the
+% call's own keys, #3 the panels): \irspectrumstack is \labstack[kind=ir]
+% and \chromatogramstack is \labstack[technique=gc]. A panel is
+% \labpanel{csv}{panel options}{peaks}; \irpanel and \chrompanel are the
+% same macro under the names each wrapper documents, so existing stacks
+% keep working and a stack reads naturally for its own kind. One kind per
+% stack: the panels share an x-axis, which only makes sense for one kind
+% of data.
+\newcommand{\Lab@stackbody}[3]{%
+  % count the panels first, in a box so nothing is typeset
+  \global\Lab@irstack@n\z@
+  \setbox\z@\hbox{\def\labpanel##1##2##3{\global\advance\Lab@irstack@n\@ne}%
+    \let\irpanel\labpanel\let\chrompanel\labpanel#3}%
+  \ifnum\Lab@irstack@n<\@ne \global\Lab@irstack@n\@ne \fi
+  \Lab@irstack@budget=\topfraction\textheight
+  \dimen@=\dimexpr\textheight-\textfraction\textheight\relax
+  \ifdim\dimen@<\Lab@irstack@budget \Lab@irstack@budget=\dimen@ \fi
+  \edef\Lab@irstack@auto{%
+    group style={group size=1 by \the\Lab@irstack@n,
+      vertical sep=8pt, x descriptions at=edge bottom},
+    height=\the\dimexpr(\Lab@irstack@budget
+      -\Lab@irstack@overhead)/\Lab@irstack@n\relax}%
+  \def\labpanel##1##2##3{\Lab@panelsplit{##2}{\Lab@stackpanel{#1}{##1}{##3}}}%
+  \let\irpanel\labpanel\let\chrompanel\labpanel
+  \begin{tikzpicture}
+    \expandafter\Lab@stack@groupplot\expandafter{\Lab@irstack@auto}{#2}{#1}
+    #3
+    \end{groupplot}
+  \end{tikzpicture}%
+}
+% One panel of a stack. #1 kind, #2 csv, #3 peaks, #4 the panel's keys with
+% its own `trace color`/`label color` already taken out (v1.25.0: this used
+% to be inline in \Lab@stackbody, with nuirred hardcoded).
+%   The pick comes AFTER \nextgroupplot, which closes the previous panel's
+%   TeX group (a pick before it was discarded with that group), and the
+%   \addplot is \expanded because pgfplots only builds the PREVIOUS panel's
+%   plot when the next \nextgroupplot arrives: a bare \Lab@tc there is read
+%   with the next panel's colour (seen on the first overlay-era test: the
+%   panels' colours were swapped).
+\newcommand{\Lab@stackpanel}[4]{%
+  \nextgroupplot[#4]
+  \Lab@pickstd
+  \expanded{\noexpand\addplot[color=\Lab@tc, line join=round]}
+    table[nulab kind #1 table,col sep=comma] {#2};
+  \csname Lab@kind@#1@peaks\endcsname{#3}}
+\newcommand{\Lab@stack@groupplot}[3]{%
+    \begin{groupplot}[
+      width=14.5cm,
+      #1,
+      nulab kind #3,
+      nulab kind #3 stack,
+      every axis plot/.append style={line width=0.5pt},
+      #2,
+    ]}
+% Overlay (v1.25.0): the panels of a stack drawn on ONE axis instead of one
+% under another -- the reference report's reactant-over-product figure (red
+% and black, labels in their line's colour), asked for as the third optional
+% argument of \irspectrumstack/\irspectrumcompare/\labstack and as
+% \irspectrumoverlay. Same panel syntax as a stack, so a figure can be
+% switched between the two by changing one word.
+%   * It is one axis, so it is built like \Lab@plotbody (a plain axis, 14.5 x
+%     9.5 cm, the kind's own keys, no groupplot, no `nulab kind .. stack`
+%     y-label shift), not like \Lab@stackbody.
+%   * The call's keys (#2) and the FIRST panel's own keys are the axis's
+%     (ylabel, ymin, ymax...). Later panels' keys cannot be: there is one
+%     axis, and a ymin chosen for one spectrum's labels would silently
+%     override another's. They are ignored with a warning, except
+%     `trace color` and `label color`, which are per trace by nature.
+%     Choose a ymin low enough for the lowest label of ANY trace.
+%   * Trace i is drawn in entry i of `overlay colors` (default black,
+%     nuirred) and its labels, ticks included, in the same colour, unless
+%     the panel says `trace color=`/`label color=`. More traces than
+%     colours: the palette repeats, with a warning.
+%   Pass 1 (in a box, nothing typeset) counts the panels and collects the
+%   first panel's keys, because \begin{axis} needs them before any panel is
+%   drawn; pass 2 draws.
+\newcount\Lab@ov@i
+\newcommand{\Lab@ovscan}[1]{%
+  \ifnum\Lab@ov@i=\@ne
+    \gdef\Lab@ov@axis{#1}%
+  \else
+    \def\Lab@ov@tmp{#1}%
+    \ifx\Lab@ov@tmp\@empty\else
+      \PackageWarning{nulabreport}{Overlay panel \the\Lab@ov@i\space has
+        axis options (#1) that are ignored: an overlay has one axis. Put
+        them in the call's first optional argument or in the first panel}%
+    \fi
+  \fi}
+\newcommand{\Lab@ovpanel}[4]{%
+  \Lab@ovpick{\the\Lab@ov@i}%
+  \expanded{\noexpand\addplot[color=\Lab@tc, line join=round]}
+    table[nulab kind #1 table,col sep=comma] {#2};
+  \csname Lab@kind@#1@peaks\endcsname{#3}}
+\newcommand{\Lab@overlaybody}[3]{%
+  \global\Lab@ov@i\z@ \gdef\Lab@ov@axis{}%
+  \setbox\z@\hbox{%
+    \def\labpanel##1##2##3{\global\advance\Lab@ov@i\@ne
+      \Lab@panelsplit{##2}{\Lab@ovscan}}%
+    \let\irpanel\labpanel\let\chrompanel\labpanel#3}%
+  \Lab@ovcheckpalette{\the\Lab@ov@i}%
+  \global\Lab@ov@i\z@
+  \def\labpanel##1##2##3{\global\advance\Lab@ov@i\@ne
+    \Lab@panelsplit{##2}{\Lab@ovpanel{#1}{##1}{##3}}}%
+  \let\irpanel\labpanel\let\chrompanel\labpanel
+  \begin{tikzpicture}
+    % \expandafter: the first panel's keys must be in the list itself, not
+    % behind a macro (pgfkeys reads a macro there as ONE key name)
+    \expandafter\Lab@ov@axisopen\expandafter{\Lab@ov@axis}{#1}{#2}
+    #3
+    \end{axis}
+  \end{tikzpicture}%
+}
+\newcommand{\Lab@ov@axisopen}[3]{%
+    \begin{axis}[
+      width=14.5cm, height=9.5cm,
+      nulab kind #2,
+      every axis plot/.append style={line width=0.5pt},
+      #3,
+      #1,
+    ]}
+\newcommand{\Lab@labstack}[5]{%
+  \Lab@plotsplit{#1}{\Lab@labstack@i{#2}{#3}{#4}{#5}}}
+\newcommand{\Lab@labstack@i}[6]{%
+  \Lab@stack@noinsets
+  \Lab@placeplot{#1}{\Lab@stackselect{#2}{#5}{#6}{#3}}{#4}}
+\ExplSyntaxOn
+\cs_new_protected:Npn \Lab@stack@noinsets
+  {
+    \tl_if_empty:NF \l__nulab_plot_insets_tl { \msg_warning:nnn { nulabreport } { inset-stack } { inset } }
+    \tl_if_empty:NF \l__nulab_plot_integrals_tl { \msg_warning:nnn { nulabreport } { inset-stack } { integrals } }
+  }
+\ExplSyntaxOff
+% mode: `stack` (the default, and what every call before v1.25.0 meant) or
+% `overlay` (one shared axis, see \Lab@overlaybody).
+\newcommand{\Lab@stackselect}[4]{%
+  \ifstrequal{#1}{overlay}{\Lab@overlaybody{#2}{#3}{#4}}{%
+    \ifstrequal{#1}{stack}{\Lab@stackbody{#2}{#3}{#4}}{%
+      \PackageError{nulabreport}{Unknown stack mode `#1'}%
+        {The third optional argument is `stack' (panels one under another, the
+         default) or `overlay' (all traces on one axis).}}}}
+% \labstack[kind=..., keys][placement][mode]{\labpanel...\labpanel...}{caption}
+\NewDocumentCommand{\labstack}{O{} O{t} O{stack} m m}{%
+  \Lab@labstack{#1}{#2}{#3}{#4}{#5}}
+\NewDocumentCommand{\irspectrumstack}{O{} O{t} O{stack} m m}{%
+  \Lab@labstack{kind=ir,#1}{#2}{#3}{#4}{#5}}
+% \irspectrumoverlay[pgfplots options][placement]{panels}{caption}   (v1.25.0)
+%   \irspectrumstack with the third optional argument already set to
+%   `overlay`: the same \irpanel{csv}{panel options}{peaks} list, but all the
+%   spectra on one axis, each in its own colour with its labels to match
+%   (see \Lab@overlaybody). Placement default [H], like \irspectrum and unlike
+%   the stack it wraps: an overlay is one 9.5 cm axis, the same kind of figure
+%   as a single spectrum, and belongs where it is written, not pinned to the
+%   top of a page. (\irspectrumstack[..][t][overlay] keeps the stack's [t].)
+\NewDocumentCommand{\irspectrumoverlay}{O{} O{H} m m}{%
+  \irspectrumstack[#1][#2][overlay]{#3}{#4}}
+% \chromatogramstack[keys][placement]{\chrompanel{csv}{panel opts}{peaks}...}{caption}
+%   Several chromatograms (e.g. groups 1-5 of one experiment) stacked with
+%   a shared retention-time axis and independent y-scales -- the same
+%   reasoning as \irspectrumstack: a weak run next to a strong one is only
+%   readable on its own scale. Pass ymax per panel (gc_tool.py's value).
+\NewDocumentCommand{\chromatogramstack}{O{} O{t} O{stack} m m}{%
+  \Lab@labstack{technique=gc,#1}{#2}{#3}{#4}{#5}}
+
+% \irspectrumcompare: since v1.17.0 a wrapper, two \irpanel's with the
+% historical 6.2cm panel height (placed before #1, so a call's own
+% height=... still wins exactly as before). The separate
+% \Lab@irspectrumcompareplot body it used to have is gone; the pgfplots keys
+% are the same, so LR3 and prelab5 render as before (checked by pixel diff).
+% Nine arguments was already the ceiling (a macro body only has #1..#9), so
+% the third optional (v1.25.0) cannot simply be added: the three optionals
+% are taken first and written INTO a local \Lab@compare, which then takes
+% the seven mandatory ones. (Parking them in macros instead does not work: a
+% float placement in [..] is not expanded, \begin{figure}[\Lab@cmp@place]
+% dies with "Unknown float option".) What the caller types is unchanged.
+\NewDocumentCommand{\irspectrumcompare}{O{} O{t} O{stack}}{%
+  \def\Lab@compare##1##2##3##4##5##6##7{%
+    % the 6.2cm panel height is a stacked panel's; an overlay is ONE axis
+    % and keeps \irspectrum's own 9.5cm
+    \ifstrequal{#3}{overlay}{%
+      \irspectrumstack[#1][#2][overlay]%
+        {\irpanel{##1}{##3}{##5}\irpanel{##2}{##4}{##6}}{##7}}{%
+      \irspectrumstack[height=6.2cm,#1][#2][#3]%
+        {\irpanel{##1}{##3}{##5}\irpanel{##2}{##4}{##6}}{##7}}}%
+  \Lab@compare}
+
+% ---------------------------------------------------------------------------
+% \irspectrumpage[pgfplots options][where]{panels}{caption}      (v1.20.0)
+% \labstackpage[kind=..., options][where]{panels}{caption}
+% \chromatogrampage[options][where]{panels}{caption}
+%
+%   A stack (same panels as \irspectrumstack: one \irpanel{csv}{panel
+%   options}{peaks} each) given a whole page of its own, with its caption at
+%   the foot of that page. Asked for in the LR4-5 review so that a band
+%   table's spectra can sit between its discussion and the table itself:
+%   "the paragraph that runs before it just fills the previous page, the
+%   next page is those stacked spectra, and the next page is just the
+%   previous paragraph ... that flows as if there even was no ir spectrum
+%   page at all."
+%
+%   That is how it behaves: the call puts nothing into the text. The page
+%   the call falls on is filled and broken exactly as it would be without
+%   it, and the spectrum page is shipped out right AFTER that page (where =
+%   next, the default) or right BEFORE it (where = previous; `before` is
+%   accepted too). Everything carries on across it, a paragraph or a
+%   table mid-way through included. It is an ordinary page of the document:
+%   same header and footer, next page number.
+%
+%   Panel height is not a guess. The caption is typeset first and
+%   measured, the stack is rendered once at a trial height and measured,
+%   and the height is corrected (again if needed) until stack + caption fill
+%   \textheight to within a point. So a long caption gives shorter panels,
+%   and the caption is always on the page with the last panel.
+%
+%   Panel count: 3 is the design case; 2 and 4 are fine. One panel works
+%   but warns (a portrait page for one spectrum: \irspectrum, or a
+%   landscape page, is the better choice). More than 4 are split over
+%   ceil(N/3) pages of 2 or 3 panels, in the order given (5 -> 3+2, 7 ->
+%   3+2+2, 8 -> 3+3+2); each page fills itself, only the last carries the
+%   caption, and the earlier ones say "Figure N, continued on the next
+%   page." at their foot. One figure number for the whole series.
+%
+%   How it is done (and why not a float): the stack and its caption are
+%   typeset into saved page boxes at the call site, where \label and
+%   \refstepcounter work normally. The call then leaves a zero-size
+%   insertion (class \Lab@pg@ins, \count 0, so it has no effect on page
+%   breaking) as an anchor. When the output routine ships a page, the
+%   anchors that landed on it are counted from the insertion box, and the
+%   saved pages are shipped through \@outputpage itself, before or after
+%   that page (the kernel's build/page/before and build/page/after hooks),
+%   so they get the page counter and the eso-pic header/footer like any
+%   other page. A [p] float would do the `next` case, but it queues behind
+%   any figure still waiting to be placed and cannot do `previous` at all.
+%   Special outputs (a float being placed mid-page) put the anchor back with
+%   \@reinserts, exactly as the kernel does for footnotes, and the anchor
+%   shares a footnote's one imprecision: if placing that float pushes the
+%   anchor's line onto the next page, the anchor still counts for this one.
+%
+%   Limitations: call it between paragraphs in the main text (a raw
+%   {=latex} block in markdown does exactly that), not inside a box, float
+%   or minipage, where an insertion cannot reach the page. Two calls on the
+%   same page ship in source order. The figure number is taken where the
+%   call is, so a figure that floats past the call keeps its lower number.
+% ---------------------------------------------------------------------------
+\newinsert\Lab@pg@ins
+\count\Lab@pg@ins=\z@ \dimen\Lab@pg@ins=\maxdimen \skip\Lab@pg@ins=\z@skip
+\newcount\Lab@pg@npages    % saved page boxes made so far
+\newcount\Lab@pg@nanchors  % anchors (calls) made so far
+\newcount\Lab@pg@nshipped  % anchors whose pages have been shipped
+\newcount\Lab@pg@here      % anchors on the page being output
+\newcount\Lab@pg@np        % panels in the current call
+\newcount\Lab@pg@nchunks   % pages the current call is split into
+\newcount\Lab@pg@base      % panels per page, before the remainder
+\newcount\Lab@pg@extra     % pages that take one more panel
+\newcount\Lab@pg@chunk     % page being built (1..nchunks)
+\newcount\Lab@pg@i         % panel index
+\newcount\Lab@pg@size      % panels on the page being built
+\newcount\Lab@pg@first     % first saved page of the current call
+\newcount\Lab@pg@a         % anchor loop index (output routine)
+\newcount\Lab@pg@p         % page loop index (output routine)
+\newcount\Lab@pg@tries
+\newbox\Lab@pg@hold
+\newbox\Lab@pg@stackbox
+\newbox\Lab@pg@capbox
+\newdimen\Lab@pg@avail
+\newdimen\Lab@pg@h
+\newdimen\Lab@pg@diff
+\newif\ifLab@pg@busy
+% Left free at the foot of the page, so rounding can never push the caption
+% into the footer.
+\newcommand{\Lab@pg@safety}{2pt}
+
+\ExplSyntaxOn
+\msg_new:nnn { nulabreport } { stackpage-one }
+  { \token_to_str:N \irspectrumpage \c_space_tl with ~ a ~ single ~ panel ~
+    on ~ line ~ \msg_line_number: . ~ One ~ spectrum ~ stretched ~ over ~ a ~
+    whole ~ portrait ~ page ~ reads ~ badly: ~ \token_to_str:N \irspectrum \c_space_tl
+    (in ~ the ~ text), ~ or ~ a ~ landscape ~ page, ~ is ~ the ~ better ~ choice. }
+\msg_new:nnn { nulabreport } { stackpage-none }
+  { \token_to_str:N \irspectrumpage \c_space_tl without ~ any ~ \token_to_str:N \irpanel
+    \c_space_tl on ~ line ~ \msg_line_number: ; ~ nothing ~ was ~ made. }
+\msg_new:nnn { nulabreport } { stackpage-where }
+  { Unknown ~ page ~ position ~ `#1' ~ for ~ \token_to_str:N \irspectrumpage :
+    ~ use ~ next ~ (the ~ default) ~ or ~ previous. ~ Using ~ next. }
+\msg_new:nnn { nulabreport } { stackpage-overfull }
+  { A ~ stack ~ page ~ on ~ line ~ \msg_line_number: \c_space_tl is ~ #1 ~ taller ~
+    than ~ the ~ page ~ after ~ correction; ~ shorten ~ its ~ caption. }
+\cs_new_protected:Npn \Lab@pg@warnone { \msg_warning:nn { nulabreport } { stackpage-one } }
+\cs_new_protected:Npn \Lab@pg@errnone { \msg_error:nn { nulabreport } { stackpage-none } }
+\cs_new_protected:Npn \Lab@pg@warnwhere #1 { \msg_warning:nnn { nulabreport } { stackpage-where } {#1} }
+\cs_new_protected:Npn \Lab@pg@warnfull #1 { \msg_warning:nnn { nulabreport } { stackpage-overfull } {#1} }
+\ExplSyntaxOff
+
+\def\Lab@pg@w@next{next}
+\def\Lab@pg@w@previous{previous}
+\def\Lab@pg@w@before{previous}
+
+% The call. #1 where, #2 panels, #3 caption, #4 kind, #5 the other keys
+% (from \Lab@plotsplit).
+\newcommand{\Lab@labstackpage}[4]{%
+  \Lab@plotsplit{#1}{\Lab@labstackpage@i{#2}{#3}{#4}}}
+\newcommand{\Lab@labstackpage@i}[5]{%
+  \@ifundefined{Lab@pg@w@#1}%
+    {\Lab@pg@warnwhere{#1}\def\Lab@pg@where{next}}%
+    {\edef\Lab@pg@where{\csname Lab@pg@w@#1\endcsname}}%
+  % collect the panels, one macro each (in a box, so nothing is typeset)
+  \global\Lab@pg@np\z@
+  \setbox\z@\hbox{%
+    \def\labpanel##1##2##3{\global\advance\Lab@pg@np\@ne
+      \expandafter\gdef\csname Lab@pg@panel@\the\Lab@pg@np\endcsname
+        {\labpanel{##1}{##2}{##3}}}%
+    \let\irpanel\labpanel\let\chrompanel\labpanel#2}%
+  \ifnum\Lab@pg@np<\@ne
+    \Lab@pg@errnone
+  \else
+    \ifnum\Lab@pg@np=\@ne \Lab@pg@warnone \fi
+    % pages: one for up to 4 panels, else ceil(N/3), filled as evenly as
+    % possible (first pages take the remainder)
+    \ifnum\Lab@pg@np>4
+      \Lab@pg@nchunks=\Lab@pg@np \advance\Lab@pg@nchunks\tw@
+      \divide\Lab@pg@nchunks\thr@@ % ceil(N/3); \divide truncates
+    \else
+      \Lab@pg@nchunks=\@ne
+    \fi
+    \Lab@pg@base=\Lab@pg@np \divide\Lab@pg@base\Lab@pg@nchunks
+    \Lab@pg@extra=\numexpr\Lab@pg@np-\Lab@pg@base*\Lab@pg@nchunks\relax
+    \Lab@pg@first=\numexpr\Lab@pg@npages+1\relax
+    \Lab@pg@i=\@ne
+    \Lab@pg@chunk=\z@
+    \Lab@pg@buildall{#4}{#5}{#3}%
+    % the anchor
+    \global\advance\Lab@pg@nanchors\@ne
+    \expandafter\xdef\csname Lab@pg@anchor@\the\Lab@pg@nanchors\endcsname
+      {{\Lab@pg@where}{\the\Lab@pg@first}{\the\Lab@pg@npages}}%
+    \insert\Lab@pg@ins{\hbox{}}%
+  \fi}
+
+% One saved page per chunk. #1 kind, #2 keys, #3 caption.
+\newcommand{\Lab@pg@buildall}[3]{%
+  \advance\Lab@pg@chunk\@ne
+  \Lab@pg@size=\Lab@pg@base
+  \ifnum\Lab@pg@chunk>\Lab@pg@extra\else \advance\Lab@pg@size\@ne \fi
+  \def\Lab@pg@panels{}%
+  \Lab@pg@collect
+  \Lab@pg@build{#1}{#2}{#3}%
+  \ifnum\Lab@pg@chunk<\Lab@pg@nchunks
+    \expandafter\@firstofone
+  \else
+    \expandafter\@gobble
+  \fi
+  {\Lab@pg@buildall{#1}{#2}{#3}}}
+% Appends \Lab@pg@size panels, from \Lab@pg@i on, to \Lab@pg@panels.
+\newcommand{\Lab@pg@collect}{%
+  \ifnum\Lab@pg@size>\z@
+    \edef\Lab@pg@panels{\unexpanded\expandafter{\Lab@pg@panels}%
+      \unexpanded\expandafter\expandafter\expandafter
+        {\csname Lab@pg@panel@\the\Lab@pg@i\endcsname}}%
+    \advance\Lab@pg@i\@ne
+    \advance\Lab@pg@size\m@ne
+    \expandafter\Lab@pg@collect
+  \fi}
+
+% The foot of a saved page: the real caption on the last page of a series,
+% a "continued" line on the others. #1 = 1 for the last page, #2 caption.
+\newcommand{\Lab@pg@foot}[2]{%
+  \ifnum#1=\@ne
+    \ifLab@barecaptions
+      \gdef\Lab@barefootertext{#2}%
+    \else
+      \captionof{figure}{#2}%
+    \fi
+  \else
+    \par\vskip\LabCaptionSkip
+    {\centering\footnotesize\itshape
+      Figure~\number\numexpr\value{figure}+1\relax, continued on the next
+      page.\par}%
+  \fi}
+\newcommand{\Lab@pg@pageinit}{%
+  \hsize\textwidth \linewidth\textwidth \columnwidth\textwidth
+  \@parboxrestore \normalsize}
+
+% Renders the current chunk at height \Lab@pg@h into \Lab@pg@stackbox.
+% #1 kind, #2 keys.
+\newcommand{\Lab@pg@render}[2]{%
+  \edef\Lab@pg@keys{\unexpanded{#2},height=\the\Lab@pg@h}%
+  \setbox\Lab@pg@stackbox\hbox{%
+    \expandafter\Lab@pg@render@i\expandafter{\Lab@pg@keys}{#1}}}
+\newcommand{\Lab@pg@render@i}[2]{\Lab@stackbody{#2}{#1}{\Lab@pg@panels}}
+
+\newcommand{\Lab@pg@build}[3]{%
+  \ifnum\Lab@pg@chunk=\Lab@pg@nchunks \def\Lab@pg@islast{1}%
+  \else \def\Lab@pg@islast{0}\fi
+  % 1. the caption, measured without stepping the counter or setting labels,
+  %    under a 100pt stand-in for the plot (an \hbox of depth 0, as a
+  %    tikzpicture is), so the interline glue TeX puts between the two on
+  %    the real page is measured too -- measured alone, the "continued" note
+  %    came out 2.9pt short and the page overfull
+  \setbox\Lab@pg@capbox\vbox{%
+    \Lab@pg@pageinit
+    \let\label\@gobble
+    \edef\Lab@pg@fig{\the\c@figure}%
+    \hbox{\vrule\@width\z@\@height100\p@\@depth\z@}%
+    \Lab@pg@foot{\Lab@pg@islast}{#3}%
+    \global\c@figure\Lab@pg@fig\relax}%
+  \Lab@pg@avail=\dimexpr\textheight-\ht\Lab@pg@capbox-\dp\Lab@pg@capbox
+    +100\p@-\Lab@pg@safety\relax
+  % 2. the stack: a trial at an even share of the room, then corrected by
+  %    the measured shortfall (pgfplots' `height` counts its own tick and
+  %    axis labels only approximately, so the first render is never exact)
+  \Lab@pg@tries=\z@
+  \Lab@pg@h=\dimexpr\Lab@pg@avail/\Lab@pg@sizeof\relax
+  \Lab@pg@fit{#1}{#2}%
+  % 3. the page itself
+  \global\advance\Lab@pg@npages\@ne
+  \expandafter\newbox\csname Lab@pg@box@\the\Lab@pg@npages\endcsname
+  \global\setbox\csname Lab@pg@box@\the\Lab@pg@npages\endcsname
+    \vbox to\textheight{%
+      \Lab@pg@pageinit
+      \hbox to\textwidth{\hss\box\Lab@pg@stackbox\hss}%
+      \Lab@pg@foot{\Lab@pg@islast}{#3}%
+      \vfil}}
+% panels on this page (the loop in \Lab@pg@collect counted \Lab@pg@size
+% down to 0, so it is recomputed here)
+\newcommand{\Lab@pg@sizeof}{%
+  \numexpr\Lab@pg@base
+    +\ifnum\Lab@pg@chunk>\Lab@pg@extra 0\else 1\fi\relax}
+\newif\ifLab@pg@again
+\newcommand{\Lab@pg@fit}[2]{%
+  \Lab@pg@render{#1}{#2}%
+  \advance\Lab@pg@tries\@ne
+  \Lab@pg@diff=\dimexpr\Lab@pg@avail-\ht\Lab@pg@stackbox-\dp\Lab@pg@stackbox\relax
+  \Lab@pg@againfalse
+  \ifdim\ifdim\Lab@pg@diff<\z@ -\fi\Lab@pg@diff>0.5pt
+    \ifnum\Lab@pg@tries<4
+      \advance\Lab@pg@h by \dimexpr\Lab@pg@diff/\Lab@pg@sizeof\relax
+      \Lab@pg@againtrue
+    \else
+      \ifdim\Lab@pg@diff<-\Lab@pg@safety
+        \Lab@pg@warnfull{\the\dimexpr-\Lab@pg@diff\relax}\fi
+    \fi
+  \fi
+  \ifLab@pg@again
+    \expandafter\@firstofone
+  \else
+    \expandafter\@gobble
+  \fi
+  {\Lab@pg@fit{#1}{#2}}}
+
+% Output side. Count the anchors that came out on this page (one empty
+% \hbox each), then ship `previous' pages before it and `next' pages after
+% it. \Lab@pg@busy keeps the saved pages' own trip through \@outputpage
+% from re-entering this.
+\def\Lab@pg@count{%
+  \global\Lab@pg@here\z@
+  \setbox\z@\vbox{\unvbox\Lab@pg@ins\Lab@pg@countloop}%
+  \global\setbox\Lab@pg@ins\box\voidb@x}
+\def\Lab@pg@countloop{%
+  \unskip\unpenalty\unkern
+  \setbox\tw@\lastbox
+  \ifvoid\tw@\else
+    \global\advance\Lab@pg@here\@ne
+    \expandafter\Lab@pg@countloop
+  \fi}
+% #1 = next or previous: ship every page of every anchor on this page that
+% asked for that position.
+\def\Lab@pg@shipall#1{%
+  \def\Lab@pg@mode{#1}%
+  \global\Lab@pg@a=\Lab@pg@nshipped
+  \Lab@pg@shipall@i}
+\def\Lab@pg@shipall@i{%
+  \ifnum\Lab@pg@a<\numexpr\Lab@pg@nshipped+\Lab@pg@here\relax
+    \global\advance\Lab@pg@a\@ne
+    \expandafter\expandafter\expandafter\Lab@pg@shipanchor
+      \csname Lab@pg@anchor@\the\Lab@pg@a\endcsname
+    \expandafter\Lab@pg@shipall@i
+  \fi}
+\def\Lab@pg@shipanchor#1#2#3{%
+  \def\Lab@pg@tmp{#1}%
+  \ifx\Lab@pg@tmp\Lab@pg@mode
+    \global\Lab@pg@p=#2\relax
+    \def\Lab@pg@last{#3}%
+    \Lab@pg@shippages
+  \fi}
+\def\Lab@pg@shippages{%
+  \ifnum\Lab@pg@p>\Lab@pg@last\else
+    \Lab@pg@shipone{\the\Lab@pg@p}%
+    \global\advance\Lab@pg@p\@ne
+    \expandafter\Lab@pg@shippages
+  \fi}
+\def\Lab@pg@shipone#1{%
+  \global\setbox\Lab@pg@hold\box\@outputbox
+  \global\setbox\@outputbox\box\csname Lab@pg@box@#1\endcsname
+  \global\Lab@pg@busytrue
+  \@outputpage
+  \global\Lab@pg@busyfalse
+  \global\setbox\@outputbox\box\Lab@pg@hold}
+\AddToHook{build/page/before}[nulabreport/stackpage]{%
+  \ifLab@pg@busy\else
+    \ifvoid\Lab@pg@ins\else
+      \Lab@pg@count
+      \Lab@pg@shipall{previous}%
+    \fi
+  \fi}
+\AddToHook{build/page/after}[nulabreport/stackpage]{%
+  \ifLab@pg@busy\else
+    \ifnum\Lab@pg@here>\z@
+      \Lab@pg@shipall{next}%
+      \global\advance\Lab@pg@nshipped\Lab@pg@here
+      \global\Lab@pg@here\z@
+    \fi
+  \fi}
+% A special output (a float being placed) gives the page back to the page
+% builder; put the anchors back with it, as the kernel does for footnotes.
+\g@addto@macro\@reinserts{%
+  \ifvoid\Lab@pg@ins\else\insert\Lab@pg@ins{\unvbox\Lab@pg@ins}\fi}
+
+\NewDocumentCommand{\labstackpage}{O{} O{next} m m}{%
+  \Lab@labstackpage{#1}{#2}{#3}{#4}}
+\NewDocumentCommand{\irspectrumpage}{O{} O{next} m m}{%
+  \Lab@labstackpage{kind=ir,#1}{#2}{#3}{#4}}
+\NewDocumentCommand{\chromatogrampage}{O{} O{next} m m}{%
+  \Lab@labstackpage{technique=gc,#1}{#2}{#3}{#4}}
+\makeatother
+% --- plot-cache
+% =============================================================================
+% 15b. Plot cache (v1.26.0). INERT unless pdfmd defines \LabPlotCacheDir (this package's
+% name for what pdfmd calls \pdfmdCacheDir; since pdfmd 3.28.37 the names this package uses
+% are listed under `picture-cache:` in nulabreport-pdfmd.yaml, which pdfmd reads beside this
+% file. It defines them only for
+% `pdfmd-options: {cache: {plots: true}}` / `pdfmd --cache-plots`)
+% under LuaLaTeX; with it undefined nothing below is defined, so a normal build
+% is exactly what it was.
+%
+% When on, each whole plot picture -- \Lab@plotbody (single), \Lab@stackbody
+% (stack and \irspectrumpage) and \Lab@overlaybody -- is looked up by a key:
+% the md5 of the macro's name, its arguments and the layout it reads (text
+% height/width, line width, font size, float fractions). A HIT includes the PDF
+% pdfmd stored for that key, at the stored size, instead of typesetting; a MISS
+% typesets exactly as before and appends the call to \jobname.plotreq, which
+% pdfmd renders afterwards in a standalone job (\LabPlotRender defined: no
+% lookup) for the next build. The stored file's box has the width, height and
+% depth the picture had, so nothing around it moves. (Included at its natural
+% size, not scaled: graphics' scale arithmetic is rounded, and a 0.05pt error
+% there moved the lines of a 19 cm plot visibly against its own labels.)
+%
+% What keeps it from going stale is on pdfmd's side, not here: it keys the
+% whole cache directory by a hash of this file, the document's preamble and
+% the engine, and drops an entry whose data file (CSV) changed.
+% =============================================================================
+\makeatletter
+% A scheme (\schemestart ... \schemestop) as one call: the unit of the scheme cache below, and what a request replays.
+% chemfig keeps one thing a scheme can change and a later one reads: the greatest depth of the molecule names so far
+% (\CF_dpmax, with gchemname on, which is its default). The standalone job hands it back to a build that finds the picture
+% stored (\pdfmdCachePost), and the context starts it from the value the call had.
+\newcommand{\Lab@sc@post}{\xdef\pdfmdCachePost{\unexpanded{\expandafter\xdef\csname CF_dpmax\endcsname}%
+  {\csname CF_dpmax\endcsname}}}
+\newcommand{\Lab@scheme}[2]{\schemestart #1\schemestop #2\Lab@sc@post}
+\ifdefined\LabPlotCacheDir\ifdefined\directlua\ifdefined\LabPlotRender\else
+  \newwrite\Lab@pc@req
+  \AtBeginDocument{\immediate\openout\Lab@pc@req=\jobname.plotreq\relax}
+  \newcommand{\Lab@pc@sep}{@@|@@}
+  % md5 of the macro named #1, or `skip` if its text holds a character that
+  % would not survive being written to a file and read back (%, #)
+  % (no % or # may appear in this Lua: TeX reads it first, as a comment/parameter.
+  % An escaped \% or \# in the call is fine; a bare one would not survive being
+  % written to a file and read back, so such a call is not cached.)
+  \newcommand{\Lab@pc@hash}[1]{%
+    \directlua{local s = token.get_macro('#1')
+      local t = s:gsub(string.char(92, 37, 37), ''):gsub(string.char(92, 35), '')
+      if t:find(string.char(37), 1, true) or t:find(string.char(35), 1, true)
+      then tex.sprint('skip') else tex.sprint(md5.sumhexa(s)) end}}
+  % The plot macros also read five variables the CALL's own keys set before
+  % they run (trace color, label color, overlay colors, insets, integrals:
+  % \Lab@plotsplit). They are part of the key, and the standalone job sets
+  % them from the request.
+  \ExplSyntaxOn
+  \cs_new:Npn \Lab@pc@state
+    {
+      \exp_not:N \tl_set:Nn \exp_not:N \l__nulab_plot_tcol_tl { \exp_not:V \l__nulab_plot_tcol_tl }
+      \exp_not:N \tl_set:Nn \exp_not:N \l__nulab_plot_lcol_tl { \exp_not:V \l__nulab_plot_lcol_tl }
+      \exp_not:N \clist_set:Nn \exp_not:N \l__nulab_plot_ovcols_clist { \exp_not:V \l__nulab_plot_ovcols_clist }
+      % v1.28.2: the insets are drawn by \Lab@plotbody too
+      \exp_not:N \tl_set:Nn \exp_not:N \l__nulab_plot_insets_tl { \exp_not:V \l__nulab_plot_insets_tl }
+      % v1.28.4: and the integral curves
+      \exp_not:N \tl_set:Nn \exp_not:N \l__nulab_plot_integrals_tl { \exp_not:V \l__nulab_plot_integrals_tl }
+    }
+  \ExplSyntaxOff
+  \newcommand{\Lab@pc@extra}{}
+  % #1 the public macro (recorded), #2 the original it replaced, #3 its
+  % braced arguments
+  \newcommand{\Lab@cached}[3]{%
+    \edef\Lab@pc@ctx{\noexpand\textheight=\the\textheight\space
+      \noexpand\textwidth=\the\textwidth\space
+      \noexpand\linewidth=\the\linewidth\space
+      \noexpand\columnwidth=\the\columnwidth\space
+      \noexpand\def\noexpand\topfraction{\topfraction}%
+      \noexpand\def\noexpand\textfraction{\textfraction}%
+      \noexpand\fontsize{\f@size}{\f@baselineskip}\noexpand\selectfont
+      \Lab@pc@state\unexpanded\expandafter{\Lab@pc@extra}}%
+    \edef\Lab@pc@src{\string#1\detokenize{#3}\detokenize\expandafter{\Lab@pc@ctx}}%
+    \edef\Lab@pc@key{\Lab@pc@hash{Lab@pc@src}}%
+    \ifx\Lab@pc@key\Lab@pc@skip
+      #2#3%
+    \else
+      \IfFileExists{\LabPlotCacheDir\Lab@pc@key.dim}{%
+        \gdef\pdfmdCacheMargin{0pt}\global\let\pdfmdCachePostStored\relax
+        \begingroup\endlinechar=-1 \catcode`\@=11
+          \input{\LabPlotCacheDir\Lab@pc@key.dim}%
+        \endgroup
+        \setbox\z@\hbox{\kern-\pdfmdCacheMargin\raise-\dimexpr\Lab@pc@dp+\pdfmdCacheMargin\relax\hbox{%
+          \includegraphics{\LabPlotCacheDir\Lab@pc@key.pdf}}}%
+        \ht\z@=\Lab@pc@ht \dp\z@=\Lab@pc@dp \wd\z@=\Lab@pc@wd
+        \pdfmdCachePostStored
+        \leavevmode\box\z@
+      }{%
+        #2#3%
+        \immediate\write\Lab@pc@req{\Lab@pc@key\Lab@pc@sep\string#1\Lab@pc@sep
+          \detokenize{#3}\Lab@pc@sep\detokenize\expandafter{\Lab@pc@ctx}}%
+      }%
+    \fi}
+  \newcommand{\Lab@pc@skip}{skip}
+  \let\Lab@plotbody@raw\Lab@plotbody
+  \renewcommand{\Lab@plotbody}[4]{\Lab@cached\Lab@plotbody\Lab@plotbody@raw{{#1}{#2}{#3}{#4}}}
+  \let\Lab@stackbody@raw\Lab@stackbody
+  \renewcommand{\Lab@stackbody}[3]{\Lab@cached\Lab@stackbody\Lab@stackbody@raw{{#1}{#2}{#3}}}
+  \let\Lab@overlaybody@raw\Lab@overlaybody
+  \renewcommand{\Lab@overlaybody}[3]{\Lab@cached\Lab@overlaybody\Lab@overlaybody@raw{{#1}{#2}{#3}}}
+  % \irspectrumpage hands the panels over as a macro (\Lab@pg@panels): pass
+  % their text, so the key and the request see it
+  \renewcommand{\Lab@pg@render@i}[2]{%
+    \expandafter\Lab@pc@pagestack\expandafter{\Lab@pg@panels}{#1}{#2}}
+  \newcommand{\Lab@pc@pagestack}[3]{\Lab@stackbody{#3}{#2}{#1}}
+  % ---- schemes (v1.28.5): a \schemestart ... \schemestop is one unbreakable drawing, looked up like a plot (pdfmd >= 3.28.35:
+  % \pdfmdCacheVersion 3). Taken as a delimited argument at \schemestart, so what the cache sees is the text between the two
+  % (its optional arguments included) and the \chemmove calls that follow it: they point at its named atoms (@{name}), so
+  % scheme and arrows are one picture, and pdfmd typesets it twice (@@runs=2@@: TikZ's remember picture) -- rows and page
+  % breaks around it stay live, and two schemes still fall on two pages. The context is the layout the plots use plus
+  % chemfig's settings (the three key groups chemfig keeps: \setchemfig, \setcharge, the delimiters), read from
+  % simplekv's own storage so a key a newer chemfig adds is in the key too, and the font; pdfmd reads them back with
+  % ordinary catcodes (@@plain@@: a key's name has a space, which expl3 drops). NOT cached, typeset as ever: a scheme
+  % with a ~ (chemfig reads it with a catcode a macro argument no longer has), a % or # in it, or in a colour (a
+  % \color or \textcolor around it: the standalone job is black).
+  \ifdefined\pdfmdCacheVersion\ifnum\pdfmdCacheVersion>2
+  \let\Lab@schemestart@raw\schemestart
+  \newcommand{\Lab@scheme@raw}[2]{\begingroup\let\schemestart\Lab@schemestart@raw\Lab@schemestart@raw #1\schemestop #2\endgroup}
+  \newcommand{\Lab@sc@black}{0 g 0 G}
+  \newcommand{\Lab@sc@look}[2]{%
+    \edef\Lab@sc@text{\detokenize{#1#2}}%
+    \edef\Lab@sc@color{\current@color}%
+    \edef\Lab@sc@verdict{\directlua{
+      local s = token.get_macro('Lab@sc@text')
+      if s:find(string.char(126), 1, true)
+         or s:find(string.char(37), 1, true) or s:find(string.char(35), 1, true)
+      then tex.sprint('skip') else tex.sprint('ok') end}}%
+    \ifx\Lab@sc@color\Lab@sc@black\else\def\Lab@sc@verdict{skip}\fi%
+    \edef\Lab@sc@runs{\directlua{
+      local s = token.get_macro('Lab@sc@text')
+      if s:find(string.char(64, 123), 1, true) then tex.sprint('@@runs=2@@') end}}}
+  \newcommand{\Lab@sc@dump}{%
+    \directlua{
+      local out = {}
+      for _, group in ipairs({'chemfig', 'charge', 'CFdelimiters'}) do
+        local list = token.get_macro('skv_list_of_default_keys_[' .. group .. ']') or ''
+        local items = {}
+        for key in list:gmatch('[^,]+') do
+          local value = token.get_macro('skv_[' .. group .. ']_' .. key)
+          if value then
+            value = value:gsub('^\\skv_stop ?', '')
+            table.insert(items, key .. '={' .. value .. '}')
+          end
+        end
+        table.insert(out, '\\setKV[' .. group .. ']{' .. table.concat(items, ',') .. '}')
+      end
+      local text = table.concat(out)
+      if text:find(string.char(37), 1, true) or text:find(string.char(35), 1, true)
+      then tex.sprint('\\relax') else tex.sprint('\\unexpanded{' .. text .. '}') end}}
+  \newcommand{\Lab@sc@cached}[2]{%
+    \begingroup
+      \Lab@sc@look{#1}{#2}%
+      \ifx\Lab@sc@verdict\Lab@pc@skip
+        \endgroup\Lab@scheme@raw{#1}{#2}%
+      \else
+        \edef\Lab@pc@extra{\unexpanded{@@plain@@@@margin=56pt@@}\Lab@sc@runs%
+          \unexpanded{\expandafter\xdef\csname CF_dpmax\endcsname}{\csname CF_dpmax\endcsname}\Lab@sc@dump \unexpanded{\fontfamily}{\f@family}\unexpanded{\fontseries}{\f@series}%
+          \unexpanded{\fontshape}{\f@shape}\unexpanded{\selectfont}}%
+        \Lab@cached\Lab@scheme\Lab@scheme@raw{{#1}{#2}}%
+        \endgroup
+      \fi}
+  % the \chemmove calls that follow the scheme belong to it (they point at its named atoms)
+  \long\def\Lab@sc@grab#1\schemestop{\Lab@sc@tail{#1}{}}
+  \long\def\Lab@sc@tail#1#2{%
+    \@ifnextchar\chemmove{\Lab@sc@more{#1}{#2}}{\Lab@sc@cached{#1}{#2}}}
+  \long\def\Lab@sc@more#1#2\chemmove{\@ifnextchar[{\Lab@sc@moveopt{#1}{#2}}{\Lab@sc@move{#1}{#2}[]}}
+  \long\def\Lab@sc@moveopt#1#2[#3]{\Lab@sc@move{#1}{#2}[#3]}
+  \long\def\Lab@sc@move#1#2[#3]#4{\Lab@sc@tail{#1}{#2\chemmove[#3]{#4}}}
+  \let\schemestart\Lab@sc@grab
+  \fi\fi
+\fi\fi\fi
+\makeatother
+\makeatother
+\endinput
