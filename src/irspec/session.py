@@ -2,6 +2,7 @@
 
     irspec session DIR [--build auto|pdfmd|latex|none] [--sort time|name]
                        [--title STEM=TITLE ...] [--md-name NAME] [--dry-run]
+                       [--formats png,tiff,svg,svg-text] [--dpi 300]
 
 It does for NIST WebBook files and SDBS pictures what ir_organize.py already
 did for the instrument's own .SPA files, in the same folder layout:
@@ -65,7 +66,7 @@ import sys
 import numpy as np
 
 from . import ir_organize as _io
-from . import jdx_tool, spa_tool, texout
+from . import export, jdx_tool, spa_tool, texout
 from .figure import Figure
 
 IMG_EXT = (".gif", ".jpg", ".jpeg", ".png", ".bmp")
@@ -311,7 +312,8 @@ def build_latex(folder, base, figures):
     return pdf
 
 
-def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=False, pdfmd=None):
+def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=False, pdfmd=None,
+        formats=(), dpi=300):
     """Process one folder; returns the list of Figure. Prints what it does."""
     folder = os.path.abspath(folder)
     if not os.path.isdir(folder):
@@ -350,6 +352,13 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
         print(f"wrote {_io.build_pdf(md, exe)}")
     elif build == "latex":
         print(f"wrote {build_latex(folder, base, figures)}")
+    if formats:
+        pdf = os.path.join(folder, base + ".pdf")
+        if not os.path.exists(pdf):
+            raise SessionError("--formats needs the PDF: use --build pdfmd or latex")
+        for p in export.export_pdf(pdf, formats, os.path.join(folder, "figures"),
+                                   export.stems_of(figures), dpi):
+            print(f"wrote {p}")
     return figures
 
 
@@ -367,6 +376,10 @@ def main(argv=None):
     ap.add_argument("--md-name", default=None, help="output basename (default ir_<dd-mm>)")
     ap.add_argument("--dry-run", action="store_true", help="print the planned file moves, stop")
     ap.add_argument("--pdfmd", default=None)
+    ap.add_argument("--formats", default="", metavar="LIST",
+                    help="also write one picture per spectrum into DIR/figures/, from the PDF: "
+                         "comma list of " + ", ".join(export.FORMATS) + " (see irspec export --help)")
+    ap.add_argument("--dpi", type=int, default=300, help="resolution of png/tiff (default 300)")
     a = ap.parse_args(argv)
     titles = {}
     for t in a.title:
@@ -374,7 +387,8 @@ def main(argv=None):
             raise SessionError(f"--title needs STEM=TITLE, got {t!r}")
         k, v = t.split("=", 1)
         titles[k] = v
-    run(a.folder, "none" if a.no_pdf else a.build, a.sort, titles, a.md_name, a.dry_run, a.pdfmd)
+    run(a.folder, "none" if a.no_pdf else a.build, a.sort, titles, a.md_name, a.dry_run, a.pdfmd,
+        export.parse_formats(a.formats), a.dpi)
 
 
 if __name__ == "__main__":
