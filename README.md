@@ -44,12 +44,15 @@ convenience, and the manifest lets you correct it ([below](#the-manifest)).
 
 ## Install
 
-Needs Python 3.9 or newer. From a checkout of this repository:
+Needs Python 3.9 or newer.
 
 ```
-pip install .            # or: pip install -e .   while developing
+pip install irspec       # or: pipx install irspec
 irspec --version         # python -m irspec --version does the same
 ```
+
+From a checkout of [the repository](https://github.com/aliperdehan/irspec) instead:
+`pip install .` (or `pip install -e .` while developing).
 
 This pulls in numpy, scipy and Pillow. The rest are programs irspec calls, and
 only the ones for the output you ask for are needed:
@@ -358,6 +361,14 @@ The original scripts the code came from are in the git history (tag `legacy-orac
 `legacy/`; see `PROVENANCE.md`); the tests compare against what they produced, recorded
 in `tests/data/`. `irspec-ir.sty` is
 generated and never edited: change `nulabreport.sty` and regenerate it.
+
+### Releasing
+
+The version bump and the `CHANGELOG.md` entry go in one commit on `main`; then the tag:
+`git tag -a vX.Y.Z -m "irspec X.Y.Z" && git push origin vX.Y.Z`. The tag starts
+`.github/workflows/publish.yml`, which refuses a tag that is not `irspec.__version__`,
+runs the tests, builds, and uploads to PyPI by trusted publishing (no token is stored; the
+PyPI project lists this repository, `publish.yml` and the environment `pypi`).
 
 ## Licence
 

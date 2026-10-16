@@ -24,6 +24,12 @@ classifiers = [
   "Environment :: Console",
 ]
 
+[project.urls]
+Homepage = "https://github.com/aliperdehan/irspec"
+Source = "https://github.com/aliperdehan/irspec"
+Changelog = "https://github.com/aliperdehan/irspec/blob/main/CHANGELOG.md"
+Issues = "https://github.com/aliperdehan/irspec/issues"
+
 [project.scripts]
 irspec = "irspec.cli:main"
 
