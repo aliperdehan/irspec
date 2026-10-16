@@ -1,7 +1,316 @@
 # irspec
 
-Infrared spectra for chemistry students: instrument and reference files in,
-tidy CSVs, peak lists and report-ready figures out.
+Infrared spectra for chemistry students. Put the files from the instrument, from
+NIST WebBook or from SDBS in a folder, run one command, and get tidy CSVs, peak
+lists and report-quality figures (PDF, PNG, TIFF, SVG) back.
 
-**Status: 0.0.x, a work in progress.** `legacy/` holds the working scripts;
-the package, the command line and a full README come next. See `PROVENANCE.md`.
+![An IR spectrum of phenacetin, drawn by irspec](docs/example-phenacetin.png)
+
+*Above: the author's own phenacetin spectrum, from `irspec session` with
+`--formats png`.*
+
+```
+irspec session my_lab_folder/ --formats png,svg
+```
+
+## Status
+
+**Pre-release.** The first release will be `0.1.0`; until then the repository is
+the only place it exists (not on PyPI, no tags). The command line and the
+folder layout below are what 0.1.0 is meant to ship, but anything may still change
+before it. The Python code (`import irspec`) is not a stable interface before
+1.0: use the command line. Still to come: a matplotlib figure backend (0.2.0) and
+an R/ggplot2 one (0.3.0). See [Versioning](#versioning) and `CHANGELOG.md`.
+
+## What it does, and what it does not
+
+It does:
+
+- read the Thermo OMNIC `.SPA`/`.SPG` files of the department's Nicolet iS5,
+  NIST WebBook `.jdx` (JCAMP-DX) files, and spectra that exist only as a picture
+  (SDBS plots) by reading the trace off the image;
+- write each spectrum as two CSVs (see [CSV files](#csv-files)), pick its peaks
+  and draw it with the labels kept apart;
+- put every spectrum on the same axis, **%Transmittance**: an Absorbance
+  spectrum is converted on purpose, never mixed in silently;
+- make a PDF with one spectrum per landscape page, and PNG/TIFF/SVG copies of
+  each page named after the spectrum.
+
+It does not interpret spectra, assign bands or identify compounds. The peak
+labels are wavenumbers; deciding what a band is stays your job. Peak picking is a
+convenience, and the manifest lets you correct it ([below](#the-manifest)).
+
+## Install
+
+Needs Python 3.9 or newer. From a checkout:
+
+```
+pip install .            # or: pip install -e .   while developing
+irspec --version
+```
+
+This pulls in numpy, scipy and Pillow. The rest are programs irspec calls, and
+only the ones for the output you ask for are needed:
+
+| You want | Needs | macOS | Debian/Ubuntu |
+|---|---|---|---|
+| a PDF | `lualatex` with pgfplots (TeX Live or MacTeX) | `brew install --cask mactex-no-gui` | `apt install texlive-full` |
+| PNG, TIFF, SVG | poppler (`pdfinfo`, `pdftoppm`, `pdftocairo`) | `brew install poppler` | `apt install poppler-utils` |
+| SVG with editable text | MuPDF (`mutool`) | `brew install mupdf-tools` | `apt install mupdf-tools` |
+| `digitize --omnic` | `tesseract` | `brew install tesseract` | `apt install tesseract-ocr` |
+
+The figures use the font STIX Two when it is installed and TeX's default
+otherwise; the layout is the same. If a program is missing, irspec says which one
+and what to install instead of failing with a traceback.
+
+On macOS the Homebrew `python3` refuses a bare `pip install` ("externally
+managed environment"); use a virtual environment
+(`python3 -m venv ~/irspec-venv && ~/irspec-venv/bin/pip install .`) or `pipx`.
+
+## Quick start
+
+1. Make a folder and drop the files in it. Loose files are sorted for you:
+   `.SPA`/`.SPG` into `SPA/`, `.jdx` into `jdx/`, anything else into `other/`.
+   **Pictures are the exception**: put an SDBS plot (`.gif`, `.jpg`, `.png`,
+   `.bmp`) in `img/` yourself, because a screenshot of the instrument and a
+   published plot are both "an image" and irspec cannot tell which you mean.
+2. Run it:
+
+   ```
+   irspec session my_lab_folder/
+   ```
+
+3. Look at the PDF it wrote, then fix whatever you disagree with in
+   `manifest.json` (a title, a peak) and run the same command again. A re-run
+   keeps your edits.
+
+After a run on one `.SPA` file the folder looks like this:
+
+```
+my_lab_folder/
+  SPA/PHENACETIN_CRUDE_LR1-2.SPA            the file, moved here
+  csv/PHENACETIN_CRUDE_LR1-2.csv            archival CSV
+  plain/PHENACETIN_CRUDE_LR1-2_plain.csv    the CSV the figure reads
+  manifest.json                             titles, peaks, per-spectrum settings
+  ir_my_lab_folder.md                       the figure list, for nulabreport's pdfmd
+  ir_my_lab_folder.tex                      the same for plain lualatex  (--build latex)
+  ir_my_lab_folder.pdf                      the figure PDF, one spectrum per page
+  figures/PHENACETIN_CRUDE_LR1-2.png        with --formats
+```
+
+The base name `ir_...` is `ir_<dd-mm>` when the folder's name contains a date
+(`own-29.09` gives `ir_29-09`), else `ir_` and the folder's name.
+`--md-name NAME` chooses it yourself.
+
+## The three kinds of input
+
+| Source | Goes in | What happens |
+|---|---|---|
+| The lab's own instrument file (`.SPA`, `.SPG`) | `SPA/` | decoded directly (checked against a Spectragryph export to 0.0000 %T); peaks picked |
+| NIST WebBook `.jdx` | `jdx/` | **Transmittance** is rescaled 0–1 → 0–100; **Absorbance** is converted to %T; **QUANT-IR gas-phase** files (absorptivity, not an absorbance) need `peak_a` or `cl` in the manifest, see below |
+| A spectrum published only as a picture (SDBS) | `img/` | the trace is read off the image and drawn back over it as a check; a failed calibration or redraw check **stops the run** and names the log in `check/` |
+
+`.jdx` files that use JCAMP's compressed number formats (SQZ/DIF/DUP) are
+refused with a message rather than decoded wrongly.
+
+### QUANT-IR gas-phase files
+
+These carry an absorptivity (absorbance per µmol/mol per metre), not an
+absorbance, and the file does not say what concentration or path length it was
+measured at. irspec will not invent one. Say what to scale the strongest band to,
+and say so in your caption:
+
+```json
+{"file": "jdx/1634-04-4-IR.jdx", "name": "MTBE_GAS", "peak_a": 1}
+```
+
+`"cl": <c×L in µmol/mol·m>` is the alternative when you know the product.
+
+## Names
+
+An instrument spectrum keeps its file's stem: `SPA/RUN3.SPA` gives
+`csv/RUN3.csv` and `plain/RUN3_plain.csv`. A reference spectrum (`jdx/`, `img/`)
+gets a name in capitals with underscores and no spaces, `csv/NAME.csv` and
+`plain/NAME.csv` (no `_plain`; the difference is deliberate). The name comes from,
+in this order:
+
+1. `"name"` in its manifest entry;
+2. `cas_names.json` in the session folder, looked up by the CAS number the file
+   name starts with: `{"67-56-1": "METHANOL_GAS", "103-90-2": "ACETAMINOPHEN"}`;
+3. the file's own stem (a WebBook file is called after its CAS number, so this
+   is rarely what you want).
+
+## CSV files
+
+Two files per spectrum, because the two jobs want different things:
+
+| | archival `csv/` | plain `plain/` |
+|---|---|---|
+| separator | semicolon | comma |
+| decimal mark | comma | point |
+| order | descending wavenumber | ascending |
+| range | everything the file has | 650 cm⁻¹ and up |
+| y | as decoded, never converted | %T, the figures' axis |
+| use | keeping the data as it came | plotting, peak picking, correlation, other programs |
+
+The plain CSV has a header line and two columns, wavenumber and intensity; a
+spreadsheet, R, matplotlib or pgfplots reads it as it is. The archival form is
+the shape Spectragryph exports.
+
+## The manifest
+
+`manifest.json` is the one place a session is configured. It is a list with one
+entry per spectrum, in figure order, written by the first run and kept on every
+re-run: your edits stay, new files are appended, vanished files are dropped.
+
+```json
+[
+  {
+    "file": "SPA/PHENACETIN_CRUDE_LR1-2.SPA",
+    "title": "Phenacetin (crude)",
+    "peaks": [[740.5, 52.3], [1241.9, 47.3], [3253.3, 75.3]],
+    "ymin": -5
+  }
+]
+```
+
+| Key | Meaning |
+|---|---|
+| `file` | path of the spectrum, relative to the folder (`SPA/…`, `jdx/…`, `img/…`) |
+| `title` | the caption under the figure, free text (`"Alcohol (stock)"` is fine); the default is the file's stem |
+| `peaks` | `[wavenumber, label_y]` pairs, as picked; edit, add or delete here. A bare number is snapped to the nearest local band. Delete the key to pick again |
+| `axis` | y-axis label (default `Transmittance %`) |
+| `ymin` | bottom of the y axis; the tool's suggestion is kept as it is, and may be negative for a strong band |
+| `threshold`, `prominence`, `distance` | peak-picking sensitivity overrides, for a band at the plot edge or noise taken for bands |
+| `name` | the reference name above (written back by the first run) |
+| `peak_a`, `cl` | QUANT-IR files only, see above |
+| `check` | pictures only: the peak table printed under the SDBS plot, typed as `"3490:84,2977:6,…"`, for the digitiser's own cross-check |
+| `args` | pictures only: extra flags for `irspec digitize convert`, as a list |
+
+Other options of `irspec session`: `--sort time|name` (order of new files; modification
+time by default), `--title STEM=TITLE` (repeatable), `--dry-run` (print the file
+moves and stop), `--build auto|pdfmd|latex|none` (`--no-pdf` is `none`), `--pdfmd PATH`.
+
+## Pictures: PNG, TIFF, SVG
+
+`--formats` takes a comma-separated list. The pictures are made **from the figure
+PDF**, one file per spectrum into `figures/`, so they all look like the PDF.
+
+| Format | File | Made by | Notes |
+|---|---|---|---|
+| `png` | `NAME.png` | poppler | `--dpi` (default 300) |
+| `tiff` | `NAME.tiff` | poppler | LZW-compressed, the same pixels as the PNG |
+| `svg` | `NAME.svg` | poppler (`pdftocairo`) | looks exactly like the PDF anywhere; text is drawn as outlines, so it **cannot be edited as text** |
+| `svg-text` | `NAME_text.svg` | MuPDF (`mutool`) | labels stay real `<text>` for Inkscape or Illustrator; the fonts' names are kept, so **STIX Two must be installed** where it is opened; TeX's word gaps are not space characters, so a label reads "Transmittance%" in an editor while it draws correctly |
+
+A PDF you already have can be converted without a session:
+`irspec export fig.pdf --formats png,tiff --dpi 600 --out pics/ --names A,B,C`
+(`--names` gives the file stems in page order; without it the pages are called
+`page-1`, `page-2`, …; the default folder is `figures/` beside the PDF).
+
+## How the PDF is made
+
+`--build auto` (the default) uses:
+
+- **`pdfmd` + nulabreport**, if both are installed: the `.md` is built by the
+  author's report pipeline, with the house style of the lab reports;
+- otherwise **plain `lualatex`** on the generated `.tex`. That document loads the
+  real `nulabreport.sty` when TeX can find it and else the bundled excerpt
+  `irspec-ir.sty`, which irspec copies beside the `.tex`.
+
+The excerpt is cut mechanically out of nulabreport.sty (its header names the
+version) and draws the same page: on the author's phenacetin spectrum the two
+differ in 0 pixels, and nulabreport's smoke test checks that the committed
+excerpt is what its markers generate. It is a fallback, not a second
+implementation, with two limits: it understands only the `captions` setting of
+`\labsetup` (`furniture` is accepted and ignored), and it can lag behind the full
+package. Where they disagree, the full package is right.
+
+## The other commands
+
+`session` is what most people want; the others are its steps, for when one step is
+all you need. Each has its own `--help`.
+
+| Command | Does | Example |
+|---|---|---|
+| `irspec session DIR` | the whole thing above | `irspec session own-29.09/ --formats png` |
+| `irspec export PDF` | PNG/TIFF/SVG from a PDF | `irspec export fig.pdf --formats svg` |
+| `irspec spa` | `.SPA` → CSVs and peaks; `batch` for several, `plot` for a legacy matplotlib PNG/SVG | `irspec spa convert run.SPA` |
+| `irspec jdx` | `.jdx` → CSVs, one file or a folder | `irspec jdx convert X.jdx --name X --out csv/X.csv --plain-out plain/X.csv` |
+| `irspec peaks` | peak-pick a `.SPA`, `.jdx` or CSV | `irspec peaks plain/X.csv` |
+| `irspec digitize` | a picture → CSVs, with a redraw check | `irspec digitize convert img/X.gif --name X --out csv/X.csv --plain-out plain/X.csv` |
+| `irspec a2t` | Absorbance → %T (`--to absorbance` for the other way) | `irspec a2t plain/X.csv --out plain/X_T.csv` |
+| `irspec absorptivity` | QUANT-IR absorptivity → Absorbance | `irspec absorptivity X.jdx --name X --out csv/X.csv --plain-out plain/X.csv --peak-a 1` |
+| `irspec corr` | Pearson r between spectra (the first is the reference) | `irspec corr plain/REF.csv plain/UNKNOWN.csv` |
+
+`digitize` has two more layouts than SDBS: `--palleros` for book figures and
+`--omnic` for OMNIC screenshots (this one reads the tick labels with tesseract).
+The module docstrings are the long documentation of each tool: what was checked,
+and how.
+
+## Can I trust the output?
+
+The tools began as the IR scripts of the author's lab-report package and were
+moved here without changing what they compute. The tests
+(`PYTHONPATH=src python3 -m unittest discover -s tests`) hold that in place:
+
+- the CSV pair for the author's own phenacetin spectrum is compared byte for byte
+  with the ones the original scripts made;
+- sixteen commands are run by the original scripts and by the package on the same
+  inputs, and the exit code, the output and every written file are compared;
+- the Markdown a session writes is compared with what the original organizer
+  wrote, and the plain-`lualatex` page with the full-package page, pixel for pixel;
+- every exported file is compared with `pdftoppm` of its own PDF page.
+
+Three more checks run on the author's own coursework folders (the environment
+variable `IRSPEC_LR6_IR` points at them) and are skipped everywhere else; they
+are how the WebBook and SDBS paths were shown to give byte-identical CSVs.
+
+The one sample spectrum in `tests/data/` is the author's own. No other student's
+data and no instructor's material is in this repository.
+
+## Versioning
+
+`0.MINOR.PATCH` until 1.0, then [Semantic Versioning](https://semver.org).
+
+- **Minor** (`0.1.0` → `0.2.0`): a new feature, or anything that could break a
+  folder or a script someone already has: a command-line flag renamed or removed,
+  a manifest key or the folder layout changed, the CSV or figure format changed.
+- **Patch** (`0.1.0` → `0.1.1`): a fix, documentation, tests, a regenerated
+  excerpt that draws the same page.
+- **`SPEC_VERSION`** (in `irspec/figure.py`, now 1) is a separate integer, written
+  into figure descriptions. It changes only when the manifest/figure format breaks,
+  and it is frozen at 1.0.
+- Planned: **0.1.0** the TeX pipeline, the exports and this README; **0.2.0**
+  the matplotlib backend; **0.3.0** the R backend; **1.0.0** when all of it is
+  done and nulabreport depends on irspec.
+- The version lives in one place, `irspec.__version__`. A release is a git tag
+  `vX.Y.Z` plus an entry in `CHANGELOG.md`. The bundled excerpt records which
+  nulabreport version it was cut from.
+
+Anything that depends on irspec before 1.0 should pin the minor version
+(`irspec>=0.1,<0.2`).
+
+## Roadmap
+
+- matplotlib backend: the same figures from the same manifest without TeX, with an
+  editable-text SVG;
+- R backend (ggplot2), reading the same plain CSVs and manifest;
+- nulabreport depending on irspec instead of carrying its own copies.
+
+Out of scope: MS, NMR, GC and TLC tools, and anything that extracts figures from
+copyrighted books.
+
+## Development
+
+```
+PYTHONPATH=src python3 -m unittest discover -s tests
+```
+
+`legacy/` holds the original scripts as the oracle for the tests (see
+`PROVENANCE.md`); it goes when the tests no longer need it. `irspec-ir.sty` is
+generated and never edited: change `nulabreport.sty` and regenerate it.
+
+## Licence
+
+MIT, see `LICENSE`.
