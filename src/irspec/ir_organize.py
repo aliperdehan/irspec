@@ -50,7 +50,7 @@ files. Nothing is ever overwritten when filing: a name clash is reported
 and the file is left where it is.
 
 The PDF is built with pdfmd.py (never bare pandoc -- see nulabreport's
-CLAUDE.md). Location: $PDFMD, else --pdfmd, else ~/dev/py/pdfmd/pdfmd.py.
+CLAUDE.md). Found as --pdfmd, else $PDFMD, else `pdfmd` on the PATH (pip install pdfmd-cli).
 """
 import argparse
 import json
@@ -69,7 +69,6 @@ from . import spa_tool  # noqa: E402
 
 SPA_EXT = (".spa", ".spg")
 JDX_EXT = (".jdx", ".dx", ".jcm")
-DEFAULT_PDFMD = os.path.expanduser("~/dev/py/pdfmd/pdfmd.py")
 # Directories/files this tool owns or generates; never filed into other/.
 OWN_DIRS = {"SPA", "jdx", "other", "csv", "plain"}
 GENERATED_EXT = (".md", ".pdf")
@@ -297,13 +296,23 @@ def default_md_name(folder):
 # -----------------------------------------------------------------------------
 # 5. PDF
 # -----------------------------------------------------------------------------
+def find_pdfmd(explicit=None):
+    """The pdfmd to build with: --pdfmd, else $PDFMD, else `pdfmd` on the PATH. None if absent."""
+    for cand in (explicit, os.environ.get("PDFMD"), shutil.which("pdfmd")):
+        if cand and os.path.exists(cand):
+            return cand
+    return None
+
+
 def build_pdf(md_path, pdfmd):
-    if not os.path.exists(pdfmd):
-        sys.exit(f"pdfmd not found at {pdfmd} (use --pdfmd or $PDFMD)")
+    pdfmd = find_pdfmd(pdfmd)
+    if not pdfmd:
+        sys.exit("pdfmd not found (pip install pdfmd-cli, or use --pdfmd or $PDFMD)")
     folder = os.path.dirname(os.path.abspath(md_path))
-    # cwd = folder so the md's relative plain/... paths resolve.
-    subprocess.run([sys.executable, pdfmd, os.path.basename(md_path)],
-                   cwd=folder, check=True)
+    # cwd = folder so the md's relative plain/... paths resolve. A pdfmd.py is run by this
+    # interpreter; an installed `pdfmd` command runs as it is.
+    cmd = [sys.executable, pdfmd] if pdfmd.endswith(".py") else [pdfmd]
+    subprocess.run([*cmd, os.path.basename(md_path)], cwd=folder, check=True)
     pdf = os.path.splitext(md_path)[0] + ".pdf"
     if not os.path.exists(pdf):
         sys.exit(f"pdfmd ran but {pdf} was not produced")
@@ -324,7 +333,7 @@ def main():
                     help="set a spectrum's title (repeatable)")
     ap.add_argument("--md-name", default=None,
                     help="output basename (default: ir_<dd-mm> from the folder name)")
-    ap.add_argument("--pdfmd", default=os.environ.get("PDFMD", DEFAULT_PDFMD))
+    ap.add_argument("--pdfmd", default=None, help="path to pdfmd (default: $PDFMD, else `pdfmd` on the PATH)")
     args = ap.parse_args()
 
     folder = os.path.abspath(args.folder)

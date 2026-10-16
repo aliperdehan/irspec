@@ -8,14 +8,20 @@ dynamic = ["version"]
 description = "Infrared spectra for chemistry students: OMNIC .SPA and JCAMP-DX in, tidy CSVs, peak lists and report-ready figures out."
 readme = "README.md"
 license = { text = "MIT" }
+keywords = ["infrared", "IR", "FTIR", "spectroscopy", "chemistry", "OMNIC", "SPA", "JCAMP-DX", "teaching"]
 authors = [{ name = "Ali Perdekhan" }]
 requires-python = ">=3.9"
 dependencies = ["numpy", "scipy", "Pillow"]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 3 - Alpha",
   "Intended Audience :: Education",
   "Intended Audience :: Science/Research",
   "Topic :: Scientific/Engineering :: Chemistry",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Environment :: Console",
 ]
 
 [project.scripts]

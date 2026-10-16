@@ -1,0 +1,177 @@
+{
+ "absorbance_to_transmittance": {
+  "files": {
+   "a_plain.csv": "53be9376fafead863380b639dff1fc2427315ce7d75762784e2c9b927760eced",
+   "t_from_a.csv": "5a4df3f581cd5bef11661f4301840a4109827ceb16e01132ab82e8889b56e9f1"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "wrote 3474 points to t_from_a.csv (%Transmittance)\n"
+ },
+ "absorptivity_to_absorbance": {
+  "files": {
+   "csv/Q.csv": "9453148a78fa6a459488beaa1e67392b78b8a5a9f25296629a94459250a390fb",
+   "phenacetin_quantir.jdx": "f6a3ff1a484840d2799809e5e90120d47602f9eee463735ebb2fc41a1c18e0c2",
+   "plain/Q.csv": "4dcb4205dfa2000d28e8b9a7b314e648f6411ec8bf1133c36e18fcec5c54e17c"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "phenacetin_quantir.jdx: A = alpha x 2839.67 (peak-normalised, strongest band A = 1.0); max A 1.0000 -> csv/Q.csv, plain/Q.csv\n"
+ },
+ "ir_corr": {
+  "files": {
+   "golden_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761",
+   "phenacetin_T.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f",
+   "t_plain.csv": "5375cbcc1795a53b5b33c9b24d34fb1a4fc5ec18e95c193d4653bdf32ee8d65c"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "1.0000  golden_plain.csv  ~  t_plain.csv\n"
+ },
+ "jdx_batch": {
+  "files": {
+   "cas_names.json": "ced6359e444bac3433fb2801f453a3f202b9d29e41c60457b71f8376acf6ee1d",
+   "csv/PHENACETIN_T.csv": "0595f2aa0c511bf0f2017534121ab66b0e7ab70e0494e9b0016a4fe73ffd5ea2",
+   "jdx/50-00-0-IR.jdx": "df0cbe93459a1ba8f31ccffeba149aa4d4ffcccd4e7ddffb7ba059f620724df9",
+   "jdx/62-44-2-IR.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f",
+   "plain/PHENACETIN_T.csv": "5375cbcc1795a53b5b33c9b24d34fb1a4fc5ec18e95c193d4653bdf32ee8d65c"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "50-00-0-IR.jdx: cas=62-44-2 name=PHENACETIN_T axis=Absorbance n=3474 range=[650.857, 3999.641] -> csv/PHENACETIN_T.csv plain -> plain/PHENACETIN_T.csv\n62-44-2-IR.jdx: cas=62-44-2 name=PHENACETIN_T axis=Transmittance n=3474 range=[650.857, 3999.641] -> csv/PHENACETIN_T.csv plain -> plain/PHENACETIN_T.csv\n"
+ },
+ "jdx_convert_absorbance": {
+  "files": {
+   "csv/A.csv": "b5d9999470b9a90726682662c5342fdb7f89949db171f859b7533ee6e98581f5",
+   "phenacetin_A.jdx": "df0cbe93459a1ba8f31ccffeba149aa4d4ffcccd4e7ddffb7ba059f620724df9",
+   "phenacetin_T.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f",
+   "plain/A.csv": "53be9376fafead863380b639dff1fc2427315ce7d75762784e2c9b927760eced"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "phenacetin_A.jdx: cas=62-44-2 name=PHENACETIN_A axis=Absorbance n=3474 range=[650.857, 3999.641] -> csv/A.csv plain -> plain/A.csv\n"
+ },
+ "jdx_convert_transmittance": {
+  "files": {
+   "csv/T.csv": "ffbd7212e24003c4ab7977585d6378a08f5a26e184a4f6ad14bb5acba08339fd",
+   "phenacetin_A.jdx": "df0cbe93459a1ba8f31ccffeba149aa4d4ffcccd4e7ddffb7ba059f620724df9",
+   "phenacetin_T.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f",
+   "plain/T.csv": "5375cbcc1795a53b5b33c9b24d34fb1a4fc5ec18e95c193d4653bdf32ee8d65c"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "phenacetin_T.jdx: cas=62-44-2 name=PHENACETIN CRUDE (TEST FIXTURE) axis=Transmittance n=3474 range=[650.857, 3999.641] -> csv/T.csv plain -> plain/T.csv\n"
+ },
+ "organize_dry_run": {
+  "files": {
+   "session_29-09/62-44-2-IR.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f",
+   "session_29-09/PHENACETIN_CRUDE_LR1-2.SPA": "76f13968bb91fe2e6f23c9261122ad0cd3f4dbbb7da8290f06722d5e2f2308be"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "would move: 62-44-2-IR.jdx -> jdx/62-44-2-IR.jdx\nwould move: PHENACETIN_CRUDE_LR1-2.SPA -> SPA/PHENACETIN_CRUDE_LR1-2.SPA\n"
+ },
+ "organize_no_pdf": {
+  "files": {
+   "session_29-09/SPA/PHENACETIN_CRUDE_LR1-2.SPA": "76f13968bb91fe2e6f23c9261122ad0cd3f4dbbb7da8290f06722d5e2f2308be",
+   "session_29-09/csv/62-44-2-IR.csv": "d3ac05444350b6c3c94ad01a8378a164b9f99c49340d1e9ad1a98108b68dfdff",
+   "session_29-09/csv/PHENACETIN_CRUDE_LR1-2.csv": "7471222a020aa500d5439380d6af8a5fffdc2bb8fae4531b22a136f66aadb96a",
+   "session_29-09/ir_29-09.md": "61a72b3c1cb4d8104753525165bc8ed2b0fd795d1a4c6bc2601f45b3ce1b1be5",
+   "session_29-09/jdx/62-44-2-IR.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f",
+   "session_29-09/manifest.json": "b66d00c18bad32816caa8c04cb36d41abcf89d2c4aca7f825a71100bd447139c",
+   "session_29-09/plain/62-44-2-IR_plain.csv": "5375cbcc1795a53b5b33c9b24d34fb1a4fc5ec18e95c193d4653bdf32ee8d65c",
+   "session_29-09/plain/PHENACETIN_CRUDE_LR1-2_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "moved: 62-44-2-IR.jdx -> jdx/62-44-2-IR.jdx\nmoved: PHENACETIN_CRUDE_LR1-2.SPA -> SPA/PHENACETIN_CRUDE_LR1-2.SPA\n# PHENACETIN_CRUDE_LR1-2: axis=Transmittance % peaks=31 ymin=-5\n# 62-44-2-IR: axis=Transmittance % peaks=31 ymin=-5\nwrote <TMP>/session_29-09/ir_29-09.md (2 spectra)\n"
+ },
+ "peaks_jdx_absorbance": {
+  "files": {
+   "PHENACETIN_CRUDE_LR1-2.SPA": "76f13968bb91fe2e6f23c9261122ad0cd3f4dbbb7da8290f06722d5e2f2308be",
+   "golden_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761",
+   "phenacetin_A.jdx": "df0cbe93459a1ba8f31ccffeba149aa4d4ffcccd4e7ddffb7ba059f620724df9",
+   "phenacetin_T.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f"
+  },
+  "returncode": 0,
+  "stderr": "note: Absorbance input -- --threshold/--prominence/--gap are native y units (Absorbance, typically 0-1), NOT the %T-tuned defaults (prominence=3.0, gap=5.0, step=5.0 assume a 0-100 scale). This file's own dynamic range over the plotted window is 0.3473 A; scale --prominence/--gap/--step down accordingly (e.g. --prominence 0.017 --gap 0.028 --step 0.028) or you will get 0 peaks (prominence too strict) or every label collapsed to the same offset (gap/step swallowing real height differences) -- both reproduced and documented 2026-09-22.\n",
+  "stdout": "# phenacetin_A.jdx  kind=jdx  axis=Absorbance  n_peaks=0  (mode=auto, threshold=5.0%, prominence=3.0, distance=8.0cm-1, type=x+y, digits_x=4, digits_y=4, angle=90)\n\npeaklist: \nymin suggestion: n/a\n"
+ },
+ "peaks_jdx_transmittance": {
+  "files": {
+   "PHENACETIN_CRUDE_LR1-2.SPA": "76f13968bb91fe2e6f23c9261122ad0cd3f4dbbb7da8290f06722d5e2f2308be",
+   "golden_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761",
+   "phenacetin_A.jdx": "df0cbe93459a1ba8f31ccffeba149aa4d4ffcccd4e7ddffb7ba059f620724df9",
+   "phenacetin_T.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "# phenacetin_T.jdx  kind=jdx  axis=Transmittance %  n_peaks=31  (mode=auto, threshold=5.0%, prominence=3.0, distance=8.0cm-1, type=x+y, digits_x=4, digits_y=4, angle=90)\n   740.5310 / 57.2566%T\n   784.8861 / 57.4923%T\n   825.3835 / 44.4474%T\n   836.9550 / 45.2754%T\n   923.7360 / 67.4510%T\n   969.0543 / 76.0428%T\n   1013.4095 / 64.7431%T\n   1045.2291 / 54.4450%T\n   1106.9400 / 63.7483%T\n   1116.5820 / 60.9629%T\n   1174.4360 / 58.7588%T\n   1241.9330 / 52.2806%T\n   1265.0748 / 66.2040%T\n   1305.5721 / 73.5698%T\n   1324.8571 / 75.1393%T\n   1362.4620 / 64.6011%T\n   1392.3531 / 67.8850%T\n   1411.6381 / 63.8204%T\n   1446.3503 / 63.8433%T\n   1480.0983 / 56.7543%T\n   1505.1685 / 52.4021%T\n   1551.4521 / 64.0518%T\n   1604.4841 / 74.4819%T\n   1644.0183 / 61.5450%T\n   1656.5530 / 56.9038%T\n   2018.1410 / 91.9331%T\n   2848.3461 / 82.1400%T\n   2917.7705 / 77.3953%T\n   2982.3740 / 81.2547%T\n   3074.9411 / 85.9287%T\n   3253.3241 / 80.2863%T\n\npeaklist: 740.5/52.3,784.9/47.3,825.4/39.4,837.0/34.4,923.7/62.5,969.1/71.0,1013.4/59.7,1045.2/49.4,1106.9/58.7,1116.6/53.7,1174.4/53.8,1241.9/47.3,1265.1/42.3,1305.6/37.3,1324.9/32.3,1362.5/27.3,1392.4/22.3,1411.6/17.3,1446.4/12.3,1480.1/7.3,1505.2/2.3,1551.5/59.1,1604.5/69.5,1644.0/56.5,1656.6/51.5,2018.1/86.9,2848.3/77.1,2917.8/72.4,2982.4/76.3,3074.9/80.9,3253.3/75.3\nymin suggestion: -5\n"
+ },
+ "peaks_plain_csv": {
+  "files": {
+   "PHENACETIN_CRUDE_LR1-2.SPA": "76f13968bb91fe2e6f23c9261122ad0cd3f4dbbb7da8290f06722d5e2f2308be",
+   "golden_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761",
+   "phenacetin_A.jdx": "df0cbe93459a1ba8f31ccffeba149aa4d4ffcccd4e7ddffb7ba059f620724df9",
+   "phenacetin_T.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "# golden_plain.csv  kind=csv  axis=Transmittance %  n_peaks=31  (mode=auto, threshold=5.0%, prominence=3.0, distance=8.0cm-1, type=x+y, digits_x=4, digits_y=4, angle=90)\n   740.5310 / 57.2566%T\n   784.8860 / 57.4923%T\n   825.3840 / 44.4474%T\n   836.9550 / 45.2754%T\n   923.7360 / 67.4510%T\n   969.0550 / 76.0428%T\n   1013.4090 / 64.7431%T\n   1045.2290 / 54.4450%T\n   1106.9400 / 63.7483%T\n   1116.5820 / 60.9629%T\n   1174.4360 / 58.7588%T\n   1241.9330 / 52.2806%T\n   1265.0740 / 66.2040%T\n   1305.5720 / 73.5698%T\n   1324.8570 / 75.1393%T\n   1362.4620 / 64.6011%T\n   1392.3530 / 67.8850%T\n   1411.6380 / 63.8204%T\n   1446.3500 / 63.8433%T\n   1480.0980 / 56.7543%T\n   1505.1680 / 52.4021%T\n   1551.4520 / 64.0518%T\n   1604.4850 / 74.4819%T\n   1644.0180 / 61.5450%T\n   1656.5530 / 56.9038%T\n   2018.1410 / 91.9331%T\n   2848.3460 / 82.1400%T\n   2917.7710 / 77.3953%T\n   2982.3740 / 81.2547%T\n   3074.9410 / 85.9287%T\n   3253.3240 / 80.2863%T\n\npeaklist: 740.5/52.3,784.9/47.3,825.4/39.4,837.0/34.4,923.7/62.5,969.1/71.0,1013.4/59.7,1045.2/49.4,1106.9/58.7,1116.6/53.7,1174.4/53.8,1241.9/47.3,1265.1/42.3,1305.6/37.3,1324.9/32.3,1362.5/27.3,1392.4/22.3,1411.6/17.3,1446.3/12.3,1480.1/7.3,1505.2/2.3,1551.5/59.1,1604.5/69.5,1644.0/56.5,1656.6/51.5,2018.1/86.9,2848.3/77.1,2917.8/72.4,2982.4/76.3,3074.9/80.9,3253.3/75.3\nymin suggestion: -5\n"
+ },
+ "peaks_spa": {
+  "files": {
+   "PHENACETIN_CRUDE_LR1-2.SPA": "76f13968bb91fe2e6f23c9261122ad0cd3f4dbbb7da8290f06722d5e2f2308be",
+   "PHENACETIN_CRUDE_LR1-2.csv": "7471222a020aa500d5439380d6af8a5fffdc2bb8fae4531b22a136f66aadb96a",
+   "PHENACETIN_CRUDE_LR1-2_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761",
+   "golden_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761",
+   "phenacetin_A.jdx": "df0cbe93459a1ba8f31ccffeba149aa4d4ffcccd4e7ddffb7ba059f620724df9",
+   "phenacetin_T.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "# PHENACETIN_CRUDE_LR1-2.SPA  kind=spa  axis=Transmittance %  n_peaks=31  (mode=auto, threshold=5.0%, prominence=3.0, distance=8.0cm-1, type=x+y, digits_x=4, digits_y=4, angle=90)\n   740.5313 / 57.2566%T\n   784.8860 / 57.4923%T\n   825.3838 / 44.4474%T\n   836.9546 / 45.2754%T\n   923.7357 / 67.4510%T\n   969.0546 / 76.0428%T\n   1013.4094 / 64.7431%T\n   1045.2291 / 54.4450%T\n   1106.9400 / 63.7483%T\n   1116.5824 / 60.9629%T\n   1174.4364 / 58.7588%T\n   1241.9327 / 52.2806%T\n   1265.0743 / 66.2040%T\n   1305.5721 / 73.5698%T\n   1324.8568 / 75.1393%T\n   1362.4619 / 64.6011%T\n   1392.3532 / 67.8850%T\n   1411.6378 / 63.8204%T\n   1446.3502 / 63.8433%T\n   1480.0984 / 56.7543%T\n   1505.1685 / 52.4021%T\n   1551.4517 / 64.0518%T\n   1604.4845 / 74.4819%T\n   1644.0181 / 61.5450%T\n   1656.5531 / 56.9038%T\n   2018.1407 / 91.9331%T\n   2848.3458 / 82.1400%T\n   2917.7706 / 77.3953%T\n   2982.3743 / 81.2547%T\n   3074.9407 / 85.9287%T\n   3253.3239 / 80.2863%T\n\npeaklist: 740.5/52.3,784.9/47.3,825.4/39.4,837.0/34.4,923.7/62.5,969.1/71.0,1013.4/59.7,1045.2/49.4,1106.9/58.7,1116.6/53.7,1174.4/53.8,1241.9/47.3,1265.1/42.3,1305.6/37.3,1324.9/32.3,1362.5/27.3,1392.4/22.3,1411.6/17.3,1446.4/12.3,1480.1/7.3,1505.2/2.3,1551.5/59.1,1604.5/69.5,1644.0/56.5,1656.6/51.5,2018.1/86.9,2848.3/77.1,2917.8/72.4,2982.4/76.3,3074.9/80.9,3253.3/75.3\nymin suggestion: -5\n"
+ },
+ "spa_batch_md": {
+  "files": {
+   "PHENACETIN_CRUDE_LR1-2.SPA": "76f13968bb91fe2e6f23c9261122ad0cd3f4dbbb7da8290f06722d5e2f2308be",
+   "out.md": "d8651221929be636d93278e5347c813f127cd0c7b9cfa0cc8cc979f52f23c307",
+   "out/csv/PHENACETIN_CRUDE_LR1-2.csv": "7471222a020aa500d5439380d6af8a5fffdc2bb8fae4531b22a136f66aadb96a",
+   "out/plain/PHENACETIN_CRUDE_LR1-2_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "# PHENACETIN_CRUDE_LR1-2  axis=Transmittance %  n_peaks=31  ymin=-5  -> out/plain/PHENACETIN_CRUDE_LR1-2_plain.csv\n\nwrote out.md (1 spectra)\nbuild it with pdfmd.py -- never bare pandoc (see nulabreport's CLAUDE.md)\n"
+ },
+ "spa_convert_auto": {
+  "files": {
+   "PHENACETIN_CRUDE_LR1-2.SPA": "76f13968bb91fe2e6f23c9261122ad0cd3f4dbbb7da8290f06722d5e2f2308be",
+   "PHENACETIN_CRUDE_LR1-2.csv": "7471222a020aa500d5439380d6af8a5fffdc2bb8fae4531b22a136f66aadb96a",
+   "PHENACETIN_CRUDE_LR1-2_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "# PHENACETIN_CRUDE_LR1-2.SPA  axis=Transmittance %  n_peaks=31  (mode=auto, threshold=5.0%, prominence=3.0, distance=8.0cm-1)\n   740.5313 / 57.2566%T\n   784.8860 / 57.4923%T\n   825.3838 / 44.4474%T\n   836.9546 / 45.2754%T\n   923.7357 / 67.4510%T\n   969.0546 / 76.0428%T\n   1013.4094 / 64.7431%T\n   1045.2291 / 54.4450%T\n   1106.9400 / 63.7483%T\n   1116.5824 / 60.9629%T\n   1174.4364 / 58.7588%T\n   1241.9327 / 52.2806%T\n   1265.0743 / 66.2040%T\n   1305.5721 / 73.5698%T\n   1324.8568 / 75.1393%T\n   1362.4619 / 64.6011%T\n   1392.3532 / 67.8850%T\n   1411.6378 / 63.8204%T\n   1446.3502 / 63.8433%T\n   1480.0984 / 56.7543%T\n   1505.1685 / 52.4021%T\n   1551.4517 / 64.0518%T\n   1604.4845 / 74.4819%T\n   1644.0181 / 61.5450%T\n   1656.5531 / 56.9038%T\n   2018.1407 / 91.9331%T\n   2848.3458 / 82.1400%T\n   2917.7706 / 77.3953%T\n   2982.3743 / 81.2547%T\n   3074.9407 / 85.9287%T\n   3253.3239 / 80.2863%T\n\npeaklist: 740.5313/52.3,784.8860/47.3,825.3838/39.4,836.9546/34.4,923.7357/62.5,969.0546/71.0,1013.4094/59.7,1045.2291/49.4,1106.9400/58.7,1116.5824/53.7,1174.4364/53.8,1241.9327/47.3,1265.0743/42.3,1305.5721/37.3,1324.8568/32.3,1362.4619/27.3,1392.3532/22.3,1411.6378/17.3,1446.3502/12.3,1480.0984/7.3,1505.1685/2.3,1551.4517/59.1,1604.4845/69.5,1644.0181/56.5,1656.5531/51.5,2018.1407/86.9,2848.3458/77.1,2917.7706/72.4,2982.3743/76.3,3074.9407/80.9,3253.3239/75.3\nymin suggestion: -5\nxmax (informational): 4000.0\n"
+ },
+ "spa_convert_manual": {
+  "files": {
+   "PHENACETIN_CRUDE_LR1-2.SPA": "76f13968bb91fe2e6f23c9261122ad0cd3f4dbbb7da8290f06722d5e2f2308be",
+   "PHENACETIN_CRUDE_LR1-2.csv": "7471222a020aa500d5439380d6af8a5fffdc2bb8fae4531b22a136f66aadb96a",
+   "PHENACETIN_CRUDE_LR1-2_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "# PHENACETIN_CRUDE_LR1-2.SPA  axis=Transmittance %  n_peaks=3  (mode=manual, threshold=5.0%, prominence=3.0, distance=8.0cm-1)\n   1241.9327 / 52.2806%T\n   1505.1685 / 52.4021%T\n   2982.3743 / 81.2547%T\n\npeaklist: 1241.9327/47.3,1505.1685/47.4,2982.3743/76.3\nymin suggestion: 40\nxmax (informational): 4000.0\n"
+ },
+ "transmittance_to_absorbance": {
+  "files": {
+   "a_from_t.csv": "8c5fe99854abf1967050f0609cd2ade6fe5b6d748e072ff33ed2f8d23b5500bd",
+   "golden_plain.csv": "15e1c4517c2cd2f02c916da132b67e94c64a9f51843be2c4e596e007341a3761",
+   "phenacetin_T.jdx": "b6266e32ac19976a7cdebf872c29459bc7cd8b03b275e7f4fc573358fa423e9f",
+   "t_plain.csv": "5375cbcc1795a53b5b33c9b24d34fb1a4fc5ec18e95c193d4653bdf32ee8d65c"
+  },
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "wrote 3474 points to a_from_t.csv (Absorbance)\n"
+ }
+}

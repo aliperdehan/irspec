@@ -2,10 +2,37 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
-## Unreleased (will become 0.1.0, the first release)
+## 0.1.0 (2026-10-16), the first release
 
-Everything below is already in the repository; 0.1.0 is the tag that says it is
-ready to be used by someone else, and it is cut when the author says so.
+The changes since the last development snapshot (0.0.5) come first; the list after
+them is everything the release holds.
+
+- `irspec session`: a book figure (`--palleros` in the manifest's `args`) with `check` set
+  to the band positions printed in the book takes those positions as its peaks (it asks
+  `digitize` for `--peaklist`); a hand-edited `peaks` still wins. Verified on the
+  Palleros IR figure of the author's coursework: both CSVs byte-identical to the ones the
+  recipe made by hand. (The figure is a textbook page and is not in this repository, so
+  the test uses a stand-in for the digitiser.)
+- A new reference entry starts with a readable title (compound name from
+  `cas_names.json`, else the title inside the `.jdx`) instead of the file stem.
+- Fixed: a second run moved `figures.json` (written by the first) into `other/`.
+- Fixed: two figures with one name no longer write one picture over the other
+  (`NAME`, `NAME-2`, ...).
+- Fixed: `ResourceWarning` from reading a `.SPA` (file not closed).
+- `pdfmd` is found as `--pdfmd`, `$PDFMD` or `pdfmd` on the PATH, in one place for both
+  `session` and `ir_organize`; the path of the author's own checkout is no longer built in.
+  An installed `pdfmd` command is run as it is, not through Python. `session` prints which
+  build (pdfmd or lualatex alone) made the PDF.
+- `python -m irspec` works.
+- `legacy/` (the original scripts, the tests' oracle) is removed; it stays in the git history
+  under the tag `legacy-oracle`. The sixteen commands are compared with what the
+  original scripts did (recorded in `tests/data/differential_expected.json`) and the
+  author's phenacetin CSVs.
+  `ir_organize` stays as a module (nulabreport's `ir_organize.py` forwards to it) and
+  `session` is its successor for new work; the two share one set of functions.
+- Development status Alpha; PyPI keywords and classifiers.
+
+Everything in 0.1.0:
 
 - `irspec session DIR`: a folder of `.SPA`, `.jdx` and SDBS-style pictures in;
   archival and plain CSVs, peak lists, a manifest, a figure PDF out.

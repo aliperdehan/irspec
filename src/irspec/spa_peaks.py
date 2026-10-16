@@ -140,7 +140,8 @@ from . import jdx_tool  # noqa: E402  -- see section 0 above
 def read_spa(fn):
     """Return (x, y): wavenumber and intensity arrays from an OMNIC .SPA/.SPG file.
     Validated against Spectragryph export to 0.0000 %T. Handles 934- and 3734-point files."""
-    data = open(fn, 'rb').read()
+    with open(fn, 'rb') as f:
+        data = f.read()
     firstx = struct.unpack_from('<f', data, 576)[0]   # max wavenumber
     lastx = struct.unpack_from('<f', data, 580)[0]     # min wavenumber
     p = 304

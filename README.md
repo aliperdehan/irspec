@@ -15,17 +15,18 @@ irspec session my_lab_folder/ --formats png,svg
 
 ## Status
 
-**Pre-release.** The first release will be `0.1.0`; until then the repository is
-the only place it exists (not on PyPI, no tags). The command line and the
-folder layout below are what 0.1.0 is meant to ship, but anything may still change
-before it. The Python code (`import irspec`) is not a stable interface before
-1.0: use the command line. See [Versioning](#versioning) and `CHANGELOG.md`.
+**Alpha, version 0.1.0.** The command line and the folder layout below work and are
+tested, but before 1.0 a new minor version (0.2, 0.3, ...) may change them: pin
+the minor version if something depends on irspec. The Python code (`import
+irspec`) is not a stable interface before 1.0: use the command line. See
+[Versioning](#versioning) and `CHANGELOG.md`.
 
 ## What it does, and what it does not
 
 It does:
 
-- read the Thermo OMNIC `.SPA`/`.SPG` files of the department's Nicolet iS5,
+- read the Thermo OMNIC `.SPA`/`.SPG` files of a Nicolet iS5 FTIR (the instrument it was
+  written for; other OMNIC files are read the same way, but only this one is tested),
   NIST WebBook `.jdx` (JCAMP-DX) files, and spectra that exist only as a picture
   (SDBS plots) by reading the trace off the image;
 - write each spectrum as two CSVs (see [CSV files](#csv-files)), pick its peaks
@@ -43,11 +44,11 @@ convenience, and the manifest lets you correct it ([below](#the-manifest)).
 
 ## Install
 
-Needs Python 3.9 or newer. From a checkout:
+Needs Python 3.9 or newer. From a checkout of this repository:
 
 ```
 pip install .            # or: pip install -e .   while developing
-irspec --version
+irspec --version         # python -m irspec --version does the same
 ```
 
 This pulls in numpy, scipy and Pillow. The rest are programs irspec calls, and
@@ -183,7 +184,7 @@ re-run: your edits stay, new files are appended, vanished files are dropped.
 | Key | Meaning |
 |---|---|
 | `file` | path of the spectrum, relative to the folder (`SPA/…`, `jdx/…`, `img/…`) |
-| `title` | the caption under the figure, free text (`"Alcohol (stock)"` is fine); the default is the file's stem |
+| `title` | the caption under the figure, free text (`"Alcohol (stock)"` is fine). A new entry starts with the file's stem (an instrument spectrum), or with its compound name (`"METHYL_CINNAMATE_GAS"` gives "Methyl cinnamate gas"), or with the title inside the `.jdx`; change it here |
 | `peaks` | `[wavenumber, label_y]` pairs, as picked; edit, add or delete here. A bare number is snapped to the nearest local band. Delete the key to pick again |
 | `axis` | y-axis label (default `Transmittance %`) |
 | `ymin` | bottom of the y axis; the tool's suggestion is kept as it is, and may be negative for a strong band |
@@ -191,11 +192,12 @@ re-run: your edits stay, new files are appended, vanished files are dropped.
 | `name` | the reference name above (written back by the first run) |
 | `peak_a`, `cl` | QUANT-IR files only, see above |
 | `check` | pictures only: the peak table printed under the SDBS plot, typed as `"3490:84,2977:6,…"`, for the digitiser's own cross-check |
-| `args` | pictures only: extra flags for `irspec digitize convert`, as a list |
+| `args` | pictures only: extra flags for `irspec digitize convert`, as a list. For a book figure: `["--palleros", "--x-ticks", "3500,3000,2500,2000,1500,1000", "--y-ends", "72.7:24.5"]`, with `check` set to the band positions printed under the troughs (`"3027.1,2948.8,..."`); those printed positions then become the peak labels, not the peak finder's |
 
 Other options of `irspec session`: `--sort time|name` (order of new files; modification
 time by default), `--title STEM=TITLE` (repeatable), `--dry-run` (print the file
-moves and stop), `--build auto|pdfmd|latex|none` (`--no-pdf` is `none`), `--pdfmd PATH`.
+moves and stop), `--build auto|pdfmd|latex|none` (`--no-pdf` is `none`), `--pdfmd PATH`
+(otherwise `$PDFMD`, else `pdfmd` on the PATH). The run says which of the two builds it used.
 
 ## Pictures: PNG, TIFF, SVG
 
@@ -252,7 +254,10 @@ figure*, not the same pixels. The TeX version remains the reference.
 `--build auto` (the default) uses:
 
 - **`pdfmd` + nulabreport**, if both are installed: the `.md` is built by the
-  author's report pipeline, with the house style of the lab reports;
+  author's own report pipeline (`pdfmd` is public, `pip install pdfmd-cli`;
+  `nulabreport` is the author's LaTeX style for Nazarbayev University lab reports
+  and is not public), so the figures come out in the house style of those reports.
+  Nobody else needs this;
 - otherwise **plain `lualatex`** on the generated `.tex`. That document loads the
   real `nulabreport.sty` when TeX can find it and else the bundled excerpt
   `irspec-ir.sty`, which irspec copies beside the `.tex`.
@@ -326,9 +331,8 @@ data and no instructor's material is in this repository.
 - **`SPEC_VERSION`** (in `irspec/figure.py`, now 1) is a separate integer, written
   into figure descriptions. It changes only when the manifest/figure format breaks,
   and it is frozen at 1.0.
-- Planned: **0.1.0** everything this README describes (the TeX pipeline, the
-  exports, the matplotlib and R backends); **1.0.0** when nulabreport depends on
-  irspec and the formats have settled.
+- **0.1.0** is the first release: the TeX pipeline, the exports and the matplotlib
+  and R backends; **1.0.0** is planned for when the formats have settled.
 - The version lives in one place, `irspec.__version__`. A release is a git tag
   `vX.Y.Z` plus an entry in `CHANGELOG.md`. The bundled excerpt records which
   nulabreport version it was cut from.
@@ -338,8 +342,8 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 ## Roadmap
 
-- nulabreport depending on irspec instead of carrying its own copies;
-- a first public release (0.1.0).
+- 1.0 when the command line, the manifest and the figure format have settled;
+- PyPI (`pip install irspec`) and a public repository.
 
 Out of scope: MS, NMR, GC and TLC tools, and anything that extracts figures from
 copyrighted books.
@@ -350,8 +354,9 @@ copyrighted books.
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
-`legacy/` holds the original scripts as the oracle for the tests (see
-`PROVENANCE.md`); it goes when the tests no longer need it. `irspec-ir.sty` is
+The original scripts the code came from are in the git history (tag `legacy-oracle`, folder
+`legacy/`; see `PROVENANCE.md`); the tests compare against what they produced, recorded
+in `tests/data/`. `irspec-ir.sty` is
 generated and never edited: change `nulabreport.sty` and regenerate it.
 
 ## Licence

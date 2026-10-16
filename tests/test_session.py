@@ -81,7 +81,126 @@ class Synthetic(unittest.TestCase):
             self.assertIn("841.89 x 595.276", info)   # a wide page, not a rotated one
 
 
+def with_gas_manifest(f):
+    (f / "manifest.json").write_text(json.dumps(
+        [{"file": "jdx/1634-04-4-IR.jdx", "name": "PHENACETIN_GAS", "peak_a": 1}]))
+
+
+class Folder(unittest.TestCase):
+    """What a folder looks like after the run, and what the run leaves alone."""
+
+    def test_running_twice_does_not_file_the_figure_list_away(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = synthetic(d)
+            with_gas_manifest(f)
+            session.run(str(f), build="none")
+            self.assertTrue((f / "figures.json").exists())
+            session.run(str(f), build="none")
+            self.assertTrue((f / "figures.json").exists())
+            self.assertFalse((f / "other" / "figures.json").exists())
+
+    def test_a_new_reference_entry_starts_with_a_readable_title(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = synthetic(d)
+            with_gas_manifest(f)
+            session.run(str(f), build="none")
+            titles = {e["file"]: e["title"] for e in json.loads((f / "manifest.json").read_text())}
+            self.assertEqual(titles["jdx/62-44-2-IR.jdx"], "Phenacetin t")    # cas_names.json
+            self.assertEqual(titles["jdx/1634-04-4-IR.jdx"], "Phenacetin gas")   # a hand-written entry too
+            self.assertEqual(titles["SPA/PHENACETIN_CRUDE_LR1-2.SPA"], "PHENACETIN_CRUDE_LR1-2")
+
+    def test_a_title_in_the_file_is_used_when_there_is_no_name(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = synthetic(d)
+            (f / "cas_names.json").unlink()
+            self.assertEqual(session.default_title(str(f), "jdx/62-44-2-IR.jdx"), "Phenacetin crude (test fixture)")
+            # an explicit --title always wins over both
+            e = session.build_manifest(str(f), {"62-44-2-IR": "Mine"}, "name")
+            self.assertEqual([x["title"] for x in e if x["file"] == "jdx/62-44-2-IR.jdx"], ["Mine"])
+
+    def test_a_book_figure_s_printed_bands_become_the_peaks(self):
+        """--palleros with --check: ir_digitize's own --peaklist is asked for, and what it prints is the
+        peak list (the book's numbers, not the peak finder's). ir_digitize is replaced by a stub here:
+        the figure itself is a textbook page and is not published (docs: README, 'Pictures')."""
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "book"
+            (f / "img").mkdir(parents=True)
+            (f / "img" / "fig.png").write_bytes(b"not a picture: the stub never opens it")
+            (f / "manifest.json").write_text(json.dumps([{
+                "file": "img/fig.png", "name": "BOOK_FIG", "check": "3027.1,1717.2",
+                "args": ["--palleros", "--x-ticks", "3500,3000", "--y-ends", "72.7:24.5"]}]))
+            seen = {}
+            real = session.call
+
+            def stub(module, argv):
+                if module != "ir_digitize":
+                    return real(module, argv)
+                seen["argv"] = list(argv)
+                out = argv[argv.index("--plain-out") + 1]
+                Path(out).write_text("wavenumber,intensity\n3500,60\n3027,40\n2000,70\n1717,30\n650,65\n")
+                Path(argv[argv.index("--out") + 1]).write_text("x\n")
+                return 0, "  peaklist: 1717.2/29.9,3027.1/52.8\n", ""
+
+            session.call = stub
+            try:
+                session.run(str(f), build="none")
+            finally:
+                session.call = real
+            self.assertIn("--peaklist", seen["argv"])
+            m = json.loads((f / "manifest.json").read_text())
+            self.assertEqual(m[0]["peaks"], [[1717.2, 29.9], [3027.1, 52.8]])
+            # and a hand-edited "peaks" is never replaced by the printed ones
+            m[0]["peaks"] = [[3027.1, 55.0]]
+            (f / "manifest.json").write_text(json.dumps(m))
+            session.call = stub
+            try:
+                session.run(str(f), build="none")
+            finally:
+                session.call = real
+            self.assertEqual(json.loads((f / "manifest.json").read_text())[0]["peaks"], [[3027.1, 55.0]])
+
+
+class FilesAreClosed(unittest.TestCase):
+    def test_reading_a_spa_leaves_no_open_file_behind(self):
+        import gc
+        import warnings
+        from irspec import spa_peaks, spa_tool
+        for reader in (spa_tool.read_spa, spa_peaks.read_spa):
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                reader(str(DATA / "PHENACETIN_CRUDE_LR1-2.SPA"))
+                gc.collect()
+            self.assertEqual([w for w in caught if issubclass(w.category, ResourceWarning)], [],
+                             reader.__module__)
+
+
+class PdfmdLookup(unittest.TestCase):
+    def test_explicit_then_environment_then_path_and_nothing_personal(self):
+        from irspec import ir_organize
+        with tempfile.TemporaryDirectory() as d:
+            a, b = Path(d) / "a.py", Path(d) / "b.py"
+            a.write_text(""); b.write_text("")
+            old = os.environ.get("PDFMD")
+            try:
+                os.environ["PDFMD"] = str(b)
+                self.assertEqual(ir_organize.find_pdfmd(str(a)), str(a))
+                self.assertEqual(ir_organize.find_pdfmd(), str(b))
+                os.environ["PDFMD"] = str(Path(d) / "missing.py")
+                self.assertNotIn("dev/py", str(ir_organize.find_pdfmd() or ""))
+            finally:
+                os.environ.pop("PDFMD", None)
+                if old is not None:
+                    os.environ["PDFMD"] = old
+        self.assertFalse(hasattr(ir_organize, "DEFAULT_PDFMD"))
+
+
 class CommandLine(unittest.TestCase):
+    def test_python_dash_m_irspec_runs_the_command(self):
+        r = subprocess.run([sys.executable, "-m", "irspec", "--version"], capture_output=True, text=True,
+                           env=dict(os.environ, PYTHONPATH=str(ROOT / "src")))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(r.stdout.startswith("irspec "))
+
     def test_version_and_unknown_command(self):
         r = subprocess.run([sys.executable, "-m", "irspec.cli", "--version"], capture_output=True,
                            text=True, env={**os.environ, "PYTHONPATH": str(ROOT / "src")})

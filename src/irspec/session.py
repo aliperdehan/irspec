@@ -110,12 +110,13 @@ def must(module, argv, what):
 # -----------------------------------------------------------------------------
 # Filing: ir_organize's, minus the files that configure the session
 # -----------------------------------------------------------------------------
-KEEP_IN_PLACE = {"manifest.json", "cas_names.json"}
+KEEP_IN_PLACE = {"manifest.json", "cas_names.json", FIGURES_NAME}
 
 
 def organize(folder, dry_run=False):
-    """ir_organize.organize, except manifest.json and cas_names.json stay put
-    (the original would file the name map into other/ before it is read)."""
+    """ir_organize.organize, except manifest.json, cas_names.json and figures.json stay put
+    (the original would file the name map into other/ before it is read, and the figure
+    list this command wrote on its last run into other/ on the next)."""
     moves = []
     for name in sorted(os.listdir(folder)):
         src = os.path.join(folder, name)
@@ -146,6 +147,27 @@ def spectra_on_disk(folder):
     return out
 
 
+def default_title(folder, rel, entry=None):
+    """The title a NEW entry starts with (edit it in manifest.json): an own .SPA spectrum has
+    its file stem; a reference spectrum has its compound name from cas_names.json
+    ("METHYL_CINNAMATE_GAS" -> "Methyl cinnamate gas"), else the title inside the .jdx
+    (WebBook's "METHANOL" -> "Methanol"), else the stem."""
+    stem = spa_tool.clean_stem(rel)
+    if rel.startswith("SPA/"):
+        return stem
+    name = reference_name(folder, {**(entry or {}), "file": rel})
+    if name != stem:
+        return name.replace("_", " ").capitalize()
+    if rel.lower().endswith(_io.JDX_EXT):
+        try:
+            title = (jdx_tool.read_jdx(os.path.join(folder, rel))[2].get("title") or "").strip()
+        except Exception:  # an unreadable file is reported when it is processed, not here
+            title = ""
+        if title:
+            return title.capitalize() if title.isupper() else title
+    return stem
+
+
 def build_manifest(folder, titles, sort):
     """ir_organize.build_manifest with img/ added: existing entries keep their
     order, titles and overrides, new files are appended, vanished ones dropped."""
@@ -167,6 +189,8 @@ def build_manifest(folder, titles, sort):
         if r in disk and r not in seen:
             e = {k: v for k, v in e.items() if k not in ("spa", "jdx")}
             e["file"] = r
+            if not e.get("title"):  # a hand-written entry (just "file" and "name") gets one too
+                e["title"] = default_title(folder, r, e)
             entries.append(e)
             seen.add(r)
     new = sorted(disk - seen)
@@ -174,7 +198,7 @@ def build_manifest(folder, titles, sort):
         new.sort(key=lambda r: (os.path.getmtime(os.path.join(folder, r)), r))
     for r in new:
         stem = spa_tool.clean_stem(r)
-        entries.append({"file": r, "title": titles.get(stem, stem)})
+        entries.append({"file": r, "title": titles.get(stem) or default_title(folder, r)})
     for e in entries:
         stem = spa_tool.clean_stem(_io.entry_file(e))
         if stem in titles:
@@ -254,12 +278,21 @@ def process_image(folder, e, csv_dir, plain_dir):
     if e.get("check"):
         argv += ["--check", e["check"]]
     argv += [str(a) for a in e.get("args", [])]
+    # A book figure (--palleros) prints its band positions under the troughs: with --check they are
+    # the peak list the report should label, so ask for it (ir_digitize --peaklist).
+    book = "--palleros" in argv and e.get("check") and "--peaklist" not in argv
+    if book:
+        argv.append("--peaklist")
     code, out, err = call("ir_digitize", argv)
     with open(os.path.join(check_dir, f"{name}.log"), "w", encoding="utf-8") as f:
         f.write(out + err)
     if code:
         raise SessionError(f"{e['file']}: ir_digitize stopped (exit {code}); "
                            f"see check/{name}.log\n{(err or out).strip()[-600:]}")
+    printed = re.search(r"^\s*peaklist:\s*(\S+)\s*$", out, re.M)
+    if printed and "peaks" not in e:  # the manifest's own "peaks" always wins
+        e["peaks"] = [[float(a), float(b)] for a, b in
+                      (pair.split("/") for pair in printed.group(1).split(","))]
     x, y = read_plain(plain)
     return _io._finish(e, name, x, y, TRANSMITTANCE, False, csv, plain)
 
@@ -276,11 +309,7 @@ def process(folder, e, csv_dir, plain_dir):
 # -----------------------------------------------------------------------------
 # Output
 # -----------------------------------------------------------------------------
-def find_pdfmd(explicit=None):
-    for cand in (explicit, os.environ.get("PDFMD"), shutil.which("pdfmd"), _io.DEFAULT_PDFMD):
-        if cand and os.path.exists(cand):
-            return cand
-    return None
+find_pdfmd = _io.find_pdfmd
 
 
 def nulabreport_installed():
@@ -346,6 +375,8 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
 
     if build == "auto":
         build = "pdfmd" if (find_pdfmd(pdfmd) and nulabreport_installed()) else "latex"
+    if build in ("pdfmd", "latex"):
+        print(f"building the PDF with {'pdfmd (nulabreport)' if build == 'pdfmd' else 'lualatex alone'}")
     if build == "pdfmd":
         exe = find_pdfmd(pdfmd)
         if not exe:

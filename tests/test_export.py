@@ -41,6 +41,12 @@ class Formats(unittest.TestCase):
         figs = [Figure("plain/A_plain.csv", "a"), Figure("plain/METHANOL.csv", "m")]
         self.assertEqual(export.stems_of(figs), ["A", "METHANOL"])
 
+    def test_two_figures_with_one_name_do_not_share_a_file(self):
+        from irspec.figure import Figure
+        figs = [Figure("plain/A_plain.csv", "a"), Figure("other/plain/A.csv", "b"),
+                Figure("plain/B.csv", "c"), Figure("x/A_plain.csv", "d")]
+        self.assertEqual(export.stems_of(figs), ["A", "A-2", "B", "A-3"])
+
 
 @unittest.skipUnless(all(HAVE[t] for t in ("lualatex", "pdftoppm", "pdftocairo")),
                      "needs lualatex and poppler")

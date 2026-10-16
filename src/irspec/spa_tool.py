@@ -244,7 +244,8 @@ def read_spa(fn):
     """Return (x, y): wavenumber and intensity arrays from an OMNIC .SPA/.SPG
     file. Validated against a Spectragryph export to 0.0000 %T. Handles both
     the 934-point and 3734-point files seen in this lab's data."""
-    data = open(fn, "rb").read()
+    with open(fn, "rb") as f:
+        data = f.read()
     if not data.startswith(MAGIC):
         # Not fatal -- some exports have a slightly different leading blip --
         # but worth a loud warning since every offset below assumes this

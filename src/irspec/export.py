@@ -113,11 +113,15 @@ def export_pdf(pdf, formats, outdir, names=None, dpi=300):
 
 
 def stems_of(figures):
-    """File stems for figures: the plain CSV's name without `_plain`."""
-    out = []
+    """File stems for figures: the plain CSV's name without `_plain`. Two figures that
+    would share a stem (the same name in two folders) get -2, -3, ... so that no picture
+    overwrites another."""
+    out, seen = [], {}
     for f in figures:
         s = os.path.splitext(os.path.basename(f.csv))[0]
-        out.append(s[:-len("_plain")] if s.endswith("_plain") else s)
+        s = s[:-len("_plain")] if s.endswith("_plain") else s
+        seen[s] = seen.get(s, 0) + 1
+        out.append(s if seen[s] == 1 else f"{s}-{seen[s]}")
     return out
 
 

@@ -1,19 +1,23 @@
 """Differential test: moving the scripts into the package must change nothing.
 
-Every case runs the same command twice on identical copies of the inputs --
-once as the copied script in legacy/ (the nulabreport originals, byte for
-byte), once as `python -m irspec.<module>` from src/ -- and compares the exit
-code, stdout, stderr and every file either run left behind, byte for byte.
-A case where both runs fail would also "match", so each must exit 0.
+Every case runs one command on a fresh copy of the inputs as `python -m irspec.<module>`
+and compares the exit code, stdout, stderr and the sha256 of every file it left behind
+with what the original scripts (the nulabreport tools, copied byte for byte into
+legacy/ while the package was made) did on the same inputs. That outcome is recorded in
+tests/data/differential_expected.json. A case where the run fails would also "match" a
+recorded failure, so each must exit 0.
+
+To record again from the originals (they are in the git history, tag legacy-oracle):
+
+    git archive legacy-oracle legacy | tar -x -C SOMEWHERE
+    python3 tests/test_differential.py --record SOMEWHERE/legacy
 
 Inputs are the author's own phenacetin spectrum and the JCAMP-DX files made
 from it (tests/make_fixtures.py); nothing third-party.
 
     python3 -m unittest discover -s tests -v
-
-Optional (skipped when unset): IRSPEC_SDBS_IMAGE=path/to/an SDBS plot image,
-to run ir_digitize on a real picture; it is not published here.
 """
+import hashlib
 import json
 import os
 import shutil
@@ -25,13 +29,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "tests" / "data"
+LEGACY = ROOT / "legacy"      # only for --record
 SPA = "PHENACETIN_CRUDE_LR1-2.SPA"
 
 
 def run(kind, module, argv, cwd):
     """kind 'legacy': python legacy/<module>.py ; kind 'pkg': python -m irspec.<module>."""
     if kind == "legacy":
-        cmd = [sys.executable, str(ROOT / "legacy" / f"{module}.py"), *argv]
+        cmd = [sys.executable, str(LEGACY / f"{module}.py"), *argv]
         env = os.environ.copy()
     else:
         cmd = [sys.executable, "-m", f"irspec.{module}", *argv]
@@ -42,6 +47,22 @@ def run(kind, module, argv, cwd):
 def snapshot(folder):
     return {str(p.relative_to(folder)): p.read_bytes()
             for p in sorted(folder.rglob("*")) if p.is_file()}
+
+
+EXPECTED = DATA / "differential_expected.json"
+
+
+def outcome(kind, module, setup, argv):
+    """Run one case in a fresh folder: exit code, stdout, stderr, and the sha256 of every file
+    left behind (folder names in the text replaced by <TMP>)."""
+    with tempfile.TemporaryDirectory() as t:
+        tmp = Path(t).resolve()
+        setup(tmp)
+        r = run(kind, module, argv, tmp)
+        clean = lambda text: text.replace(str(tmp), "<TMP>")
+        files = {k: hashlib.sha256(v).hexdigest() for k, v in snapshot(tmp).items()}
+        return {"returncode": r.returncode, "stdout": clean(r.stdout), "stderr": clean(r.stderr),
+                "files": files}
 
 
 def put(folder, *names, rename=None):
@@ -75,9 +96,9 @@ def setup_batch_jdx(d):
 
 
 def setup_a2t(d):
-    # an Absorbance plain CSV, made the same way for both runs (legacy writer)
+    # an Absorbance plain CSV, made by the package's own writer
     put(d, "phenacetin_A.jdx")
-    r = run("legacy", "jdx_tool", ["convert", "phenacetin_A.jdx", "--out", "a.csv",
+    r = run("pkg", "jdx_tool", ["convert", "phenacetin_A.jdx", "--out", "a.csv",
                                    "--plain-out", "a_plain.csv"], d)
     assert r.returncode == 0, r.stderr
     (d / "a.csv").unlink()
@@ -86,7 +107,7 @@ def setup_a2t(d):
 
 def setup_corr(d):
     put(d, "golden_plain.csv", "phenacetin_T.jdx")
-    r = run("legacy", "jdx_tool", ["convert", "phenacetin_T.jdx", "--out", "t.csv",
+    r = run("pkg", "jdx_tool", ["convert", "phenacetin_T.jdx", "--out", "t.csv",
                                    "--plain-out", "t_plain.csv"], d)
     assert r.returncode == 0, r.stderr
     (d / "t.csv").unlink()
@@ -134,39 +155,28 @@ CASES = [
 
 
 class Differential(unittest.TestCase):
-    def check(self, name, module, setup, argv):
-        results = {}
-        with tempfile.TemporaryDirectory() as tl, tempfile.TemporaryDirectory() as tp:
-            for kind, tmp in (("legacy", Path(tl).resolve()), ("pkg", Path(tp).resolve())):
-                setup(tmp)
-                r = run(kind, module, argv, tmp)
-                self.assertEqual(r.returncode, 0, f"{name} [{kind}] failed:\n{r.stderr}")
-                clean = lambda s: s.replace(str(tmp), "<TMP>")
-                results[kind] = (clean(r.stdout), clean(r.stderr), snapshot(tmp))
-        lo, po = results["legacy"], results["pkg"]
-        self.assertEqual(lo[0], po[0], f"{name}: stdout differs")
-        self.assertEqual(lo[1], po[1], f"{name}: stderr differs")
-        self.assertEqual(sorted(lo[2]), sorted(po[2]), f"{name}: different files written")
-        for rel in lo[2]:
-            self.assertEqual(lo[2][rel], po[2][rel], f"{name}: {rel} differs")
-        self.assertTrue(lo[2], f"{name}: nothing to compare")
-
-    def test_every_case(self):
-        for case in CASES:
-            with self.subTest(case=case[0]):
-                self.check(*case)
-
-    @unittest.skipUnless(os.environ.get("IRSPEC_SDBS_IMAGE"), "set IRSPEC_SDBS_IMAGE to run")
-    def test_ir_digitize_on_a_real_sdbs_image(self):
-        img = Path(os.environ["IRSPEC_SDBS_IMAGE"])
-
-        def setup(d):
-            (d / "img").mkdir()
-            shutil.copy(img, d / "img" / img.name)
-        self.check("ir_digitize", "ir_digitize", setup,
-                   ["convert", f"img/{img.name}", "--name", "X", "--out", "csv/X.csv",
-                    "--plain-out", "plain/X.csv", "--overlay", "check/X.png"])
+    def test_every_case_against_the_recorded_outcome(self):
+        """The same sixteen commands, against what the original scripts did (EXPECTED, recorded
+        by `python3 tests/test_differential.py --record DIR`)."""
+        expected = json.loads(EXPECTED.read_text())
+        self.assertEqual(sorted(expected), sorted(c[0] for c in CASES))
+        for name, module, setup, argv in CASES:
+            with self.subTest(case=name):
+                got = outcome("pkg", module, setup, argv)
+                self.assertEqual(got["returncode"], 0, got["stderr"])
+                want = expected[name]
+                self.assertEqual(got["stdout"], want["stdout"], f"{name}: stdout differs")
+                self.assertEqual(got["stderr"], want["stderr"], f"{name}: stderr differs")
+                self.assertEqual(sorted(got["files"]), sorted(want["files"]), f"{name}: files written")
+                for rel in want["files"]:
+                    self.assertEqual(got["files"][rel], want["files"][rel], f"{name}: {rel} differs")
 
 
 if __name__ == "__main__":
-    unittest.main()
+    if sys.argv[1:2] == ["--record"]:
+        LEGACY = Path(sys.argv[2]).resolve()
+        out = {c[0]: outcome("legacy", *c[1:]) for c in CASES}
+        EXPECTED.write_text(json.dumps(out, indent=1, sort_keys=True) + "\n")
+        print(f"recorded {len(out)} cases from {LEGACY} into {EXPECTED.relative_to(ROOT)}")
+    else:
+        unittest.main()
