@@ -22,6 +22,14 @@ class Docs(unittest.TestCase):
         for fmt in export.FORMATS:
             self.assertIn(f"| `{fmt}` |", self.readme, f"README table lacks format {fmt}")
 
+    def test_backends_and_spec_file_are_documented(self):
+        from irspec import mpl
+        for word in ("figures.json", "irspec plot", "--backend r", "irspec.R", "figures/matplotlib/",
+                     "figures/r/"):
+            self.assertIn(word, self.readme)
+        for fmt in mpl.FORMATS:
+            self.assertIn(fmt, self.readme)
+
     def test_spec_version_quoted_correctly(self):
         self.assertRegex(self.readme, rf"now {figure.SPEC_VERSION}\)")
 

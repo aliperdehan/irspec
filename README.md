@@ -19,8 +19,7 @@ irspec session my_lab_folder/ --formats png,svg
 the only place it exists (not on PyPI, no tags). The command line and the
 folder layout below are what 0.1.0 is meant to ship, but anything may still change
 before it. The Python code (`import irspec`) is not a stable interface before
-1.0: use the command line. Still to come: a matplotlib figure backend (0.2.0) and
-an R/ggplot2 one (0.3.0). See [Versioning](#versioning) and `CHANGELOG.md`.
+1.0: use the command line. See [Versioning](#versioning) and `CHANGELOG.md`.
 
 ## What it does, and what it does not
 
@@ -34,7 +33,9 @@ It does:
 - put every spectrum on the same axis, **%Transmittance**: an Absorbance
   spectrum is converted on purpose, never mixed in silently;
 - make a PDF with one spectrum per landscape page, and PNG/TIFF/SVG copies of
-  each page named after the spectrum.
+  each page named after the spectrum;
+- or draw the same figures without TeX, with matplotlib or with R (ggplot2), if
+  you would rather have those ([below](#drawing-without-tex-matplotlib-and-r)).
 
 It does not interpret spectra, assign bands or identify compounds. The peak
 labels are wavenumbers; deciding what a band is stays your job. Peak picking is a
@@ -57,6 +58,8 @@ only the ones for the output you ask for are needed:
 | a PDF | `lualatex` with pgfplots (TeX Live or MacTeX) | `brew install --cask mactex-no-gui` | `apt install texlive-full` |
 | PNG, TIFF, SVG | poppler (`pdfinfo`, `pdftoppm`, `pdftocairo`) | `brew install poppler` | `apt install poppler-utils` |
 | SVG with editable text | MuPDF (`mutool`) | `brew install mupdf-tools` | `apt install mupdf-tools` |
+| matplotlib figures (`irspec plot`) | the matplotlib package: `pip install ".[matplotlib]"` | | |
+| R figures (`irspec plot --backend r`) | R with `ggplot2`, `jsonlite`; `ragg`, `svglite` recommended | `brew install --cask r` | `apt install r-base` |
 | `digitize --omnic` | `tesseract` | `brew install tesseract` | `apt install tesseract-ocr` |
 
 The figures use the font STIX Two when it is installed and TeX's default
@@ -92,10 +95,12 @@ my_lab_folder/
   csv/PHENACETIN_CRUDE_LR1-2.csv            archival CSV
   plain/PHENACETIN_CRUDE_LR1-2_plain.csv    the CSV the figure reads
   manifest.json                             titles, peaks, per-spectrum settings
+  figures.json                              the figures as the drawing backends read them
   ir_my_lab_folder.md                       the figure list, for nulabreport's pdfmd
   ir_my_lab_folder.tex                      the same for plain lualatex  (--build latex)
   ir_my_lab_folder.pdf                      the figure PDF, one spectrum per page
-  figures/PHENACETIN_CRUDE_LR1-2.png        with --formats
+  figures/PHENACETIN_CRUDE_LR1-2.png        with --formats (from the PDF)
+  figures/matplotlib/..., figures/r/...     with irspec plot
 ```
 
 The base name `ir_...` is `ir_<dd-mm>` when the folder's name contains a date
@@ -208,6 +213,39 @@ A PDF you already have can be converted without a session:
 (`--names` gives the file stems in page order; without it the pages are called
 `page-1`, `page-2`, …; the default folder is `figures/` beside the PDF).
 
+## Drawing without TeX: matplotlib and R
+
+`irspec session` also writes `figures.json`: the figures (the plain CSV, title,
+y-axis label, peaks, `ymin`) in a form that knows nothing about OMNIC, JCAMP or
+TeX. Two more drawing programs read it, and neither needs TeX:
+
+```
+irspec plot my_lab_folder/                                  # matplotlib: PNG
+irspec plot my_lab_folder/ --formats png,svg-text,pdf       # more formats
+irspec plot my_lab_folder/ --backend r --formats png,svg    # R and ggplot2
+Rscript irspec.R my_lab_folder/ --formats png               # R, without Python
+```
+
+(`irspec plot --print-r-script` prints where `irspec.R` is; the script stands
+alone, so a class that works in R needs only that file and a `figures.json`.)
+Pictures go to `figures/matplotlib/` or `figures/r/`, so they never overwrite
+the ones made from the TeX PDF. Options: `--formats`, `--out`, `--size
+WIDTHxHEIGHT` in inches (default 10x6.6), `--dpi` (300), `--no-caption`.
+
+| | matplotlib | R |
+|---|---|---|
+| needs | `matplotlib` | R with `ggplot2`, `jsonlite` (`ragg` for PNG/TIFF and `svglite` for SVG are used when installed) |
+| formats | png, tiff, pdf, svg (text as outlines), svg-text (editable text) | png, tiff, svg (editable text, as `svg-text`), pdf only where R has cairo (on macOS, CRAN's R does with XQuartz installed) |
+| font | STIX Two Text if installed, else the STIXGeneral that comes with matplotlib | STIX Two Text if installed, else the default serif; the one used is printed |
+
+All three drawings (TeX, matplotlib, R) share one set of numbers
+(`src/irspec/layout.py`), measured on the TeX figure: the axis box, the x axis
+from 4000 to 650 cm⁻¹, the trace (0.5 pt, `#B03A2E`), the peak labels (8 pt,
+rotated, hanging below their `label_y` on a short grey leader tick) and where
+the y axis starts and stops. They differ in the y tick spacing (pgfplots' rule
+is its own), in antialiasing, and in where the caption sits, so *the same
+figure*, not the same pixels. The TeX version remains the reference.
+
 ## How the PDF is made
 
 `--build auto` (the default) uses:
@@ -235,6 +273,7 @@ all you need. Each has its own `--help`.
 |---|---|---|
 | `irspec session DIR` | the whole thing above | `irspec session own-29.09/ --formats png` |
 | `irspec export PDF` | PNG/TIFF/SVG from a PDF | `irspec export fig.pdf --formats svg` |
+| `irspec plot DIR` | the figures drawn by matplotlib or R, no TeX | `irspec plot own-29.09/ --backend r --formats png` |
 | `irspec spa` | `.SPA` → CSVs and peaks; `batch` for several, `plot` for a legacy matplotlib PNG/SVG | `irspec spa convert run.SPA` |
 | `irspec jdx` | `.jdx` → CSVs, one file or a folder | `irspec jdx convert X.jdx --name X --out csv/X.csv --plain-out plain/X.csv` |
 | `irspec peaks` | peak-pick a `.SPA`, `.jdx` or CSV | `irspec peaks plain/X.csv` |
@@ -260,7 +299,12 @@ moved here without changing what they compute. The tests
   inputs, and the exit code, the output and every written file are compared;
 - the Markdown a session writes is compared with what the original organizer
   wrote, and the plain-`lualatex` page with the full-package page, pixel for pixel;
-- every exported file is compared with `pdftoppm` of its own PDF page.
+- every exported file is compared with `pdftoppm` of its own PDF page;
+- the y limits of the drawing code are held to what the TeX figure really draws
+  (frame and tick positions read from the PDF on six y ranges); the matplotlib
+  figure's line data, limits, label texts and positions are compared with the
+  CSV and the peak list; the R script's limits and ticks are compared with the
+  Python ones.
 
 Three more checks run on the author's own coursework folders (the environment
 variable `IRSPEC_LR6_IR` points at them) and are skipped everywhere else; they
@@ -281,9 +325,9 @@ data and no instructor's material is in this repository.
 - **`SPEC_VERSION`** (in `irspec/figure.py`, now 1) is a separate integer, written
   into figure descriptions. It changes only when the manifest/figure format breaks,
   and it is frozen at 1.0.
-- Planned: **0.1.0** the TeX pipeline, the exports and this README; **0.2.0**
-  the matplotlib backend; **0.3.0** the R backend; **1.0.0** when all of it is
-  done and nulabreport depends on irspec.
+- Planned: **0.1.0** everything this README describes (the TeX pipeline, the
+  exports, the matplotlib and R backends); **1.0.0** when nulabreport depends on
+  irspec and the formats have settled.
 - The version lives in one place, `irspec.__version__`. A release is a git tag
   `vX.Y.Z` plus an entry in `CHANGELOG.md`. The bundled excerpt records which
   nulabreport version it was cut from.
@@ -293,10 +337,8 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 ## Roadmap
 
-- matplotlib backend: the same figures from the same manifest without TeX, with an
-  editable-text SVG;
-- R backend (ggplot2), reading the same plain CSVs and manifest;
-- nulabreport depending on irspec instead of carrying its own copies.
+- nulabreport depending on irspec instead of carrying its own copies;
+- a first public release (0.1.0).
 
 Out of scope: MS, NMR, GC and TLC tools, and anything that extracts figures from
 copyrighted books.

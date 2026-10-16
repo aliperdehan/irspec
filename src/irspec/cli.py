@@ -2,6 +2,7 @@
 
     irspec session DIR      a folder of spectra -> CSVs, peaks, figure PDF
     irspec export PDF ...   PNG/TIFF/SVG pictures from a figure PDF
+    irspec plot DIR ...     the figures drawn by matplotlib or R, no TeX needed
     irspec spa ...          OMNIC .SPA -> CSVs, peaks, legacy plots   (spa_tool)
     irspec jdx ...          JCAMP-DX -> CSVs                          (jdx_tool)
     irspec peaks ...        peak-pick a .SPA, .jdx or CSV             (spa_peaks)
@@ -22,6 +23,7 @@ from . import __version__
 COMMANDS = {
     "session": "session",
     "export": "export",
+    "plot": "plot",
     "spa": "spa_tool",
     "jdx": "jdx_tool",
     "peaks": "spa_peaks",

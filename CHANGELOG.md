@@ -16,7 +16,13 @@ ready to be used by someone else, and it is cut when the author says so.
   `irspec-ir.sty`.
 - The older tools as sub-commands: `spa`, `jdx`, `peaks`, `digitize`, `a2t`,
   `absorptivity`, `corr`.
-- Manifest and figure format: `SPEC_VERSION = 1`.
+- `figures.json`, written by `session`: the renderer-neutral figure list
+  (`SPEC_VERSION = 1`, plain text, csv paths relative to the file).
+- `irspec plot DIR [--backend matplotlib|r]`: the figures drawn without TeX, into
+  `figures/matplotlib/` or `figures/r/`. matplotlib: png, tiff, pdf, svg,
+  svg-text; R (`data/irspec.R`, also runnable alone with `Rscript`): png, tiff,
+  svg, pdf where R has cairo. One shared geometry, `layout.py`, measured on the
+  TeX figure.
 
 ## Development history, unreleased
 

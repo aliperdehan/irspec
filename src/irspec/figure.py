@@ -8,11 +8,21 @@ at 650 cm-1), a y-axis label, peaks, a title and a few size knobs.
 The on-disk form is a manifest entry (the JSON that `ir_organize` already keeps
 beside a session): {"file"|"csv", "title", "peaks", "axis", "ymin", "width",
 "height"}. `Figure.from_entry` / `to_entry` are the two directions.
+
+`figures.json` (write_figures / read_figures) is the same list written beside a
+session's manifest, after the run, with every `csv` relative to that file's own
+folder: the one file a backend (matplotlib, R, anything else) needs. Text in it
+(`title`, `axis`) is plain, never LaTeX-escaped; the TeX writer escapes at
+render time. `width` and `height` are TeX lengths and mean nothing outside TeX:
+other backends take their own size.
 """
+import json
+import os
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 SPEC_VERSION = 1
+FIGURES_NAME = "figures.json"   # what `session` writes and every backend reads
 
 
 @dataclass
@@ -66,3 +76,26 @@ class Figure:
                 peaks.append((float(x), float(ly)))
         return cls(csv=os.path.relpath(r["plain_path"], folder), title=r["title"],
                    axis=r["axis_md"], peaks=peaks, ymin=r["ymin"])
+
+
+def write_figures(figures, path) -> str:
+    """Write `figures` as a JSON list of entries (spec SPEC_VERSION)."""
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump([fig.to_entry() for fig in figures], f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    return str(path)
+
+
+def read_figures(path):
+    """(figures, folder): the Figures in a figures.json, and the folder their
+    `csv` paths are relative to (the JSON's own)."""
+    path = os.fspath(path)
+    with open(path, encoding="utf-8") as f:
+        entries = json.load(f)
+    if not isinstance(entries, list):
+        raise ValueError(f"{path}: expected a JSON list of figures")
+    for e in entries:
+        if e.get("spec", SPEC_VERSION) != SPEC_VERSION:
+            raise ValueError(f"{path}: figure spec {e.get('spec')} is not the one this irspec "
+                             f"reads ({SPEC_VERSION})")
+    return [Figure.from_entry(e) for e in entries], os.path.dirname(os.path.abspath(path))

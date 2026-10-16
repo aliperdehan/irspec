@@ -34,15 +34,15 @@ class ExportError(SystemExit):
     """A message for the user, not a traceback."""
 
 
-def parse_formats(text):
+def parse_formats(text, allowed=FORMATS):
     """'png,svg' -> ['png', 'svg'] (order kept, duplicates dropped); errors
     name the allowed values."""
     out = []
     for f in re.split(r"[,\s]+", text.strip().lower()):
         if not f:
             continue
-        if f not in FORMATS:
-            raise ExportError(f"unknown format {f!r}; choose from: {', '.join(FORMATS)}")
+        if f not in allowed:
+            raise ExportError(f"unknown format {f!r}; choose from: {', '.join(allowed)}")
         if f not in out:
             out.append(f)
     return out

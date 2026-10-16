@@ -67,7 +67,7 @@ import numpy as np
 
 from . import ir_organize as _io
 from . import export, jdx_tool, spa_tool, texout
-from .figure import Figure
+from .figure import FIGURES_NAME, Figure, write_figures
 
 IMG_EXT = (".gif", ".jpg", ".jpeg", ".png", ".bmp")
 CAS_RE = re.compile(r"^(\d{2,7}-\d\d-\d)")
@@ -337,6 +337,7 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
         print(f"# {r['stem']}: axis={r['axis_label']} peaks={r['n_peaks']} ymin={r['ymin']}")
     _io.save_manifest(folder, entries)
     figures = [Figure.from_organize_result(r, folder) for r in results]
+    write_figures(figures, os.path.join(folder, FIGURES_NAME))
     base = md_name or _io.default_md_name(folder)
     md = os.path.join(folder, base + ".md")
     with open(md, "w", encoding="utf-8") as f:
