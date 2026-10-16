@@ -110,6 +110,41 @@ class RenderTex(unittest.TestCase):
             diff = int((np.array(ImageChops.difference(pa, pb)) > 0).sum())
             self.assertEqual(diff, 0, f"{diff} pixels differ between full package and excerpt")
 
+    def test_bundled_fonts_draw_what_the_installed_ones_do(self):
+        """On a machine without STIX Two the .tex loads irspec-fonts/ beside it.
+        Simulated by skipping the installed fonts: the PDF must embed STIX Two
+        (not TeX's default) and match the installed-font page to rasterisation noise."""
+        from PIL import Image, ImageChops
+        import numpy as np
+        with tempfile.TemporaryDirectory() as d:
+            empty = Path(d) / "empty-texmfhome"
+            empty.mkdir()
+            env = {"TEXMFHOME": str(empty)}          # no nulabreport.sty: the excerpt path
+            a = self.make(d, "installed")
+            rc, log = build(a, env)
+            self.assertEqual(rc, 0, log[-600:])
+            b = self.make(d, "bundled")
+            (b / "fig.tex").write_text(texout.render_tex(
+                [Figure(csv="plain/p.csv", title="Phenacetin (crude)",
+                        peaks=[(1241.9, 40.0), (1511.0, 55.0), (2980.0, 90.0)], ymin=20)],
+                bundled_fonts=True), encoding="utf-8")
+            self.assertTrue((b / "irspec-fonts" / "OFL.txt").exists())
+            rc, log = build(b, env)
+            self.assertEqual(rc, 0, log[-600:])
+            names = subprocess.run(["pdffonts", str(b / "fig.pdf")], capture_output=True,
+                                   text=True).stdout
+            self.assertIn("STIXTwoText", names)
+            self.assertIn("STIXTwoMath", names)
+            self.assertNotIn("LMRoman", names)
+            pa = Image.open(raster(a / "fig.pdf", Path(d) / "a")).convert("L")
+            pb = Image.open(raster(b / "fig.pdf", Path(d) / "b")).convert("L")
+            # The system STIX Two Math is CFF (.otf), the bundled one TrueType: the
+            # same design rasterised a little differently (measured: at most 26 of
+            # 255 grey levels, on 0.3 % of the pixels).
+            diff = np.array(ImageChops.difference(pa, pb))
+            self.assertLessEqual(int(diff.max()), 48, "bundled fonts draw something else")
+            self.assertLess(float((diff > 0).mean()), 0.005)
+
 
 if __name__ == "__main__":
     unittest.main()

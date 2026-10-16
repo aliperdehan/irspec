@@ -19,7 +19,7 @@ import os
 import shutil
 from importlib import resources
 
-from . import spa_tool
+from . import fonts, spa_tool
 from .figure import Figure
 
 EXCERPT_NAME = "irspec-ir.sty"
@@ -51,8 +51,8 @@ _FALLBACK_PREAMBLE = r"""\usepackage{amsmath,amssymb}
 \usepackage{unicode-math}
 \defaultfontfeatures{Scale=MatchLowercase}
 \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
-\IfFontExistsTF{STIX Two Text}{\setmainfont{STIX Two Text}}{}
-\IfFontExistsTF{STIX Two Math}{\setmathfont{STIX Two Math}}{}
+\IfFontExistsTF{STIX Two Text}{\setmainfont{STIX Two Text}}{\IfFileExists{irspec-fonts/STIXTwoText-Regular.ttf}{\setmainfont{STIXTwoText-Regular.ttf}[Path=irspec-fonts/,ItalicFont=STIXTwoText-Italic.ttf]}{}}
+\IfFontExistsTF{STIX Two Math}{\setmathfont{STIX Two Math}}{\IfFileExists{irspec-fonts/STIXTwoMath-Regular.ttf}{\setmathfont{STIXTwoMath-Regular.ttf}[Path=irspec-fonts/]}{}}
 \usepackage{microtype}
 \setlength{\emergencystretch}{3em}
 \usepackage[bidi=basic,shorthands=off,british]{babel}
@@ -60,7 +60,13 @@ _FALLBACK_PREAMBLE = r"""\usepackage{amsmath,amssymb}
 \usepackage{irspec-ir}"""
 
 
-def render_tex(figures) -> str:
+def render_tex(figures, bundled_fonts=False) -> str:
+    """`bundled_fonts` skips the installed STIX Two and loads the copies in
+    irspec-fonts/ (what happens anyway on a machine without STIX Two)."""
+    preamble = _FALLBACK_PREAMBLE
+    if bundled_fonts:
+        preamble = (preamble.replace("\\IfFontExistsTF{STIX Two Text}", "\\IfFontExistsTF{No Such Font Text}")
+                            .replace("\\IfFontExistsTF{STIX Two Math}", "\\IfFontExistsTF{No Such Font Math}"))
     body = ["\\begin{landscape}"] + [_block(f) for f in figures] + ["\\end{landscape}"]
     return (
         "% Build with lualatex. Prefers the real nulabreport.sty; falls back to\n"
@@ -69,7 +75,7 @@ def render_tex(figures) -> str:
         "\\usepackage[margin=0.6in]{geometry}\n"
         "\\IfFileExists{nulabreport.sty}%\n"
         "  {\\usepackage{nulabreport}}%\n"
-        "  {" + _FALLBACK_PREAMBLE.replace("\n", "\n   ") + "}\n"
+        "  {" + preamble.replace("\n", "\n   ") + "}\n"
         "\\labsetup{furniture=false, captions=bare}\n"
         "\\begin{document}\n"
         + "\n".join(body) + "\n"
@@ -81,8 +87,11 @@ def excerpt_text() -> str:
 
 
 def write_excerpt(folder) -> str:
-    """Copy the bundled irspec-ir.sty into `folder`; return its path."""
+    """Copy the bundled irspec-ir.sty into `folder`, with the STIX Two fonts the
+    fallback preamble loads when they are not installed (irspec-fonts/); return
+    the .sty's path."""
     dest = os.path.join(folder, EXCERPT_NAME)
     with open(dest, "w", encoding="utf-8") as f:
         f.write(excerpt_text())
+    fonts.copy_to(folder)
     return dest

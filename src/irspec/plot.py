@@ -10,8 +10,8 @@ DIR/figures/r/, so they never overwrite the ones made from the TeX PDF
 geometry (layout.py) and agree on everything but the y tick spacing.
 
   matplotlib   png, tiff, pdf, svg (outlined text), svg-text (editable text)
-  r            png, tiff, svg (editable text; svg-text is the same), pdf where
-               R has cairo. Needs R with ggplot2 and jsonlite (ragg, svglite
+  r            the same five; pdf and svg need an R with working cairo (macOS:
+               XQuartz). Needs R with ggplot2 and jsonlite (ragg, svglite
                recommended). The script is data/irspec.R and runs on its own:
                Rscript irspec.R DIR --formats png   (`--print-r-script` says where)
 """

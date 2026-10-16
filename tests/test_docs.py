@@ -30,6 +30,13 @@ class Docs(unittest.TestCase):
         for fmt in mpl.FORMATS:
             self.assertIn(fmt, self.readme)
 
+    def test_bundled_fonts_have_their_license_documented(self):
+        from irspec import fonts
+        for name in (*fonts.TEXT, fonts.MATH, fonts.LICENSE):
+            self.assertTrue(Path(fonts.path(name)).exists(), name)
+        self.assertIn("SIL Open Font License", self.readme)
+        self.assertIn("OFL.txt", self.readme)
+
     def test_spec_version_quoted_correctly(self):
         self.assertRegex(self.readme, rf"now {figure.SPEC_VERSION}\)")
 

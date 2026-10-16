@@ -11,8 +11,8 @@ antialiasing. It needs matplotlib (`pip install irspec[matplotlib]`) and no TeX.
 
 Formats: png, tiff, pdf, svg (text as outlines, draws the same anywhere),
 svg-text (labels stay <text>, editable; the font must be installed where it is
-opened). Fonts: STIX Two Text when matplotlib can find it, else the STIXGeneral
-that ships with matplotlib; which one was used is printed.
+opened). Fonts: STIX Two Text when it is installed, else the copy bundled with
+irspec (fonts.py); which one was used is printed.
 """
 import argparse
 import os
@@ -20,7 +20,7 @@ import sys
 
 import numpy as np
 
-from . import layout
+from . import fonts, layout
 from .export import ExportError, parse_formats, stems_of
 from .figure import FIGURES_NAME, Figure, read_figures
 
@@ -45,15 +45,21 @@ def _pyplot():
 
 
 def pick_font():
-    """(family, note): STIX Two Text if matplotlib finds it, else STIXGeneral."""
+    """(family, note): STIX Two Text if matplotlib finds it installed, else the
+    copy bundled with irspec."""
     from matplotlib import font_manager as fm
-    for fam in ("STIX Two Text", "STIXGeneral"):
+    if not fonts.force_bundled():
         try:
-            path = fm.findfont(fm.FontProperties(family=fam), fallback_to_default=False)
+            path = fm.findfont(fm.FontProperties(family="STIX Two Text"), fallback_to_default=False)
+            return "STIX Two Text", f"STIX Two Text ({os.path.basename(path)})"
         except ValueError:
-            continue
-        return fam, f"{fam} ({os.path.basename(path)})"
-    return "DejaVu Serif", "DejaVu Serif (no STIX font found)"
+            pass
+    else:   # pretend it is not installed
+        fm.fontManager.ttflist = [f for f in fm.fontManager.ttflist if f.name != "STIX Two Text"]
+        getattr(fm.fontManager, "_findfont_cached", None) and fm.fontManager._findfont_cached.cache_clear()
+    for name in fonts.TEXT:
+        fm.fontManager.addfont(fonts.path(name))
+    return "STIX Two Text", "STIX Two Text (bundled with irspec)"
 
 
 def read_plain(path):

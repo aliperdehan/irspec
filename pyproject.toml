@@ -28,7 +28,7 @@ matplotlib = ["matplotlib"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-irspec = ["data/*.sty", "data/*.R"]
+irspec = ["data/*.sty", "data/*.R", "data/fonts/*"]
 
 [tool.setuptools.dynamic]
 version = { attr = "irspec.__version__" }

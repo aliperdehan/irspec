@@ -20,8 +20,11 @@ ready to be used by someone else, and it is cut when the author says so.
   (`SPEC_VERSION = 1`, plain text, csv paths relative to the file).
 - `irspec plot DIR [--backend matplotlib|r]`: the figures drawn without TeX, into
   `figures/matplotlib/` or `figures/r/`. matplotlib: png, tiff, pdf, svg,
-  svg-text; R (`data/irspec.R`, also runnable alone with `Rscript`): png, tiff,
-  svg, pdf where R has cairo. One shared geometry, `layout.py`, measured on the
+  svg-text; R (`data/irspec.R`, also runnable alone with `Rscript`): the same five
+  (pdf and svg need an R with working cairo).
+- STIX Two Text (Regular, Italic) and STIX Two Math bundled, unmodified, under the
+  SIL OFL 1.1 (`data/fonts/`, with `OFL.txt`); matplotlib, R and the plain-lualatex
+  fallback use them when STIX Two is not installed. One shared geometry, `layout.py`, measured on the
   TeX figure.
 
 ## Development history, unreleased

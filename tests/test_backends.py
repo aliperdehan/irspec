@@ -42,6 +42,13 @@ def r_ready():
     return r.returncode == 0
 
 
+def r_cairo():
+    r = subprocess.run(["Rscript", "-e", "f <- tempfile(); ok <- tryCatch({suppressWarnings(cairo_pdf(f)); "
+                        "dev.off(); TRUE}, error = function(e) FALSE, warning = function(w) FALSE); "
+                        "quit(status = !ok)"], capture_output=True)
+    return r.returncode == 0
+
+
 def make_session(d):
     f = Path(d) / "session_29-09"
     (f / "SPA").mkdir(parents=True)
@@ -162,6 +169,36 @@ class Matplotlib(unittest.TestCase):
             self.assertIn("3253.3", text)
             self.assertTrue(Path(d, "PHENACETIN_CRUDE_LR1-2.pdf").read_bytes().startswith(b"%PDF"))
 
+    def test_bundled_fonts_are_the_real_thing(self):
+        """The copies shipped with irspec are STIX Two under the OFL, and
+        matplotlib draws with them when the installed ones are 'missing'."""
+        from irspec import fonts
+        from matplotlib import font_manager as fm
+        from matplotlib import ft2font
+        for name in (*fonts.TEXT, fonts.MATH):
+            f = ft2font.FT2Font(fonts.path(name))
+            self.assertIn("STIX Two", f.family_name)
+        self.assertIn("SIL OPEN FONT LICENSE Version 1.1", Path(fonts.path(fonts.LICENSE)).read_text())
+        old = os.environ.get("IRSPEC_BUNDLED_FONTS")
+        saved = list(fm.fontManager.ttflist)
+        os.environ["IRSPEC_BUNDLED_FONTS"] = "1"
+        try:
+            family, note = mpl.pick_font()
+            self.assertIn("bundled", note)
+            used = fm.findfont(fm.FontProperties(family=family), fallback_to_default=False)
+            self.assertEqual(os.path.basename(used), "STIXTwoText-Regular.ttf")
+            self.assertTrue(used.startswith(str(Path(fonts.path("OFL.txt")).parent)))
+            italic = fm.findfont(fm.FontProperties(family=family, style="italic"),
+                                 fallback_to_default=False)
+            self.assertEqual(os.path.basename(italic), "STIXTwoText-Italic.ttf")
+        finally:
+            fm.fontManager.ttflist = saved
+            getattr(fm.fontManager, "_findfont_cached", None) and fm.fontManager._findfont_cached.cache_clear()
+            if old is None:
+                os.environ.pop("IRSPEC_BUNDLED_FONTS", None)
+            else:
+                os.environ["IRSPEC_BUNDLED_FONTS"] = old
+
     def test_no_caption_and_default_folder(self):
         out = mpl.draw(self.figs[0], str(self.folder), caption=False)
         self.assertEqual(out.texts, [])
@@ -201,16 +238,39 @@ class R(unittest.TestCase):
 
     def test_files_through_the_plot_command(self):
         with tempfile.TemporaryDirectory() as d:
-            plot.main([str(self.folder), "--backend", "r", "--formats", "png,svg,tiff",
+            plot.main([str(self.folder), "--backend", "r", "--formats", "png,svg-text,tiff",
                        "--dpi", "50", "--size", "6x4", "--out", d])
             from PIL import Image
             for name in ("PHENACETIN_CRUDE_LR1-2.png", "PHENACETIN_CRUDE_LR1-2.tiff"):
                 with Image.open(os.path.join(d, name)) as im:
                     self.assertEqual(im.size, (300, 200), name)
-            svg = Path(d, "PHENACETIN_CRUDE_LR1-2.svg").read_text(encoding="utf-8")
+            svg = Path(d, "PHENACETIN_CRUDE_LR1-2_text.svg").read_text(encoding="utf-8")
             self.assertIn("<text", svg)
             self.assertIn("3253.3", svg)
             self.assertIn("Phenacetin 100% (crude)", svg)
+
+    @unittest.skipUnless(r_ready() and r_cairo(), "this R has no working cairo")
+    def test_cairo_formats(self):
+        with tempfile.TemporaryDirectory() as d:
+            plot.main([str(self.folder), "--backend", "r", "--formats", "pdf,svg", "--size", "6x4",
+                       "--out", d])
+            pdf = Path(d, "PHENACETIN_CRUDE_LR1-2.pdf").read_bytes()
+            self.assertTrue(pdf.startswith(b"%PDF"))
+            svg = Path(d, "PHENACETIN_CRUDE_LR1-2.svg").read_text(encoding="utf-8")
+            self.assertIn("<svg", svg)
+            self.assertNotIn("<text", svg)          # outlined, as matplotlib's svg
+
+    def test_bundled_fonts_in_r(self):
+        r = subprocess.run(["Rscript", str(R_SCRIPT), str(self.folder), "--formats", "svg-text",
+                            "--size", "6x4", "--out", str(self.folder / "r-bundled")],
+                           capture_output=True, text=True, env={**os.environ, "IRSPEC_BUNDLED_FONTS": "1"})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("bundled with irspec", r.stdout)
+
+    def test_usage_and_help(self):
+        for args in ([], ["--help"]):
+            r = subprocess.run(["Rscript", str(R_SCRIPT), *args], capture_output=True, text=True)
+            self.assertIn("usage: Rscript irspec.R", r.stdout + r.stderr, args)
 
     def test_bad_format_is_a_message(self):
         r = subprocess.run(["Rscript", str(R_SCRIPT), str(self.folder), "--formats", "gif"],

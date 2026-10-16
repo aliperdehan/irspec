@@ -12,12 +12,13 @@
 # measured, and tests/test_backends.py checks the two agree.
 #
 # Needs: ggplot2 (>= 3.5) and jsonlite. Optional: ragg (PNG/TIFF; else the
-# cairo device), svglite (svg). Formats:
-#   png, tiff (LZW), svg (svglite: labels stay <text>, editable in Inkscape or
-#   Illustrator; the font must be installed where the file is opened; "svg-text"
-#   is accepted as the same thing), pdf (needs an R with working cairo, which
-#   the macOS build has only with XQuartz).
-# Font: STIX Two Text when systemfonts can find it, else the default serif.
+# cairo device), svglite (svg-text). Formats, as in the matplotlib backend:
+#   png, tiff (LZW), pdf, svg (text as outlines: draws the same anywhere),
+#   svg-text (svglite: labels stay <text>, editable in Inkscape or Illustrator;
+#   the font must be installed where the file is opened). pdf and svg need an R
+#   with working cairo, which the macOS build has only with XQuartz installed.
+# Font: STIX Two Text when installed, else the copies in fonts/ beside this script
+# (keep that folder with it), else the default serif.
 
 need <- function(pkg, why) {
   if (!requireNamespace(pkg, quietly = TRUE))
@@ -88,13 +89,33 @@ read_figures <- function(path) {
 }
 
 # ---- drawing ----------------------------------------------------------------
+script_dir <- function() {
+  a <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (length(a)) dirname(normalizePath(sub("^--file=", "", a[1]))) else getwd()
+}
+
+# STIX Two Text when installed, else the copies in fonts/ beside this script
+# (SIL OFL 1.1, fonts/OFL.txt). IRSPEC_BUNDLED_FONTS=1 forces them (for tests).
 pick_font <- function() {
   if (requireNamespace("systemfonts", quietly = TRUE)) {
-    p <- systemfonts::match_fonts("STIX Two Text")$path
-    if (length(p) && grepl("STIX", p, ignore.case = TRUE))
-      return(list(family = "STIX Two Text", note = sprintf("STIX Two Text (%s)", basename(p))))
+    force <- !(Sys.getenv("IRSPEC_BUNDLED_FONTS") %in% c("", "0"))
+    if (!force) {
+      p <- systemfonts::match_fonts("STIX Two Text")$path
+      if (length(p) && grepl("STIX", p, ignore.case = TRUE))
+        return(list(family = "STIX Two Text", note = sprintf("STIX Two Text (%s)", basename(p))))
+    }
+    d <- file.path(script_dir(), "fonts")
+    reg <- file.path(d, "STIXTwoText-Regular.ttf"); ita <- file.path(d, "STIXTwoText-Italic.ttf")
+    if (file.exists(reg) && file.exists(ita)) {
+      # register_font refuses a name a system font already has: under the forcing
+      # test hook the family gets another name, for real use (not installed) it
+      # is the real one, so an svg-text file asks for "STIX Two Text".
+      fam <- if (force) "STIX Two Text (irspec copy)" else "STIX Two Text"
+      systemfonts::register_font(fam, plain = reg, italic = ita, bold = reg, bolditalic = ita)
+      return(list(family = fam, note = "STIX Two Text (bundled with irspec)"))
+    }
   }
-  list(family = "serif", note = "serif (STIX Two Text not found)")
+  list(family = "serif", note = "serif (STIX Two Text not found; needs the systemfonts package)")
 }
 
 draw <- function(fig, family, caption = TRUE) {
@@ -146,17 +167,24 @@ draw <- function(fig, family, caption = TRUE) {
 }
 
 # ---- output -----------------------------------------------------------------
-FORMATS <- c("png", "tiff", "svg", "pdf")
-EXT <- c(png = ".png", tiff = ".tiff", svg = ".svg", pdf = ".pdf")
+FORMATS <- c("png", "tiff", "pdf", "svg", "svg-text")
+EXT <- c(png = ".png", tiff = ".tiff", pdf = ".pdf", svg = ".svg", "svg-text" = ".svg")
+SUFFIX <- c("svg-text" = "_text")
 
 # R's own svg()/cairo_pdf() devices need R built with working cairo, which the
 # macOS CRAN build only has with XQuartz installed; so PNG/TIFF go through ragg
-# and SVG through svglite, and PDF is offered only where cairo works.
+# and the editable SVG through svglite, and pdf and the outlined svg are offered
+# only where cairo works.
 cairo_works <- function() {
   f <- tempfile(fileext = ".pdf")
   ok <- tryCatch({ suppressWarnings(cairo_pdf(f)); dev.off(); TRUE }, error = function(e) FALSE,
                  warning = function(w) FALSE)
   unlink(f); ok
+}
+
+need_cairo <- function(fmt) {
+  if (!cairo_works()) stop(sprintf("%s needs an R with working cairo (on macOS: brew install --cask xquartz); ", fmt),
+                           "use `--formats svg-text` for an SVG, or the matplotlib backend", call. = FALSE)
 }
 
 save_as <- function(p, dest, fmt, size, dpi) {
@@ -172,17 +200,23 @@ save_as <- function(p, dest, fmt, size, dpi) {
       else tiff(dest, width = w, height = h, units = "in", res = dpi, compression = "lzw", type = "cairo")
       print(p); dev.off()
     },
-    svg = {
+    "svg-text" = {
       need("svglite", "SVG with editable text")
       svglite::svglite(dest, width = w, height = h); print(p); dev.off()
     },
+    svg = {
+      need_cairo("svg")
+      svg(dest, width = w, height = h); print(p); dev.off()
+    },
     pdf = {
-      if (!cairo_works()) stop("pdf needs an R with working cairo (on macOS: install XQuartz); ",
-                               "make the PDF with the TeX pipeline or `irspec plot --backend matplotlib`", call. = FALSE)
+      need_cairo("pdf")
       cairo_pdf(dest, width = w, height = h); print(p); dev.off()
     })
   invisible(dest)
 }
+
+USAGE <- paste("usage: Rscript irspec.R SESSION_DIR_OR_figures.json [--formats png,tiff,pdf,svg,svg-text]",
+               "[--out DIR] [--size WxH] [--dpi N] [--no-caption]")
 
 parse_args <- function(argv) {
   a <- list(path = NULL, formats = "png", out = NULL, size = c(10, 6.6), dpi = 300,
@@ -214,8 +248,7 @@ main <- function(argv = commandArgs(trailingOnly = TRUE)) {
   if (is.null(a$path)) stop(USAGE, call. = FALSE)
   need("jsonlite", "reads figures.json"); need("ggplot2", "draws the figures")
   formats <- unique(strsplit(tolower(trimws(a$formats)), "[,[:space:]]+")[[1]])
-  formats[formats == "svg-text"] <- "svg"        # R's svg already keeps its text editable
-  formats <- unique(formats[nzchar(formats)])
+  formats <- formats[nzchar(formats)]
   bad <- setdiff(formats, FORMATS)
   if (length(bad)) stop(sprintf("unknown format '%s'; choose from: %s", bad[1], paste(FORMATS, collapse = ", ")), call. = FALSE)
   r <- read_figures(a$path)
@@ -234,7 +267,7 @@ main <- function(argv = commandArgs(trailingOnly = TRUE)) {
   for (f in r$figures) {
     p <- draw(f, font$family, a$caption)
     for (fmt in formats) {
-      dest <- file.path(out, paste0(f$stem, EXT[[fmt]]))
+      dest <- file.path(out, paste0(f$stem, if (fmt %in% names(SUFFIX)) SUFFIX[[fmt]] else "", EXT[[fmt]]))
       save_as(p, dest, fmt, a$size, a$dpi)
       cat(sprintf("wrote %s\n", dest))
     }

@@ -62,8 +62,9 @@ only the ones for the output you ask for are needed:
 | R figures (`irspec plot --backend r`) | R with `ggplot2`, `jsonlite`; `ragg`, `svglite` recommended | `brew install --cask r` | `apt install r-base` |
 | `digitize --omnic` | `tesseract` | `brew install tesseract` | `apt install tesseract-ocr` |
 
-The figures use the font STIX Two when it is installed and TeX's default
-otherwise; the layout is the same. If a program is missing, irspec says which one
+The figures use the font STIX Two when it is installed. When it is not, they use
+the copies bundled with irspec (see [Licence](#licence)), so a figure looks the same
+on a machine that does not have the font. If a program is missing, irspec says which one
 and what to install instead of failing with a traceback.
 
 On macOS the Homebrew `python3` refuses a bare `pip install` ("externally
@@ -235,8 +236,8 @@ WIDTHxHEIGHT` in inches (default 10x6.6), `--dpi` (300), `--no-caption`.
 | | matplotlib | R |
 |---|---|---|
 | needs | `matplotlib` | R with `ggplot2`, `jsonlite` (`ragg` for PNG/TIFF and `svglite` for SVG are used when installed) |
-| formats | png, tiff, pdf, svg (text as outlines), svg-text (editable text) | png, tiff, svg (editable text, as `svg-text`), pdf only where R has cairo (on macOS, CRAN's R does with XQuartz installed) |
-| font | STIX Two Text if installed, else the STIXGeneral that comes with matplotlib | STIX Two Text if installed, else the default serif; the one used is printed |
+| formats | png, tiff, pdf, svg (text as outlines), svg-text (editable text) | the same five; pdf and svg need an R with working cairo (on macOS, CRAN's R has it only with XQuartz: `brew install --cask xquartz`), the others do not |
+| font | STIX Two Text if installed, else the bundled copy; the one used is printed | the same (the R script looks for the bundled copy in the `fonts/` folder beside it, so keep that folder with it) |
 
 All three drawings (TeX, matplotlib, R) share one set of numbers
 (`src/irspec/layout.py`), measured on the TeX figure: the axis box, the x axis
@@ -355,4 +356,8 @@ generated and never edited: change `nulabreport.sty` and regenerate it.
 
 ## Licence
 
-MIT, see `LICENSE`.
+irspec is MIT, see `LICENSE`. It bundles three unmodified fonts from the STIX
+Fonts Project (STIX Two Text Regular and Italic, STIX Two Math; about 1.9 MB), which
+are under the SIL Open Font License 1.1, not MIT: the notice and the license text
+are in `src/irspec/data/fonts/` (`OFL.txt`, `README.txt`) and travel with every copy,
+as the license asks. They are used only when STIX Two is not installed.
