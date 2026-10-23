@@ -162,6 +162,58 @@ against main (end the description with: 🤖 Generated with [Claude Code](https:
 Do not merge it. Report the PR URL and the test result in your final message.
 ```
 
+## Next slice: `irspec session DIR --preview` (roadmap 1c, second part)
+
+After `irspec preview FILE` was merged (`794f2fc`). This is the part that shows what is going out
+through the pipeline before anything is filed.
+
+```
+Repository: github.com/aliperdehan/irspec (Python package `irspec`, MIT, public). Read `CLAUDE.md`,
+`docs/roadmap.md` (section "1c. Terminal preview" and the Principles), the README, and
+`src/irspec/preview.py` with `tests/test_preview.py` (already merged: `irspec preview FILE`) first,
+then do ONE small slice: add `--preview` to `irspec session`.
+
+  irspec session DIR --preview [--width N] [--height N] [--ascii] [--json]
+
+It is a dry run that shows more than `--dry-run` does: it prints the planned file moves exactly as
+`--dry-run` does, and then, for every spectrum that is in DIR (loose, or already filed in SPA/ and
+jdx/), the same preview `irspec preview` prints, headed by the name and folder the file will get
+(csv/, plain/ names as `session` would give them). It stops there. It writes NOTHING: no folder, no
+manifest.json, no figures.json, no .md/.tex/.pdf, no moved file; a test must compare a tree listing
+(with file sizes and mtimes) before and after. Do NOT implement `--stack`, `--image`, a TUI, changes
+to the plain `--dry-run` output, or any other roadmap item. `--preview` together with `--dry-run`
+is allowed and means the same as `--preview`.
+
+Requirements:
+- Reuse, do not copy: the planned moves from `session.organize(folder, dry_run=True)`, the drawing
+  and text from `preview.py` (split a function out of `preview.py` if needed, keeping its own tests
+  green). Each file is previewed from where it will be filed, not by moving it. No second picking
+  or limit computation. Images (img/) are not previewed: list each with the note that it is
+  digitized by `session`, not drawn here.
+- An existing manifest.json in DIR is respected as `preview` already does (its peaks and titles
+  win). `--title STEM=TITLE` is honoured in the header.
+- Nothing interactive; width/height/ascii/json behave as in `irspec preview`. With `--json` print
+  exactly one object on stdout: {"moves": [...], "spectra": [ <what `irspec preview --json`
+  prints, plus "will_be_filed_as"> ], "images": [...]} and nothing else on stdout. Exit 2 with the
+  reason on stderr when DIR is not a folder or has no spectra; one unreadable file does not stop
+  the others: it is listed with its error, and the exit code is then 1.
+- Register the flag in `cli.py`/`session.py` like the others, document it in the README (the
+  options table of `irspec session`), a line under `## Unreleased` in CHANGELOG.md, and update
+  the roadmap's 1c. Do NOT bump `__version__`, tag or release.
+- Tests in `tests/test_session_preview.py` (unittest): a folder made from the sample
+  `tests/data/PHENACETIN_CRUDE_LR1-2.SPA` (copied to a temp dir as a loose file) and the `.jdx`
+  fixtures; the unchanged tree; `--json`; an unreadable file; `--dry-run` alone unchanged.
+  Mutation-check each test (break the code, see it fail, restore). Use only sample data in
+  `tests/data`.
+- Rules from CLAUDE.md apply: never `rm` with a wildcard, never type /Users/<name> paths, no pip
+  install into a system python (use a venv).
+
+Work on a new branch `claude/session-preview`, commit there (end commit messages with:
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>), push it, and open a pull request
+against main (end the description with: 🤖 Generated with [Claude Code](https://claude.com/claude-code)).
+Do not merge it. Report the PR URL and the test result in your final message.
+```
+
 ## The first prompt, as it was sent
 
 For the record: the template above filled in for `set`/`unset`/`show`. Its result is merged
