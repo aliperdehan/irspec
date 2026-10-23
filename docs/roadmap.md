@@ -42,6 +42,15 @@ moves only if the manifest or `figures.json` format breaks; adding optional keys
 
 ### 1a. Editing: `irspec edit`
 
+**Done (Unreleased, `src/irspec/edit.py`, `tests/test_edit.py`):** `set KEY=VALUE ...`,
+`unset KEY ...` and `show [FILE] [--json]` on `manifest.json` only, for the keys `title`,
+`axis`, `name`, `ymin`, `ymax`, `xmin`, `xmax`, `threshold`, `prominence`, `distance`; atomic
+write, order and layout kept, idempotent, `--json` for the changes. **Not done:** `peak
+add/remove/auto/clear`, `rename`/`remove`/`move`, re-running the session for the figure
+(`--no-build`), and the per-figure `xmin`/`xmax`/`ymax` in the drawing code (the keys can be
+stored today, nothing reads them). The command listing below is the original design; the three
+done commands are exactly as written there.
+
 **Decided.** Today the manifest is edited by hand in a text editor, which is the only "edit"
 there is. It becomes commands (names provisional; `irspec peaks` is already the peak picker for a
 file, so editing is a new `edit` command, not an overload):

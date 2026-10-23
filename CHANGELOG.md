@@ -2,6 +2,16 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## Unreleased
+
+- New `irspec edit`: `irspec edit DIR FILE set KEY=VALUE ...`, `irspec edit DIR FILE unset KEY ...`
+  and `irspec edit DIR show [FILE] [--json]` change or show `manifest.json` without a text
+  editor (keys: `title`, `axis`, `name`, `ymin`, `ymax`, `xmin`, `xmax`, `threshold`,
+  `prominence`, `distance`). Atomic write, order and layout kept, idempotent, prints the old and
+  new value (`--json`: one object), errors on stderr with exit 2 (1 for a missing manifest).
+  First slice of roadmap item 1a; peak editing and re-running the session are not in it, and
+  `xmin`, `xmax` and `ymax` are stored but not yet read by the figures.
+
 ## 0.1.0 (2026-10-16), the first release
 
 The changes since the last development snapshot (0.0.5) come first; the list after
