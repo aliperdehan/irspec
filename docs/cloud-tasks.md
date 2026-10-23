@@ -111,6 +111,57 @@ against main (end the description with: 🤖 Generated with [Claude Code](https:
 Do not merge it. Report the PR URL and the test result in your final message.
 ```
 
+## Next slice: `irspec preview FILE` (roadmap 1c, first part)
+
+Launched after the peak-editing slice was merged (`6c096c8`). Stdlib only, nothing to render with
+TeX or R, so the cloud box can check all of it.
+
+```
+Repository: github.com/aliperdehan/irspec (Python package `irspec`, MIT, public). Read `CLAUDE.md`,
+`docs/roadmap.md` (section "1c. Terminal preview" and the Principles) and the README first, then do
+ONE small slice: a new command `irspec preview FILE` that prints one spectrum to stdout as plain text.
+
+  irspec preview FILE [--width N] [--height N] [--ascii] [--json]
+
+FILE is a .SPA, a .jdx or a CSV, read the way `irspec peaks` / `load_spectrum` in
+`src/irspec/spa_peaks.py` read them. Do NOT implement `--stack`, `--image`, `session --preview`,
+`--dry-run` changes, curses/TUI or colour, nor any other roadmap item.
+
+Requirements:
+- Nothing interactive: no prompts, no terminal needed, exit 2 with the reason on stderr when the
+  file cannot be read, 0 otherwise. Standard library only (no rich/textual/curses).
+- Width: `shutil.get_terminal_size()` when stdout is a terminal, 80 columns when it is not (a pipe,
+  a log, an agent); `--width`/`--height` override. Height default 20 rows of plot. The same text
+  either way.
+- The plot: wavenumber axis 4000 to 650 left to right (as in the figures; take the limits from
+  `layout.py`, do not copy the numbers), %Transmittance up, the picked peaks marked and numbered.
+  Braille (2x4 dots per character) when stdout's encoding is UTF-8, otherwise (or with `--ascii`)
+  the characters `. : * |`. Under the plot, a text block: file, detected axis (and the conversion
+  when it is absorbance), number of points, the range, the peaks (position and label height) as
+  `irspec session` would pick them.
+- Peaks come from the same code the figure uses (`find_peaks_auto`, `assign_label_y`, and the
+  Figure objects in `figure.py` if they fit); write no second picking or limit computation, or the
+  preview can lie. If a manifest entry for the file exists in its folder, use its peaks.
+- `--json` prints exactly one object on stdout (file, axis, points, range, ymin, peaks) and the
+  plot is left out. `--help` says the honest limit: shape, ranges, peak positions and which are
+  labelled; not fonts, exact label placement or tick spacing.
+- Register in `cli.py` like the others; add a README section (`tests/test_docs.py` requires every
+  command to be mentioned as `irspec <cmd>`) and a line under `## Unreleased` in CHANGELOG.md;
+  update the roadmap's 1c to say what is done. Do NOT bump `__version__`, tag or release.
+- Code in a new module `src/irspec/preview.py`. Tests in `tests/test_preview.py` (unittest,
+  `PYTHONPATH=src python3 -m unittest discover -s tests`): golden strings for the ASCII output at a
+  small fixed width and height on the sample `tests/data/PHENACETIN_CRUDE_LR1-2.SPA` and on the
+  `.jdx` fixtures; the 80-column default when piped; `--json`; an unreadable file. Mutation-check
+  each test (break the code, see it fail, restore). Use only the sample data in `tests/data`.
+- Rules from CLAUDE.md apply: never `rm` with a wildcard, never type /Users/<name> paths, no pip
+  install into a system python (use a venv).
+
+Work on a new branch `claude/preview`, commit there (end commit messages with:
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>), push it, and open a pull request
+against main (end the description with: 🤖 Generated with [Claude Code](https://claude.com/claude-code)).
+Do not merge it. Report the PR URL and the test result in your final message.
+```
+
 ## The first prompt, as it was sent
 
 For the record: the template above filled in for `set`/`unset`/`show`. Its result is merged
