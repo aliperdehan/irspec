@@ -15,7 +15,7 @@ irspec session my_lab_folder/ --formats png,svg
 
 **Contents:** [Status](#status) · [What it does](#what-it-does-and-what-it-does-not) ·
 [Install](#install) · [Quick start](#quick-start) · [Inputs](#the-three-kinds-of-input) ·
-[Names](#names) · [CSV files](#csv-files) · [Manifest](#the-manifest) ·
+[Names](#names) · [CSV files](#csv-files) · [Manifest](#the-manifest) · [Editing](#editing-the-manifest-irspec-edit) ·
 [Pictures](#pictures-png-tiff-svg) · [Without TeX](#drawing-without-tex-matplotlib-and-r) ·
 [PDF build](#how-the-pdf-is-made) · [All commands](#the-other-commands) ·
 [Trust](#can-i-trust-the-output) · [Versioning](#versioning) · [Roadmap](#roadmap) ·
@@ -217,6 +217,40 @@ re-run: your edits stay, new files are appended, vanished files are dropped.
 | `check` | pictures only: the peak table printed under the SDBS plot, typed as `"3490:84,2977:6,…"`, for the digitiser's own cross-check |
 | `args` | pictures only: extra flags for `irspec digitize convert`, as a list. For a book figure: `["--palleros", "--x-ticks", "3500,3000,2500,2000,1500,1000", "--y-ends", "72.7:24.5"]`, with `check` set to the band positions printed under the troughs (`"3027.1,2948.8,..."`); those printed positions then become the peak labels, not the peak finder's |
 
+## Editing the manifest: `irspec edit`
+
+`irspec edit` changes `manifest.json` from the command line, so a script (or an AI agent)
+can do what you do in a text editor. It touches the manifest only; run `irspec session` on the
+folder afterwards to redraw (a re-run keeps what you set).
+
+```
+irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 set title="Phenacetin (crude)" ymin=-5
+irspec edit my_lab_folder/ SPA/PHENACETIN_CRUDE_LR1-2.SPA unset ymin
+irspec edit my_lab_folder/ show                 # every entry, as text
+irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
+```
+
+- **Which entry.** `FILE` is the entry's `file` value (`SPA/X.SPA`), or just its file name or
+  stem when only one entry has it; an ambiguous or unknown name is an error that lists the
+  candidates.
+- **Which keys.** `set` and `unset` take `title`, `axis`, `name` (text) and `ymin`, `ymax`,
+  `xmin`, `xmax`, `threshold`, `prominence`, `distance` (numbers, stored as JSON numbers; a
+  value that is not a number is refused). Any other key is an error naming the allowed ones.
+  `xmin`, `xmax` and `ymax` are stored but the drawing code does not read them yet; `peaks`
+  still has to be edited by hand.
+- **What it writes.** The file is replaced atomically (a temporary file in the same folder,
+  then a rename). Entries and keys keep their order, a new key goes last, and the file keeps
+  its layout (the one `session` writes, else its own indentation, line endings and final
+  newline). A command that changes nothing does not touch the file, so running it twice leaves
+  identical bytes; `unset` of a key that is not there is not an error.
+- **What it prints.** Each change as `key: old -> new`. With `--json`, exactly one object on
+  stdout, `{"file": "SPA/X.SPA", "changes": [{"key": "ymin", "old": -5, "new": -7}]}` (`old` is
+  `null` for a key that was not there, `new` is `null` after `unset`; unchanged keys are not
+  listed). `show --json` prints the entry as an object, or all entries as a list.
+- **Exit status.** 0 done; 2 the command cannot be carried out (unknown key, not a number, no
+  such entry); 1 `manifest.json` is missing or unreadable. Errors go to stderr. It never asks
+  anything.
+
 ## Pictures: PNG, TIFF, SVG
 
 `--formats` takes a comma-separated list. The pictures are made **from the figure
@@ -297,6 +331,7 @@ all you need. Each has its own `--help`.
 |---|---|---|
 | `irspec session DIR` | the whole thing above | `irspec session own-29.09/ --formats png` |
 | `irspec export PDF` | PNG/TIFF/SVG from a PDF | `irspec export fig.pdf --formats svg` |
+| `irspec edit DIR` | set or unset a manifest key, show the entries ([above](#editing-the-manifest-irspec-edit)) | `irspec edit own-29.09/ X set ymin=-5` |
 | `irspec plot DIR` | the figures drawn by matplotlib or R, no TeX | `irspec plot own-29.09/ --backend r --formats png` |
 | `irspec spa` | `.SPA` → CSVs and peaks; `batch` for several, `plot` for a legacy matplotlib PNG/SVG | `irspec spa convert run.SPA` |
 | `irspec jdx` | `.jdx` → CSVs, one file or a folder | `irspec jdx convert X.jdx --name X --out csv/X.csv --plain-out plain/X.csv` |
@@ -360,9 +395,10 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 ## Roadmap
 
-The first release is out (PyPI, public repository). Planned, in this order; none of it exists yet:
+The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset` and `show` exist so far:
 
-- **Editing from the command line** (`irspec edit`: add and remove peaks, set a title or a range),
+- **Editing from the command line** (`irspec edit set/unset/show` are in; still to come: add and
+  remove peaks, rename/remove/move, re-running the session for the figure),
   `--json` output and a written description of the manifest, so scripts and AI agents can drive
   everything a person can;
 - **A preview in the terminal** (`irspec preview`, `session --preview`): the spectrum drawn in
