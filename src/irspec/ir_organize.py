@@ -177,11 +177,12 @@ def build_manifest(folder, titles, sort):
 def resolve_peaks(x, y, e, axis, absorbance, auto_kwargs, gap):
     """Peaks for one spectrum as [(x, y, label_y)]. Manifest "peaks" wins:
     [x, label_y] pairs are used verbatim, bare numbers are snapped to the
-    nearest local band; otherwise auto-pick. Also (re)writes e["peaks"]."""
+    nearest local band; an empty list means none; no "peaks" key means auto-pick.
+    Also (re)writes e["peaks"]."""
     spec = e.get("peaks")
     if isinstance(spec, str):  # legacy comma string
         spec = [float(v) for v in spec.split(",") if v.strip()]
-    if spec:
+    if spec or isinstance(spec, list):  # [] is "no peaks" (irspec edit peak clear), not "pick"
         sign = 1.0 if absorbance else -1.0
         bare = [float(v) for v in spec if not isinstance(v, (list, tuple))]
         snapped = {}

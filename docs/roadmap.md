@@ -42,14 +42,20 @@ moves only if the manifest or `figures.json` format breaks; adding optional keys
 
 ### 1a. Editing: `irspec edit`
 
-**Done (Unreleased, `src/irspec/edit.py`, `tests/test_edit.py`):** `set KEY=VALUE ...`,
-`unset KEY ...` and `show [FILE] [--json]` on `manifest.json` only, for the keys `title`,
-`axis`, `name`, `ymin`, `ymax`, `xmin`, `xmax`, `threshold`, `prominence`, `distance`; atomic
-write, order and layout kept, idempotent, `--json` for the changes. **Not done:** `peak
-add/remove/auto/clear`, `rename`/`remove`/`move`, re-running the session for the figure
-(`--no-build`), and the per-figure `xmin`/`xmax`/`ymax` in the drawing code (the keys can be
-stored today, nothing reads them). The command listing below is the original design; the three
-done commands are exactly as written there.
+**Done (Unreleased, `src/irspec/edit.py`, `tests/test_edit.py`, `tests/test_edit_peaks.py`):**
+`set KEY=VALUE ...`, `unset KEY ...` and `show [FILE] [--json]` on `manifest.json` only, for the
+keys `title`, `axis`, `name`, `ymin`, `ymax`, `xmin`, `xmax`, `threshold`, `prominence`,
+`distance`; and `peak add X ...`, `peak remove X ...`, `peak clear`, `peak auto`. Atomic write,
+order and layout kept, idempotent, `--json` for the changes. The peak commands run `session`'s own
+peak code (`ir_organize._finish`/`resolve_peaks`, hence `find_peaks_manual`, `find_peaks_auto`,
+`assign_label_y`), so `peak auto` on a fresh session changes nothing and a following `session`
+keeps the edit; `remove` matches within 15 cm-1 (the snapping window). To make `clear` survive a
+re-run, `"peaks": []` now means "no peaks" in `resolve_peaks` (it used to be picked again).
+**Not done:** `rename`/`remove`/`move`, re-running the session for the figure (`--no-build`), a
+`--prominence` etc. override on `peak auto` (it uses the entry's keys; `set` them first), and the
+per-figure `xmin`/`xmax`/`ymax` in the drawing code (the keys can be stored today, nothing reads
+them). The command listing below is the original design; the done commands are exactly as written
+there.
 
 **Decided.** Today the manifest is edited by hand in a text editor, which is the only "edit"
 there is. It becomes commands (names provisional; `irspec peaks` is already the peak picker for a
