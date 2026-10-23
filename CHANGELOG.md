@@ -9,8 +9,18 @@ irspec follows the rules in the README's "Versioning" section. Newest first.
   editor (keys: `title`, `axis`, `name`, `ymin`, `ymax`, `xmin`, `xmax`, `threshold`,
   `prominence`, `distance`). Atomic write, order and layout kept, idempotent, prints the old and
   new value (`--json`: one object), errors on stderr with exit 2 (1 for a missing manifest).
-  First slice of roadmap item 1a; peak editing and re-running the session are not in it, and
+  First slice of roadmap item 1a; re-running the session is not in it, and
   `xmin`, `xmax` and `ymax` are stored but not yet read by the figures.
+- `irspec edit DIR FILE peak add X ...`, `peak remove X ...`, `peak clear` and `peak auto`:
+  second slice of roadmap item 1a. `add` snaps each wavenumber to the nearest local band
+  (`find_peaks_manual`, through the code `session` itself uses, so the label heights are
+  session's), `remove` takes out the stored peak nearest X within 15 cm-1, `clear` leaves none,
+  `auto` picks again with the entry's `threshold`/`prominence`/`distance` and replaces hand
+  edits, saying what it dropped. Same conventions as `set`/`unset` (atomic, idempotent, old ->
+  new, `--json`, exit 2/1); the spectrum is read as `session` reads it, exit 2 when there is none.
+- `"peaks": []` in the manifest now means "no peaks" (it used to be picked again by `session`,
+  as if the key were missing), so a cleared or emptied list survives a re-run. Delete the key to
+  pick again, as before.
 
 ## 0.1.0 (2026-10-16), the first release
 

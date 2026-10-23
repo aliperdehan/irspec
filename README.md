@@ -208,7 +208,7 @@ re-run: your edits stay, new files are appended, vanished files are dropped.
 |---|---|
 | `file` | path of the spectrum, relative to the folder (`SPA/…`, `jdx/…`, `img/…`) |
 | `title` | the caption under the figure, free text (`"Alcohol (stock)"` is fine). A new entry starts with the file's stem (an instrument spectrum), or with its compound name (`"METHYL_CINNAMATE_GAS"` gives "Methyl cinnamate gas"), or with the title inside the `.jdx`; change it here |
-| `peaks` | `[wavenumber, label_y]` pairs, as picked; edit, add or delete here. A bare number is snapped to the nearest local band. Delete the key to pick again |
+| `peaks` | `[wavenumber, label_y]` pairs, as picked; edit, add or delete here (or with `irspec edit … peak`). A bare number is snapped to the nearest local band. `[]` means no peaks. Delete the key to pick again |
 | `axis` | y-axis label (default `Transmittance %`) |
 | `ymin` | bottom of the y axis; the tool's suggestion is kept as it is, and may be negative for a strong band |
 | `threshold`, `prominence`, `distance` | peak-picking sensitivity overrides, for a band at the plot edge or noise taken for bands |
@@ -226,6 +226,10 @@ folder afterwards to redraw (a re-run keeps what you set).
 ```
 irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 set title="Phenacetin (crude)" ymin=-5
 irspec edit my_lab_folder/ SPA/PHENACETIN_CRUDE_LR1-2.SPA unset ymin
+irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 peak add 1720 3000    # snapped to the nearest band
+irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 peak remove 3253
+irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 peak clear            # no peaks at all
+irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 peak auto             # pick again, drop hand edits
 irspec edit my_lab_folder/ show                 # every entry, as text
 irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
 ```
@@ -236,8 +240,20 @@ irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
 - **Which keys.** `set` and `unset` take `title`, `axis`, `name` (text) and `ymin`, `ymax`,
   `xmin`, `xmax`, `threshold`, `prominence`, `distance` (numbers, stored as JSON numbers; a
   value that is not a number is refused). Any other key is an error naming the allowed ones.
-  `xmin`, `xmax` and `ymax` are stored but the drawing code does not read them yet; `peaks`
-  still has to be edited by hand.
+  `xmin`, `xmax` and `ymax` are stored but the drawing code does not read them yet.
+- **Peaks.** `peak add X ...` snaps each wavenumber to the nearest local band of that
+  spectrum (within 15 cm⁻¹) and adds it with the label height `session` gives a band named by
+  its wavenumber alone. `peak remove X ...` takes out the stored peak nearest X, if one is
+  within 15 cm⁻¹. `peak clear` leaves the figure with no peaks (`"peaks": []`). `peak auto`
+  picks again with the entry's `threshold`, `prominence` and `distance`, **replaces everything
+  stored, hand edits included**, and lists what it dropped. Each writes an explicit `peaks`
+  list, which `irspec session` keeps, so the redraw shows exactly these peaks. They start from
+  what the figure shows now (an entry with no `peaks` yet starts from the automatic list), a
+  peak already there or none near an X to remove changes nothing (a note goes to stderr, exit
+  0), and the changes print as `peak: old -> new` (`--json`: `{"key": "peak", "old": null,
+  "new": [1732.7, 93.6]}` for an added peak, the other way round for a removed one). The
+  spectrum is read as `session` reads it (an own `.SPA` from the file, a reference spectrum
+  from `plain/NAME.csv`); with no spectrum to read, exit 2.
 - **What it writes.** The file is replaced atomically (a temporary file in the same folder,
   then a rename). Entries and keys keep their order, a new key goes last, and the file keeps
   its layout (the one `session` writes, else its own indentation, line endings and final
@@ -395,10 +411,10 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 ## Roadmap
 
-The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset` and `show` exist so far:
+The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show` and `peak` exist so far:
 
-- **Editing from the command line** (`irspec edit set/unset/show` are in; still to come: add and
-  remove peaks, rename/remove/move, re-running the session for the figure),
+- **Editing from the command line** (`irspec edit set/unset/show/peak` are in; still to come: rename/remove/move,
+  re-running the session for the figure),
   `--json` output and a written description of the manifest, so scripts and AI agents can drive
   everything a person can;
 - **A preview in the terminal** (`irspec preview`, `session --preview`): the spectrum drawn in
