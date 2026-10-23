@@ -114,6 +114,17 @@ clicking, item 4. A curses editor would be a third way to do the same thing.
   Not fonts, exact label placement or tick spacing.
 - Test with golden strings on the sample `.SPA`; mutation-check.
 
+**Done (Unreleased, `src/irspec/preview.py`, `tests/test_preview.py`):** `irspec preview FILE
+[--width N] [--height N] [--ascii] [--json]` for one `.SPA`, `.jdx` or CSV: Braille on a UTF-8
+stdout, `. : * |` otherwise, the terminal's width on a terminal and 80 columns when piped, the x
+limits from `layout.XLIM` and the y limits from `layout.ylimits`, peaks and `ymin` from
+`ir_organize._finish` (session's own code) or from the file's manifest entry, a `.jdx` converted as
+session converts it (`tests/test_preview.py` pins the peaks of the three fixtures to the session's).
+**Not done:** `--stack` (several spectra), `--image`, `session --preview` / `--dry-run` for a
+whole folder before filing, a QUANT-IR file without a manifest entry (it needs `peak_a` or `cl`,
+as in the session), and a check of the Braille output on a real terminal (the tests pin the
+characters, not how a given terminal draws them).
+
 **Check first:** how `session` builds its figure list, so `--preview` hooks in before filing.
 
 ## 2. `\irspectrum` reads the instrument file itself

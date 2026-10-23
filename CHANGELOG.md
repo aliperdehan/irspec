@@ -4,6 +4,16 @@ irspec follows the rules in the README's "Versioning" section. Newest first.
 
 ## Unreleased
 
+- New `irspec preview FILE [--width N] [--height N] [--ascii] [--json]`: one spectrum (`.SPA`,
+  `.jdx` or CSV) printed as plain text, with the wavenumber axis from 4000 to 650 left to right,
+  the figure's y limits, the picked peaks marked and numbered, and a block with the detected axis
+  (and the absorbance to %T conversion of a `.jdx`), the points, the ranges and the peaks with
+  their label heights. Braille dots on a UTF-8 stdout, else (or with `--ascii`) `. : * |`; the
+  terminal's width on a terminal, 80 columns otherwise. The peaks and `ymin` come from
+  `irspec session`'s own code, and from the folder's `manifest.json` when the file is listed in
+  it, so the preview shows the edits of `irspec edit`. `--json` prints one object and no plot;
+  exit 2 with the reason on stderr for a file that cannot be read. First part of roadmap item 1c:
+  `--stack`, `session --preview` and `--image` are not in it. Nothing is written.
 - New `irspec edit`: `irspec edit DIR FILE set KEY=VALUE ...`, `irspec edit DIR FILE unset KEY ...`
   and `irspec edit DIR show [FILE] [--json]` change or show `manifest.json` without a text
   editor (keys: `title`, `axis`, `name`, `ymin`, `ymax`, `xmin`, `xmax`, `threshold`,
