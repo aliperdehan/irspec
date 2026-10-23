@@ -267,6 +267,71 @@ irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
   such entry); 1 `manifest.json` is missing or unreadable. Errors go to stderr. It never asks
   anything.
 
+## Looking at a spectrum in the terminal: `irspec preview`
+
+`irspec preview FILE` prints one spectrum as plain text, so you can see what the pipeline is
+going to do with it before anything is filed or built. `FILE` is a `.SPA`, a `.jdx` or a CSV.
+It reads the file and writes nothing.
+
+```
+irspec preview own-29.09/SPA/PHENACETIN_CRUDE_LR1-2.SPA
+irspec preview X.jdx --width 100 --height 24
+irspec preview X.jdx --ascii            # . : * | instead of Braille dots
+irspec preview X.jdx --json             # the numbers only, one object
+```
+
+```
+PHENACETIN_CRUDE_LR1-2.SPA  --  Transmittance % against wavenumber (cm-1)
+
+    |*********:........:***::**:::::::**|:   .:  . ..
+ 90 |          ** *****            Q    ||..|||:||||||.*
+    |           V  UTSR                 |N||**||*|**|||
+ 50 |                                   P *KIG*BA*75||1
+    |                                   O MJHFD 986 43
+ 20 |                                     L  EC      2
+    |
+-10 |
+    ++------+-------+------+-------+------+-------+-----
+     4,000        3,000  2,500   2,000  1,500        650
+
+axis:    Transmittance %
+points:  3734 (3474 between 650 and 4000 cm-1)
+peaks:   31 (picked automatically); wavenumber/label height
+  1 740.5/52.3   2 784.9/47.3   3 825.4/39.4
+  ...
+```
+
+- **The plot.** The wavenumber axis runs 4000 to 650 from left to right, as in the figures,
+  with intensity up; the trace is the part of the spectrum the figure shows, and the vertical
+  extent is the figure's (the same `ymin`, so the room the peak labels need is there too). Each
+  picked peak has a symbol (`1`-`9`, then `A`-`Z`, then `a`-`z`) under its band, or above it for an
+  absorbance spectrum, and the list under the plot gives its wavenumber and label height. A peak
+  with no free place near the curve is listed with `-` and is not marked.
+- **Characters.** Braille dots (2 x 4 per character) when stdout's encoding is UTF-8, else, or
+  with `--ascii`, `.` (low in its cell), `:` (middle), `*` (high) and `|` (a steep stretch).
+  Everything around the trace is ASCII either way.
+- **Width and height.** The terminal's width when stdout is a terminal, 80 columns when it is a
+  pipe or a log (the text is otherwise the same); `--width N` and `--height N` (rows of plot,
+  default 20) override both.
+- **What is shown is what a session would do.** The peaks, the label heights and the `ymin` come
+  from the code `irspec session` runs, and a `.jdx` is converted as the session converts it
+  (fractional %T times 100, an absorbance to %T, which the text says). If the file is listed in a
+  `manifest.json` in its folder or the folder above, that entry is used (its `peaks`,
+  `threshold`, `prominence`, `distance`, `axis`, `ymin`, and `peak_a` or `cl` for a QUANT-IR
+  file), so `irspec edit` followed by `irspec preview` shows the edit. Otherwise the peaks are the
+  automatic ones.
+- **`--json`** prints exactly one object and no plot: `file`, `kind` (`spa`, `jdx`, `csv`),
+  `axis`, `converted_from` (`"Absorbance"` or `null`), `points`, `range` (`x` and `y`, of
+  the figure's window for `y`), `ymin`, `peaks` (`[wavenumber, label_y]` pairs) and
+  `peaks_from` (`"automatic"` or `"manifest.json"`).
+- **Exit status.** 0 done; 2 when the file cannot be read or drawn (a missing file, a file that
+  is not what its name says, a QUANT-IR file with no `peak_a` or `cl` to scale it, a width below
+  30 or a height below 3); the reason is on stderr. It never asks anything.
+- **The limit.** The preview shows the shape, the ranges, the peak positions and which peaks are
+  marked. It does not show fonts, the exact place of the labels in the figure, or its tick
+  spacing. Several spectra at once (`--stack`) and a preview of a whole folder before filing
+  (`session --preview`) are not there yet.
+
 ## Pictures: PNG, TIFF, SVG
 
 `--formats` takes a comma-separated list. The pictures are made **from the figure
@@ -348,6 +413,7 @@ all you need. Each has its own `--help`.
 | `irspec session DIR` | the whole thing above | `irspec session own-29.09/ --formats png` |
 | `irspec export PDF` | PNG/TIFF/SVG from a PDF | `irspec export fig.pdf --formats svg` |
 | `irspec edit DIR` | set or unset a manifest key, show the entries ([above](#editing-the-manifest-irspec-edit)) | `irspec edit own-29.09/ X set ymin=-5` |
+| `irspec preview FILE` | one spectrum as text in the terminal, with its peaks ([above](#looking-at-a-spectrum-in-the-terminal-irspec-preview)) | `irspec preview own-29.09/SPA/X.SPA --ascii` |
 | `irspec plot DIR` | the figures drawn by matplotlib or R, no TeX | `irspec plot own-29.09/ --backend r --formats png` |
 | `irspec spa` | `.SPA` → CSVs and peaks; `batch` for several, `plot` for a legacy matplotlib PNG/SVG | `irspec spa convert run.SPA` |
 | `irspec jdx` | `.jdx` → CSVs, one file or a folder | `irspec jdx convert X.jdx --name X --out csv/X.csv --plain-out plain/X.csv` |
@@ -411,14 +477,15 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 ## Roadmap
 
-The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show` and `peak` exist so far:
+The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show` and `peak`, and `irspec preview FILE`, exist so far:
 
 - **Editing from the command line** (`irspec edit set/unset/show/peak` are in; still to come: rename/remove/move,
   re-running the session for the figure),
   `--json` output and a written description of the manifest, so scripts and AI agents can drive
   everything a person can;
-- **A preview in the terminal** (`irspec preview`, `session --preview`): the spectrum drawn in
-  text to the width of the terminal, with what the run is going to do;
+- **A preview in the terminal** (`irspec preview FILE` is in; still to come: `--stack` and
+  `session --preview` for a whole folder before filing): the spectrum drawn in text to the width
+  of the terminal, with what the run is going to do;
 - **`\irspectrum` reading `.SPA` and `.jdx` files directly** in LuaTeX, with automatic peaks
   and the x and y ranges chosen in the call, so a report needs no CSV;
 - optional **smoothing, baseline correction and band areas**, off by default, the raw data never
