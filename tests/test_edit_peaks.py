@@ -338,7 +338,7 @@ class SessionKeepsTheEdit(Base):
         figure = figures["figures"][0] if isinstance(figures, dict) else figures[0]
         self.assertEqual([list(p) for p in figure["peaks"]], edited)
         self.assertNotIn(740.5, [p[0] for p in figure["peaks"]])
-        md = next(self.dir.glob("*.md")).read_text(encoding="utf-8")
+        md = (self.dir / "ir_session.md").read_text(encoding="utf-8")
         label = next(p[1] for p in edited if p[0] == 1732.7)
         self.assertIn(f"1732.7/{label}", md.replace(" ", ""))
         self.assertNotIn("740.5/", md)
