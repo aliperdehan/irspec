@@ -95,6 +95,12 @@ CI (`test.yml`): Linux and macOS, Python 3.9 and 3.13; tests that need lualatex,
 MuPDF skip themselves, so a green CI does not cover the TeX/R paths: run the suite locally with the
 tools installed before releasing.
 
+## Where the plans are
+
+`docs/roadmap.md`: decided-but-unbuilt work (terminal preview, a Lua reader so `\irspectrum` takes
+`.SPA`/`.jdx`, optional processing, a Mac app) with the order, the rules, and what to check first.
+Read it before starting any of those; update it in the same commit as the code.
+
 ## Where the history is
 
 `CHANGELOG.md` (user-facing), `PROVENANCE.md` (the oracle), git tags `legacy-oracle` (last commit

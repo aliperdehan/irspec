@@ -13,6 +13,14 @@ lists and report-quality figures (PDF, PNG, TIFF, SVG) back.
 irspec session my_lab_folder/ --formats png,svg
 ```
 
+**Contents:** [Status](#status) · [What it does](#what-it-does-and-what-it-does-not) ·
+[Install](#install) · [Quick start](#quick-start) · [Inputs](#the-three-kinds-of-input) ·
+[Names](#names) · [CSV files](#csv-files) · [Manifest](#the-manifest) ·
+[Pictures](#pictures-png-tiff-svg) · [Without TeX](#drawing-without-tex-matplotlib-and-r) ·
+[PDF build](#how-the-pdf-is-made) · [All commands](#the-other-commands) ·
+[Trust](#can-i-trust-the-output) · [Versioning](#versioning) · [Roadmap](#roadmap) ·
+[Development](#development) · [Licence](#licence)
+
 ## Status
 
 **Alpha, version 0.1.0.** The command line and the folder layout below work and are
@@ -112,6 +120,18 @@ The base name `ir_...` is `ir_<dd-mm>` when the folder's name contains a date
 (`own-29.09` gives `ir_29-09`), else `ir_` and the folder's name.
 `--md-name NAME` chooses it yourself.
 
+### Options of `irspec session`
+
+| Option | Meaning |
+|---|---|
+| `--dry-run` | print the file moves and stop |
+| `--build auto\|pdfmd\|latex\|none` | how the PDF is made (`--no-pdf` is `none`); the run says which build it used, see [How the PDF is made](#how-the-pdf-is-made) |
+| `--pdfmd PATH` | the `pdfmd` to use (otherwise `$PDFMD`, else `pdfmd` on the PATH) |
+| `--sort time\|name` | order of new files (modification time by default) |
+| `--title STEM=TITLE` | set a caption from the command line (repeatable) |
+| `--md-name NAME` | base name of the `.md`/`.tex`/`.pdf` |
+| `--formats LIST`, `--dpi N` | also write PNG/TIFF/SVG, see [Pictures](#pictures-png-tiff-svg) |
+
 ## The three kinds of input
 
 | Source | Goes in | What happens |
@@ -196,11 +216,6 @@ re-run: your edits stay, new files are appended, vanished files are dropped.
 | `peak_a`, `cl` | QUANT-IR files only, see above |
 | `check` | pictures only: the peak table printed under the SDBS plot, typed as `"3490:84,2977:6,…"`, for the digitiser's own cross-check |
 | `args` | pictures only: extra flags for `irspec digitize convert`, as a list. For a book figure: `["--palleros", "--x-ticks", "3500,3000,2500,2000,1500,1000", "--y-ends", "72.7:24.5"]`, with `check` set to the band positions printed under the troughs (`"3027.1,2948.8,..."`); those printed positions then become the peak labels, not the peak finder's |
-
-Other options of `irspec session`: `--sort time|name` (order of new files; modification
-time by default), `--title STEM=TITLE` (repeatable), `--dry-run` (print the file
-moves and stop), `--build auto|pdfmd|latex|none` (`--no-pdf` is `none`), `--pdfmd PATH`
-(otherwise `$PDFMD`, else `pdfmd` on the PATH). The run says which of the two builds it used.
 
 ## Pictures: PNG, TIFF, SVG
 
@@ -345,11 +360,24 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 ## Roadmap
 
-- 1.0 when the command line, the manifest and the figure format have settled;
-- PyPI (`pip install irspec`) and a public repository.
+The first release is out (PyPI, public repository). Planned, in this order; none of it exists yet:
 
-Out of scope: MS, NMR, GC and TLC tools, and anything that extracts figures from
-copyrighted books.
+- **Editing from the command line** (`irspec edit`: add and remove peaks, set a title or a range),
+  `--json` output and a written description of the manifest, so scripts and AI agents can drive
+  everything a person can;
+- **A preview in the terminal** (`irspec preview`, `session --preview`): the spectrum drawn in
+  text to the width of the terminal, with what the run is going to do;
+- **`\irspectrum` reading `.SPA` and `.jdx` files directly** in LuaTeX, with automatic peaks
+  and the x and y ranges chosen in the call, so a report needs no CSV;
+- optional **smoothing, baseline correction and band areas**, off by default, the raw data never
+  changed;
+- **1.0** when the command line, the manifest and the figure format have settled;
+- perhaps a small **Mac app** over the same commands, built from this repository (`app/`).
+
+The reasons and the design are in [`docs/roadmap.md`](docs/roadmap.md).
+
+Out of scope: MS, NMR, GC and TLC tools, identifying compounds, and anything that extracts figures
+from copyrighted books.
 
 ## Development
 
