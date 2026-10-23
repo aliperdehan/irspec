@@ -2,6 +2,7 @@
 
     irspec session DIR [--build auto|pdfmd|latex|none] [--sort time|name]
                        [--title STEM=TITLE ...] [--md-name NAME] [--dry-run]
+                       [--preview [--width N] [--height N] [--ascii] [--json]]
                        [--formats png,tiff,svg,svg-text] [--dpi 300]
 
 It does for NIST WebBook files and SDBS pictures what ir_organize.py already
@@ -147,11 +148,12 @@ def spectra_on_disk(folder):
     return out
 
 
-def default_title(folder, rel, entry=None):
+def default_title(folder, rel, entry=None, path=None):
     """The title a NEW entry starts with (edit it in manifest.json): an own .SPA spectrum has
     its file stem; a reference spectrum has its compound name from cas_names.json
     ("METHYL_CINNAMATE_GAS" -> "Methyl cinnamate gas"), else the title inside the .jdx
-    (WebBook's "METHANOL" -> "Methanol"), else the stem."""
+    (WebBook's "METHANOL" -> "Methanol"), else the stem. `path` is where the file is now when
+    it is not yet at folder/rel (--preview, before filing)."""
     stem = spa_tool.clean_stem(rel)
     if rel.startswith("SPA/"):
         return stem
@@ -160,7 +162,8 @@ def default_title(folder, rel, entry=None):
         return name.replace("_", " ").capitalize()
     if rel.lower().endswith(_io.JDX_EXT):
         try:
-            title = (jdx_tool.read_jdx(os.path.join(folder, rel))[2].get("title") or "").strip()
+            title = (jdx_tool.read_jdx(path or os.path.join(folder, rel))[2].get("title")
+                     or "").strip()
         except Exception:  # an unreadable file is reported when it is processed, not here
             title = ""
         if title:
@@ -168,9 +171,12 @@ def default_title(folder, rel, entry=None):
     return stem
 
 
-def build_manifest(folder, titles, sort):
+def build_manifest(folder, titles, sort, planned=None):
     """ir_organize.build_manifest with img/ added: existing entries keep their
-    order, titles and overrides, new files are appended, vanished ones dropped."""
+    order, titles and overrides, new files are appended, vanished ones dropped.
+    `planned` ({"SPA/x.SPA": current path}) lists files that are not filed yet but will be
+    (--preview): they count as on disk, and are read from where they are."""
+    planned = planned or {}
     mpath = os.path.join(folder, "manifest.json")
     old = []
     if os.path.exists(mpath):
@@ -182,7 +188,7 @@ def build_manifest(folder, titles, sort):
         m = re.search(r"(?:^|/)((?:SPA|jdx|img)/[^/]+)$", p)
         return m.group(1) if m else p
 
-    disk = set(spectra_on_disk(folder))
+    disk = set(spectra_on_disk(folder)) | set(planned)
     entries, seen = [], set()
     for e in old:
         r = rel(_io.entry_file(e) or "")
@@ -190,15 +196,16 @@ def build_manifest(folder, titles, sort):
             e = {k: v for k, v in e.items() if k not in ("spa", "jdx")}
             e["file"] = r
             if not e.get("title"):  # a hand-written entry (just "file" and "name") gets one too
-                e["title"] = default_title(folder, r, e)
+                e["title"] = default_title(folder, r, e, planned.get(r))
             entries.append(e)
             seen.add(r)
     new = sorted(disk - seen)
     if sort == "time":
-        new.sort(key=lambda r: (os.path.getmtime(os.path.join(folder, r)), r))
+        new.sort(key=lambda r: (os.path.getmtime(planned.get(r) or os.path.join(folder, r)), r))
     for r in new:
         stem = spa_tool.clean_stem(r)
-        entries.append({"file": r, "title": titles.get(stem) or default_title(folder, r)})
+        entries.append({"file": r, "title": titles.get(stem)
+                        or default_title(folder, r, path=planned.get(r))})
     for e in entries:
         stem = spa_tool.clean_stem(_io.entry_file(e))
         if stem in titles:
@@ -341,6 +348,105 @@ def build_latex(folder, base, figures):
     return pdf
 
 
+def move_line(folder, src, dst, dry_run):
+    return (f"{'would move' if dry_run else 'moved'}: "
+            f"{os.path.relpath(src, folder)} -> {os.path.relpath(dst, folder)}")
+
+
+# -----------------------------------------------------------------------------
+# --preview: what a run would do with every spectrum, written nowhere
+# -----------------------------------------------------------------------------
+def _rel(folder, path):
+    return os.path.relpath(path, folder).replace(os.sep, "/")
+
+
+def planned_names(folder, e):
+    """(name, csv, plain) a spectrum's CSVs get, relative to the folder, as `process` writes them."""
+    if e["file"].startswith("SPA/"):
+        stem = spa_tool.clean_stem(e["file"])
+        return stem, f"csv/{stem}.csv", f"plain/{stem}_plain.csv"
+    name = reference_name(folder, e)
+    return name, f"csv/{name}.csv", f"plain/{name}.csv"
+
+
+def preview_folder(folder, titles, sort, width, height, braille, as_json):
+    """The planned moves (as --dry-run prints them), then for every spectrum the preview of
+    `irspec preview`, headed by where it will be filed. Writes nothing. Returns the exit status:
+    0, or 1 when a spectrum could not be read (the others are still shown); a folder that is not
+    one, or has no spectra, exits 2."""
+    from . import preview as pv
+
+    def stop(msg):
+        print(f"irspec session: {msg}", file=sys.stderr)
+        sys.exit(2)
+
+    folder = os.path.abspath(folder)
+    if not os.path.isdir(folder):
+        stop(f"not a directory: {folder}")
+    if width < pv.MIN_WIDTH:
+        stop(f"--width must be at least {pv.MIN_WIDTH} (got {width})")
+    if height < pv.MIN_HEIGHT:
+        stop(f"--height must be at least {pv.MIN_HEIGHT} (got {height})")
+    moves = organize(folder, dry_run=True)
+    planned = {}
+    for src, dst in moves:
+        r = _rel(folder, dst)
+        if r.startswith(("SPA/", "jdx/")):
+            planned[r] = src
+    mpath = os.path.join(folder, "manifest.json")
+    listed = set()
+    try:
+        if os.path.exists(mpath):
+            with open(mpath, encoding="utf-8") as f:
+                listed = {_io.entry_file(e) for e in json.load(f)}
+        entries = build_manifest(folder, titles, sort, planned)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as err:
+        stop(f"manifest.json cannot be used ({str(err) or type(err).__name__})")
+    if not entries:
+        stop("no spectra found (SPA/, jdx/ or img/)")
+
+    spectra, images, blocks, failed = [], [], [], False
+    for e in entries:
+        rel = e["file"]
+        name, csv, plain = planned_names(folder, e)
+        if rel.lower().endswith(IMG_EXT):
+            images.append({"file": rel, "name": name, "csv": csv, "plain": plain,
+                           "note": "digitized by `irspec session`, not drawn here"})
+            continue
+        src = planned.get(rel) or os.path.join(folder, rel)
+        head = {"will_be_filed_as": rel, "title": e.get("title"), "csv": csv, "plain": plain}
+        try:
+            info = pv.work_out_entry(src, e, mpath if rel in listed else None)
+            info["file"] = _rel(folder, src)
+            record = {**pv.public(info), **head}
+            text = "" if as_json else pv.render(info, width, height, braille)
+        except pv.PreviewError as err:
+            failed = True
+            reason = str(err).replace(src, _rel(folder, src))   # not the absolute path
+            record = {"file": _rel(folder, src), **head, "error": reason}
+            text = f"error:   {reason}\n"
+        spectra.append(record)
+        where = f"now {_rel(folder, src)}" if rel in planned else "already there"
+        blocks.append(f"=== {rel}  ({where}) ===\ntitle:   {head['title']}\n"
+                      f"csv:     {csv}\nplain:   {plain}\n\n{text}")
+    if as_json:
+        print(json.dumps({"moves": [{"from": _rel(folder, a), "to": _rel(folder, b)}
+                                    for a, b in moves],
+                          "spectra": spectra, "images": images}, ensure_ascii=False))
+        return 1 if failed else 0
+    for src, dst in moves:
+        print(move_line(folder, src, dst, True))
+    for b in blocks:
+        print(b)
+    if images:
+        print("=== pictures: digitized by `irspec session`, not drawn here ===")
+        for im in images:
+            print(f"{im['file']}  ->  {im['csv']}, {im['plain']}")
+        print()
+    print("preview only: nothing was written.")
+    return 1 if failed else 0
+
+
 def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=False, pdfmd=None,
         formats=(), dpi=300):
     """Process one folder; returns the list of Figure. Prints what it does."""
@@ -349,8 +455,7 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
         raise SessionError(f"not a directory: {folder}")
     moves = organize(folder, dry_run)
     for src, dst in moves:
-        print(f"{'would move' if dry_run else 'moved'}: "
-              f"{os.path.relpath(src, folder)} -> {os.path.relpath(dst, folder)}")
+        print(move_line(folder, src, dst, dry_run))
     if dry_run:
         return []
     entries = build_manifest(folder, titles or {}, sort)
@@ -407,6 +512,17 @@ def main(argv=None):
     ap.add_argument("--title", action="append", default=[], metavar="STEM=TITLE")
     ap.add_argument("--md-name", default=None, help="output basename (default ir_<dd-mm>)")
     ap.add_argument("--dry-run", action="store_true", help="print the planned file moves, stop")
+    ap.add_argument("--preview", action="store_true",
+                    help="--dry-run, and then each spectrum drawn as text as `irspec preview` "
+                         "does, headed by the name and folder it will get; writes nothing "
+                         "(with --dry-run it means the same). Takes --width, --height, --ascii, "
+                         "--json; --build, --formats and --dpi are ignored")
+    ap.add_argument("--width", type=int, metavar="N", help="--preview: columns (default: the "
+                    "terminal's width, or 80 when piped)")
+    ap.add_argument("--height", type=int, metavar="N", help="--preview: rows of plot (default 20)")
+    ap.add_argument("--ascii", action="store_true", help="--preview: . : * | instead of Braille")
+    ap.add_argument("--json", action="store_true", help="--preview: one JSON object "
+                    "{moves, spectra, images} on stdout and no plot")
     ap.add_argument("--pdfmd", default=None)
     ap.add_argument("--formats", default="", metavar="LIST",
                     help="also write one picture per spectrum into DIR/figures/, from the PDF: "
@@ -419,6 +535,16 @@ def main(argv=None):
             raise SessionError(f"--title needs STEM=TITLE, got {t!r}")
         k, v = t.split("=", 1)
         titles[k] = v
+    if a.preview:
+        from . import preview as pv
+        sys.exit(preview_folder(
+            a.folder, titles, a.sort,
+            a.width if a.width is not None else pv.default_width(),
+            a.height if a.height is not None else pv.DEFAULT_HEIGHT,
+            pv.utf8_stdout() and not a.ascii, a.json))
+    for flag in ("width", "height", "ascii", "json"):
+        if getattr(a, flag) not in (None, False):
+            ap.error(f"--{flag} goes with --preview")
     run(a.folder, "none" if a.no_pdf else a.build, a.sort, titles, a.md_name, a.dry_run, a.pdfmd,
         export.parse_formats(a.formats), a.dpi)
 

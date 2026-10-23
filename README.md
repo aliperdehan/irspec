@@ -125,6 +125,7 @@ The base name `ir_...` is `ir_<dd-mm>` when the folder's name contains a date
 | Option | Meaning |
 |---|---|
 | `--dry-run` | print the file moves and stop |
+| `--preview` | `--dry-run`, and then every spectrum drawn as text with its peaks and the names it will get; writes nothing, see [Preview a whole folder](#preview-a-whole-folder-before-filing) (takes `--width`, `--height`, `--ascii`, `--json` as `irspec preview` does) |
 | `--build auto\|pdfmd\|latex\|none` | how the PDF is made (`--no-pdf` is `none`); the run says which build it used, see [How the PDF is made](#how-the-pdf-is-made) |
 | `--pdfmd PATH` | the `pdfmd` to use (otherwise `$PDFMD`, else `pdfmd` on the PATH) |
 | `--sort time\|name` | order of new files (modification time by default) |
@@ -329,8 +330,34 @@ peaks:   31 (picked automatically); wavenumber/label height
   30 or a height below 3); the reason is on stderr. It never asks anything.
 - **The limit.** The preview shows the shape, the ranges, the peak positions and which peaks are
   marked. It does not show fonts, the exact place of the labels in the figure, or its tick
-  spacing. Several spectra at once (`--stack`) and a preview of a whole folder before filing
-  (`session --preview`) are not there yet.
+  spacing. Several spectra at once (`--stack`) is not there yet.
+
+### Preview a whole folder before filing
+
+```
+irspec session DIR --preview [--width N] [--height N] [--ascii] [--json] [--title STEM=TITLE]
+```
+
+A dry run that shows more than `--dry-run`: it prints the planned file moves exactly as
+`--dry-run` does, then, for every spectrum in `DIR` (loose, or already in `SPA/` and `jdx/`), the
+same text `irspec preview` prints, headed by the place and the names the file will get (`title`,
+`csv/...`, `plain/...`, as `irspec session` would give them). **It writes nothing**: no folder,
+no `manifest.json`, `figures.json`, `.md`, `.tex` or `.pdf`, and no file is moved. A loose file
+is read from where it lies.
+
+- An existing `manifest.json` is respected as `irspec preview` does (its peaks and titles win),
+  and `--title STEM=TITLE` is honoured in the header. `--dry-run` together with `--preview` means
+  the same as `--preview`; `--build`, `--formats` and `--dpi` are ignored.
+- Pictures (`img/`) are listed with the names they will get and a note that `irspec session`
+  digitizes them; they are not drawn here.
+- `--json` prints exactly one object and nothing else on stdout:
+  `{"moves": [{"from", "to"}, ...], "spectra": [...], "images": [...]}`. Each spectrum is what
+  `irspec preview --json` prints for it (with `file` relative to `DIR`, where the file is now) plus
+  `will_be_filed_as` (e.g. `"SPA/RUN3.SPA"`), `title`, `csv` and `plain`; a spectrum that could not
+  be read has `file`, those four keys and `error`.
+- **Exit status.** 0 done; 1 when one or more spectra could not be read (each is listed with its
+  error and the others are still shown); 2 when `DIR` is not a folder, has no spectra, its
+  `manifest.json` cannot be used, or `--width`/`--height` are too small. The reason is on stderr.
 
 ## Pictures: PNG, TIFF, SVG
 
@@ -477,15 +504,15 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 ## Roadmap
 
-The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show` and `peak`, and `irspec preview FILE`, exist so far:
+The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show` and `peak`, `irspec preview FILE` and `irspec session --preview`, exist so far:
 
 - **Editing from the command line** (`irspec edit set/unset/show/peak` are in; still to come: rename/remove/move,
   re-running the session for the figure),
   `--json` output and a written description of the manifest, so scripts and AI agents can drive
   everything a person can;
-- **A preview in the terminal** (`irspec preview FILE` is in; still to come: `--stack` and
-  `session --preview` for a whole folder before filing): the spectrum drawn in text to the width
-  of the terminal, with what the run is going to do;
+- **A preview in the terminal** (`irspec preview FILE` and `irspec session --preview` are in; still
+  to come: `--stack`): the spectrum drawn in text to the width of the terminal, with what the run
+  is going to do;
 - **`\irspectrum` reading `.SPA` and `.jdx` files directly** in LuaTeX, with automatic peaks
   and the x and y ranges chosen in the call, so a report needs no CSV;
 - optional **smoothing, baseline correction and band areas**, off by default, the raw data never

@@ -120,12 +120,21 @@ stdout, `. : * |` otherwise, the terminal's width on a terminal and 80 columns w
 limits from `layout.XLIM` and the y limits from `layout.ylimits`, peaks and `ymin` from
 `ir_organize._finish` (session's own code) or from the file's manifest entry, a `.jdx` converted as
 session converts it (`tests/test_preview.py` pins the peaks of the three fixtures to the session's).
-**Not done:** `--stack` (several spectra), `--image`, `session --preview` / `--dry-run` for a
-whole folder before filing, a QUANT-IR file without a manifest entry (it needs `peak_a` or `cl`,
-as in the session), and a check of the Braille output on a real terminal (the tests pin the
-characters, not how a given terminal draws them).
-
-**Check first:** how `session` builds its figure list, so `--preview` hooks in before filing.
+**Done too (Unreleased, `session.preview_folder`, `tests/test_session_preview.py`):** `irspec
+session DIR --preview [--width N] [--height N] [--ascii] [--json]` prints the planned moves as
+`--dry-run` does, then for every spectrum in the folder (loose, or filed in `SPA/`/`jdx/`) the
+`irspec preview` text, headed by the title, `csv/` and `plain/` names it will get; `img/` pictures
+are listed, not drawn. It writes nothing (a test compares the tree, sizes and mtimes, before and
+after). The planning is `session.organize(dry_run=True)` and `session.build_manifest(..., planned)`
+(which now accepts files not yet filed), the drawing is `preview.work_out_entry` / `render`, so a
+file is read from where it lies and shows the peaks the session will write (a test runs the real
+session afterwards and compares the peaks and `ymin` in `manifest.json` and `figures.json`).
+`--json` prints `{"moves", "spectra", "images"}`; exit 1 when a spectrum cannot be read, 2 for a
+folder that is not one or has none.
+**Not done:** `--stack` (several spectra), `--image`, a QUANT-IR file without a manifest entry (it
+needs `peak_a` or `cl`, as in the session; `--preview` lists it with that error and exits 1), and a
+check of the Braille output on a real terminal (the tests pin the characters, not how a given
+terminal draws them).
 
 ## 2. `\irspectrum` reads the instrument file itself
 
