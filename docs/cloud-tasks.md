@@ -6,7 +6,7 @@ cloud agent, what to copy from it, and the prompt for the next slice. Written 20
 ## What worked
 
 - **A slice that fits one pull request**: one new module, its tests, README and CHANGELOG lines.
-  The first one took about 15 minutes and 107k agent tokens; 33 mutations of `edit.py`, 40 new
+  The first one took about 15 minutes and 107k agent tokens (see "What it cost"); 33 mutations of `edit.py`, 40 new
   tests, CI green on Linux and macOS, Python 3.9 and 3.13.
 - **Everything the agent needs is in the pushed repo**: the prompt says "read `CLAUDE.md` and
   `docs/roadmap.md` first", so push the roadmap before launching. A cloud session clones from
@@ -18,12 +18,20 @@ cloud agent, what to copy from it, and the prompt for the next slice. Written 20
 - **Merge as a rebase** (`gh pr merge N --rebase`): `main` stays linear, the commit keeps its
   message.
 
-## What is not known
+## What it cost
 
-Whether a cloud run counts against the plan's usage or the bonus credits. One trial (2026-10-23):
-the credit counter did not move, the usage bar went 16% to 18% while another session was running
-in parallel, so the 2 points cannot be attributed. Weak evidence for "plan usage, not bonus
-credits". A clean test needs everything else idle.
+Two runs, read by the author from the account's counters (2026-10-23):
+
+| Run | Agent tokens | Counter |
+|-----|--------------|---------|
+| `set`/`unset`/`show` (PR #1) | 107k | credit unchanged; plan usage bar 16% to 18%, unattributable (another session ran in parallel) |
+| `peak add/remove/clear/auto` (PR #2) | about 150k | credit balance 48 to 47 (dollars of a 100 allowance), about $1 |
+
+So a slice of this size costs about a dollar of the credit balance; the first run's change was
+too small to see. What the bonus credits cover versus the plan's usage is still not confirmed
+from the account's own documentation. A slice is also not free of review: PR #2 arrived with a
+mistake in one test (it read the first `*.md` in a folder copied from a template, which finds a
+stale file), found because CI ran red on every job. Read the CI result before merging.
 
 ## Template: a prompt that works
 
