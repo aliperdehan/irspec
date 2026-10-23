@@ -4,6 +4,14 @@ irspec follows the rules in the README's "Versioning" section. Newest first.
 
 ## Unreleased
 
+- New `irspec session DIR --preview [--width N] [--height N] [--ascii] [--json]`: the planned file
+  moves exactly as `--dry-run` prints them, then every spectrum in the folder (loose, or already in
+  `SPA/` and `jdx/`) drawn as `irspec preview` draws it, headed by the title, `csv/` and `plain/`
+  names the file will get; pictures in `img/` are listed, not drawn. It writes nothing (no folder,
+  manifest, figure list, report or moved file). An existing `manifest.json` and `--title` are
+  honoured. `--json` prints one object `{"moves", "spectra", "images"}`; exit 1 when a spectrum
+  could not be read (it is listed with its error, the others are shown), 2 for a folder that is
+  not one or has no spectra. Second part of roadmap item 1c; `--stack` and `--image` are not in it.
 - New `irspec preview FILE [--width N] [--height N] [--ascii] [--json]`: one spectrum (`.SPA`,
   `.jdx` or CSV) printed as plain text, with the wavenumber axis from 4000 to 650 left to right,
   the figure's y limits, the picked peaks marked and numbered, and a block with the detected axis

@@ -150,8 +150,15 @@ def read_spectrum(path, entry):
 
 def work_out(path):
     """Everything the preview shows, as a dict (the --json object plus the arrays)."""
-    from . import ir_organize as _io
     entry, mpath = find_manifest_entry(path)
+    return work_out_entry(path, entry, mpath)
+
+
+def work_out_entry(path, entry, mpath):
+    """work_out with the manifest entry given (None for none) and the manifest it came from, for
+    a caller that already knows them, such as `irspec session --preview`, which previews a file
+    from where it will be filed."""
+    from . import ir_organize as _io
     x, y, axis, absorbance, kind, converted = read_spectrum(path, entry)
     probe = dict(entry) if entry else {}
     from_manifest = bool(entry and "peaks" in entry)
@@ -339,6 +346,11 @@ def draw(info, width, height, braille):
     return [ln.rstrip() for ln in out], symbols
 
 
+def public(info):
+    """The --json object: info without the arrays and flags the drawing needs."""
+    return {k: v for k, v in info.items() if not k.startswith("_")}
+
+
 def pack(items, width, indent="  "):
     """Items laid out in columns that fit `width`."""
     w = max(len(s) for s in items) + 2
@@ -421,8 +433,7 @@ def main(argv=None):
             raise PreviewError(f"--height must be at least {MIN_HEIGHT} (got {height})")
         info = work_out(args.file)
         if args.json:
-            print(json.dumps({k: v for k, v in info.items() if not k.startswith("_")},
-                             ensure_ascii=False))
+            print(json.dumps(public(info), ensure_ascii=False))
         else:
             text = render(info, width, height, utf8_stdout() and not args.ascii)
             sys.stdout.write(text)
