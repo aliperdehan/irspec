@@ -214,6 +214,67 @@ against main (end the description with: 🤖 Generated with [Claude Code](https:
 Do not merge it. Report the PR URL and the test result in your final message.
 ```
 
+## Next slice: `irspec edit move` and `remove` (roadmap 1a, third part)
+
+After `irspec session --preview` (PR #4). Only the manifest-only commands: `rename` is `set name=`
+(already there), and the re-run of the session (`--no-build`) is a later slice.
+
+```
+Repository: github.com/aliperdehan/irspec (Python package `irspec`, MIT, public). Read `CLAUDE.md`,
+`docs/roadmap.md` (section "1a. Editing" and the Principles), the README, and `src/irspec/edit.py`
+with `tests/test_edit.py` and `tests/test_edit_peaks.py` (already merged: `set`, `unset`, `show`,
+`peak ...`) first, then do ONE small slice: two more subcommands of `irspec edit`.
+
+  irspec edit DIR FILE move --to POSITION
+  irspec edit DIR FILE remove
+
+`move` puts FILE's entry at POSITION in manifest.json (1 = first; `last` is allowed; a number
+past the end means last; below 1 is exit 2), keeping every other entry's order. Moving an entry
+to where it already is changes nothing (idempotent, says so). The figures in the PDF follow the
+manifest order, so this is how a spectrum is moved in the report.
+
+`remove` takes the entry out of manifest.json AND moves its spectrum file to `DIR/removed/`
+(same name; the folder is created). Nothing is deleted, so the user can put it back. Reason: a
+file left in SPA/, jdx/ or img/ is added to the manifest again by the next `session` run
+(`session.build_manifest` appends every file on disk that the manifest lacks), while `removed/` is
+not scanned by `session.spectra_on_disk` or `session.organize` (check this in the code and add a
+test: after `remove`, a `session` run does not bring the spectrum back, and does not file
+`removed/` into `other/`). The files `csv/NAME.csv` and `plain/...` that `session` made for it are
+left alone. If `removed/NAME` already exists, exit 2 and change nothing (never overwrite). The
+`peaks`, titles and other keys of the removed entry are not kept anywhere; `--json` prints the
+whole removed entry so the user can restore it by hand.
+
+Do NOT implement `rename` (it is `set name=`), `--no-build`, re-running the session, `restore`,
+batch removal of several FILEs, or any other roadmap item.
+
+Requirements:
+- FILE is matched exactly as the existing subcommands do (reuse their lookup, same exit codes:
+  2 when the command cannot be carried out, 1 for a missing or broken manifest). Atomic write of
+  manifest.json (the existing helper), order and layout of the other entries untouched. For
+  `remove`, write the manifest first and move the file second; if the move fails, restore the
+  manifest and exit 2 with the reason.
+- `--json` prints exactly one object like the other subcommands do (old and new position for
+  `move`; the removed entry and its new path for `remove`) and nothing else on stdout.
+- Register nothing new in `cli.py` if `edit` already dispatches subcommands; otherwise follow its
+  pattern. README: add both to the `irspec edit` section. A line under `## Unreleased` in
+  CHANGELOG.md; update the roadmap's 1a ("Done / Not done"). Do NOT bump `__version__`, tag or
+  release.
+- Tests in `tests/test_edit_move_remove.py` (unittest): a session folder made from the sample
+  `tests/data/PHENACETIN_CRUDE_LR1-2.SPA` and the `.jdx` fixtures (see how
+  `tests/test_edit_peaks.py` builds one; remember `default_md_name` names the markdown after the
+  folder, so never `glob("*.md")`). Cover: move first/middle/last/past the end/0, already there;
+  remove then `session` again (spectrum stays out, `removed/` not filed); name collision in
+  `removed/`; unknown FILE; broken manifest; `--json`. Mutation-check each test (break the code,
+  see it fail, restore). Use only sample data in `tests/data`.
+- Rules from CLAUDE.md apply: never `rm` with a wildcard, never type /Users/<name> paths, no pip
+  install into a system python (use a venv).
+
+Work on a new branch `claude/edit-move-remove`, commit there (end commit messages with:
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>), push it, and open a pull request
+against main (end the description with: 🤖 Generated with [Claude Code](https://claude.com/claude-code)).
+Do not merge it. Report the PR URL and the test result in your final message.
+```
+
 ## The first prompt, as it was sent
 
 For the record: the template above filled in for `set`/`unset`/`show`. Its result is merged
@@ -227,9 +288,9 @@ Each is one pull request and independent of the others, in the order the roadmap
 
 1. Per-figure `xmin`/`xmax`/`ymax` read by the Python, matplotlib and R drawing code
    (`layout.XLIM` becomes per-figure). Needs R and a TeX build to check, so review locally.
-2. `rename`/`remove`/`move` and `--no-build` (re-run the session for that figure).
+2. `edit --no-build`'s counterpart: re-run the session for that figure after an edit
+   (`move`/`remove` is the slice above; `rename` is `set name=`).
 3. `--json` on `session`, `peaks` and `show`, and the written schema (roadmap 1b).
-4. `irspec preview` (roadmap 1c): stdlib only, the width from `shutil.get_terminal_size()`.
 
 Items 2a/2b (the trace macro, the Lua reader) touch the private `nulabreport`, which a cloud
 session cannot reach: do those locally.
