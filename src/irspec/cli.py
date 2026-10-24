@@ -3,7 +3,7 @@
     irspec session DIR      a folder of spectra -> CSVs, peaks, figure PDF
     irspec export PDF ...   PNG/TIFF/SVG pictures from a figure PDF
     irspec plot DIR ...     the figures drawn by matplotlib or R, no TeX needed
-    irspec edit DIR ...     change or show manifest.json (set/unset a key, peak add/remove, show)
+    irspec edit DIR ...     change or show manifest.json (set/unset a key, peak add/remove, move, remove, show)
     irspec preview FILE     one spectrum drawn as text, with its peaks
     irspec spa ...          OMNIC .SPA -> CSVs, peaks, legacy plots   (spa_tool)
     irspec jdx ...          JCAMP-DX -> CSVs                          (jdx_tool)

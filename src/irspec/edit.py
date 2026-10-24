@@ -6,6 +6,8 @@
     irspec edit DIR FILE peak remove X [X ...]
     irspec edit DIR FILE peak clear
     irspec edit DIR FILE peak auto
+    irspec edit DIR FILE move --to POSITION
+    irspec edit DIR FILE remove
     irspec edit DIR show [FILE] [--json]
 
 DIR is a session folder (the one holding manifest.json). FILE names one
@@ -34,8 +36,23 @@ means no peaks). They are worked out from what `session` would draw now: an entr
 from its plain/ CSV; with none of them, exit 2. A peak already
 there, or none near an X to remove, changes nothing and is not an error.
 
-It changes manifest.json and nothing else; it does not re-run the session, so
-run `irspec session DIR` afterwards to redraw (a re-run keeps what is edited).
+Order and removal. `move --to POSITION` puts the entry at POSITION in manifest.json (1 is first,
+`last` is allowed, a number past the end means last, below 1 is exit 2) and keeps the order of
+all the others; the figures follow the manifest order. Moving an entry to where it is changes
+nothing. `remove` takes the entry out of manifest.json and moves its spectrum file to
+DIR/removed/ (same name; the folder is created; nothing is deleted, put the file back to
+restore it). A file left in SPA/, jdx/ or img/ would be listed again by the next `session` run;
+`removed/` is not scanned by it, and not filed into other/. csv/ and plain/ files made for the
+spectrum stay where they are. If removed/NAME already exists, nothing is changed and the exit
+status is 2 (a file is never overwritten). The manifest is written first and the file moved
+second; if the move fails the manifest is put back. The removed entry (its peaks, title, ...) is
+kept nowhere else: with --json it is printed whole. A manifest entry whose file is no longer
+on disk is just taken out. {"file", "removed": <entry>, "moved_to": "removed/NAME" or null}.
+`move --json` prints the changes with key "position" ({"key": "position", "old": 3, "new": 1},
+no change listed when it is already there).
+
+It changes manifest.json (and, for `remove`, moves one file) and nothing else; it does not re-run
+the session, so run `irspec session DIR` afterwards to redraw (a re-run keeps what is edited).
 The write is atomic (a temporary file in the same folder, then a rename), the
 order of the entries and of each entry's keys is kept, a new key goes last, and
 the file keeps its layout: the layout `irspec session` writes (one key per line,
@@ -60,6 +77,7 @@ import json
 import math
 import os
 import re
+import shutil
 import struct
 import sys
 import tempfile
@@ -70,6 +88,7 @@ ALLOWED_KEYS = ("title", "axis", "ymin", "ymax", "xmin", "xmax",
                 "threshold", "prominence", "distance", "name")
 
 PEAK_ACTIONS = ("add", "remove", "clear", "auto")
+REMOVED_DIR = "removed"  # where `remove` puts the spectrum; session never scans it
 PEAK_TOLERANCE = 15.0  # cm-1: the window find_peaks_manual snaps within, and `remove` matches within
 
 _NUMBER = re.compile(r"^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$")
@@ -457,7 +476,8 @@ def edit(folder, name, verb, items):
     elif verb == "peak":
         plan = parse_peak_args(items)
     else:
-        raise EditError(f"unknown action {verb!r}; use set, unset or peak (or: irspec edit DIR show)")
+        raise EditError(f"unknown action {verb!r}; use set, unset, peak, move or remove "
+                        f"(or: irspec edit DIR show)")
     entries, text = read_manifest(folder)
     i = find_entry(entries, name)
     entry = entries[i]
@@ -468,6 +488,81 @@ def edit(folder, name, verb, items):
     if changes:
         write_atomic(manifest_path(folder), serialize(entries, text))
     return entry_file(entry), changes
+
+
+def parse_position(text):
+    """`--to` value -> an int >= 1, or "last"."""
+    if text is None:
+        raise EditError("move needs --to POSITION (1 is first, or last)")
+    s = text.strip()
+    if s.lower() == "last":
+        return "last"
+    if not _INT.match(s):
+        raise EditError(f"--to needs a whole number or 'last', got {text!r}")
+    value = int(s)
+    if value < 1:
+        raise EditError(f"--to must be 1 or more (1 is first), got {value}")
+    return value
+
+
+def move_entry(folder, name, to):
+    """Put the entry `name` at position `to` (1-based, or "last"). Returns (file, changes, position)."""
+    target = parse_position(to)
+    entries, text = read_manifest(folder)
+    i = find_entry(entries, name)
+    new = len(entries) if target == "last" else min(target, len(entries))
+    changes = []
+    if new - 1 != i:
+        entries.insert(new - 1, entries.pop(i))
+        changes.append({"key": "position", "old": i + 1, "new": new})
+        write_atomic(manifest_path(folder), serialize(entries, text))
+    return entry_file(entries[new - 1]), changes, new
+
+
+def _disk_path(folder, f):
+    """Where the entry's file is, if it is a file inside `folder`; else None. A path from another
+    machine is matched on its SPA/, jdx/ or img/ tail, as `session` does."""
+    p = f.replace("\\", "/")
+    m = re.search(r"(?:^|/)((?:SPA|jdx|img)/[^/]+)$", p)
+    path = os.path.join(folder, m.group(1) if m else p)
+    root = os.path.realpath(folder)
+    real = os.path.realpath(path)
+    if os.path.commonpath([root, real]) != root or not os.path.isfile(path):
+        return None
+    return path
+
+
+def remove_entry(folder, name):
+    """Take the entry `name` out of manifest.json and move its file to DIR/removed/.
+    Returns (file, entry, moved_to); moved_to is "removed/NAME", or None if the file was not there."""
+    entries, text = read_manifest(folder)
+    i = find_entry(entries, name)
+    entry = entries[i]
+    f = entry_file(entry)
+    src = _disk_path(folder, f)
+    dst = None
+    if src is not None:
+        dst = os.path.join(folder, REMOVED_DIR, os.path.basename(src))
+        if os.path.lexists(dst):
+            raise EditError(f"{REMOVED_DIR}/{os.path.basename(src)} already exists; nothing was "
+                            f"changed (move or rename it first)")
+    del entries[i]
+    write_atomic(manifest_path(folder), serialize(entries, text))
+    if src is None:
+        return f, entry, None
+    try:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.move(src, dst)
+    except OSError as e:
+        try:
+            write_atomic(manifest_path(folder), text)
+        except OSError as e2:
+            raise EditError(f"could not move {f} to {REMOVED_DIR}/ ({e.strerror or e}) and could "
+                            f"not put manifest.json back ({e2.strerror or e2}); the entry "
+                            f"{json.dumps(entry, ensure_ascii=False)} is missing from it")
+        raise EditError(f"could not move {f} to {REMOVED_DIR}/ ({e.strerror or e}); "
+                        f"manifest.json is as it was")
+    return f, entry, f"{REMOVED_DIR}/{os.path.basename(dst)}"
 
 
 def show(folder, name=None):
@@ -483,19 +578,26 @@ def build_parser():
               "       irspec edit DIR FILE unset KEY [KEY ...]\n"
               "       irspec edit DIR FILE peak add|remove X [X ...]\n"
               "       irspec edit DIR FILE peak clear|auto\n"
+              "       irspec edit DIR FILE move --to POSITION\n"
+              "       irspec edit DIR FILE remove\n"
               "       irspec edit DIR show [FILE] [--json]",
         description="Change or show a session's manifest.json. Keys: " + ", ".join(ALLOWED_KEYS)
                     + ". FILE is an entry's \"file\" value, or its file name or stem if that is "
                       "unambiguous. `peak` snaps, removes, clears or re-picks the entry's peaks (`peak auto` "
-                      "replaces hand edits). Changes manifest.json only; run `irspec session DIR` to redraw.",
+                      "replaces hand edits). `move --to POSITION` reorders the entry (1 is first, or 'last'); "
+                      "`remove` takes it out of the manifest and moves its file to DIR/removed/. "
+                      "Changes manifest.json only (and that one file); run `irspec session DIR` to redraw.",
         epilog="Exit status: 0 done; 2 the command cannot be carried out; 1 manifest.json missing "
                "or unreadable.")
     p.add_argument("dir", metavar="DIR", help="the session folder (holds manifest.json)")
     p.add_argument("rest", nargs="*", metavar="FILE ACTION ...",
                    help="FILE set KEY=VALUE ... | FILE unset KEY ... | "
-                        "FILE peak add|remove X ... | FILE peak clear|auto | show [FILE]")
+                        "FILE peak add|remove X ... | FILE peak clear|auto | FILE move --to POSITION | "
+                        "FILE remove | show [FILE]")
+    p.add_argument("--to", metavar="POSITION", default=None,
+                   help="move: the new position of the entry (1 is first, or 'last')")
     p.add_argument("--json", action="store_true",
-                   help="print one JSON object (set/unset) or the entries (show) on stdout")
+                   help="print one JSON object (set/unset/peak/move/remove) or the entries (show) on stdout")
     return p
 
 
@@ -525,7 +627,35 @@ def main(argv=None):
                     print("(no entries)")
             return 0
         if len(rest) < 2:
-            raise EditError("expected: irspec edit DIR FILE set|unset|peak ...  or  irspec edit DIR show [FILE]")
+            raise EditError("expected: irspec edit DIR FILE set|unset|peak|move|remove ...  "
+                            "or  irspec edit DIR show [FILE]")
+        if args.to is not None and rest[1] != "move":
+            raise EditError("--to goes with move only")
+        if rest[1] == "move":
+            if rest[2:]:
+                raise EditError("move takes no arguments but --to POSITION")
+            file, changes, position = move_entry(args.dir, rest[0], args.to)
+            if args.json:
+                print(json.dumps({"file": file, "changes": changes}, ensure_ascii=False))
+            elif changes:
+                print(format_changes(file, changes))
+            else:
+                print(f"{file}: no change (already at position {position})")
+            return 0
+        if rest[1] == "remove":
+            if rest[2:]:
+                raise EditError("remove takes no arguments")
+            file, entry, moved_to = remove_entry(args.dir, rest[0])
+            if args.json:
+                print(json.dumps({"file": file, "removed": entry, "moved_to": moved_to},
+                                 ensure_ascii=False))
+            else:
+                print(f"{file}: removed from manifest.json")
+                print(f"  moved to {moved_to}" if moved_to else
+                      "  (no such file on disk; only the manifest entry was removed)")
+                print("  csv/ and plain/ files made for it are left in place; "
+                      "run `irspec session` to redraw")
+            return 0
         file, changes = edit(args.dir, rest[0], rest[1], rest[2:])
         if args.json:
             print(json.dumps({"file": file, "changes": changes}, ensure_ascii=False))

@@ -231,6 +231,9 @@ irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 peak add 1720 3000    # snappe
 irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 peak remove 3253
 irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 peak clear            # no peaks at all
 irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 peak auto             # pick again, drop hand edits
+irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 move --to 1           # first figure in the report
+irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 move --to last
+irspec edit my_lab_folder/ 62-44-2-IR remove                            # out of the manifest, file to removed/
 irspec edit my_lab_folder/ show                 # every entry, as text
 irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
 ```
@@ -255,6 +258,19 @@ irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
   "new": [1732.7, 93.6]}` for an added peak, the other way round for a removed one). The
   spectrum is read as `session` reads it (an own `.SPA` from the file, a reference spectrum
   from `plain/NAME.csv`); with no spectrum to read, exit 2.
+- **Order and removal.** `move --to POSITION` puts the entry at that place in `manifest.json`
+  (1 is first, `last` is allowed, a number past the end means last, below 1 is exit 2) and
+  keeps the order of all the others; the figures in the report follow the manifest order. An
+  entry already there is left alone (`--json`: `{"file": ..., "changes": [{"key": "position",
+  "old": 3, "new": 1}]}`, with `changes` empty when nothing moved). `remove` takes the entry out
+  of `manifest.json` **and moves its spectrum file to `removed/`** (same name; the folder is
+  created). Nothing is deleted: put the file back to restore it. The move is needed because a
+  file left in `SPA/`, `jdx/` or `img/` is listed again by the next `irspec session`, while
+  `removed/` is not looked at, nor filed into `other/`. The `csv/` and `plain/` files made for
+  it stay where they are. If `removed/NAME` already exists, nothing is changed and the exit
+  status is 2 (a file is never overwritten). The entry's own `peaks`, title and other keys are
+  kept nowhere else; `--json` prints the whole entry (`{"file", "removed": {...}, "moved_to":
+  "removed/NAME"}`) so you can paste it back. Run `irspec session` afterwards to redraw.
 - **What it writes.** The file is replaced atomically (a temporary file in the same folder,
   then a rename). Entries and keys keep their order, a new key goes last, and the file keeps
   its layout (the one `session` writes, else its own indentation, line endings and final
@@ -439,7 +455,7 @@ all you need. Each has its own `--help`.
 |---|---|---|
 | `irspec session DIR` | the whole thing above | `irspec session own-29.09/ --formats png` |
 | `irspec export PDF` | PNG/TIFF/SVG from a PDF | `irspec export fig.pdf --formats svg` |
-| `irspec edit DIR` | set or unset a manifest key, show the entries ([above](#editing-the-manifest-irspec-edit)) | `irspec edit own-29.09/ X set ymin=-5` |
+| `irspec edit DIR` | set or unset a manifest key, edit peaks, reorder or remove an entry, show the entries ([above](#editing-the-manifest-irspec-edit)) | `irspec edit own-29.09/ X set ymin=-5` |
 | `irspec preview FILE` | one spectrum as text in the terminal, with its peaks ([above](#looking-at-a-spectrum-in-the-terminal-irspec-preview)) | `irspec preview own-29.09/SPA/X.SPA --ascii` |
 | `irspec plot DIR` | the figures drawn by matplotlib or R, no TeX | `irspec plot own-29.09/ --backend r --formats png` |
 | `irspec spa` | `.SPA` → CSVs and peaks; `batch` for several, `plot` for a legacy matplotlib PNG/SVG | `irspec spa convert run.SPA` |
@@ -504,9 +520,9 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 ## Roadmap
 
-The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show` and `peak`, `irspec preview FILE` and `irspec session --preview`, exist so far:
+The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show`, `peak`, `move` and `remove`, `irspec preview FILE` and `irspec session --preview`, exist so far:
 
-- **Editing from the command line** (`irspec edit set/unset/show/peak` are in; still to come: rename/remove/move,
+- **Editing from the command line** (`irspec edit set/unset/show/peak/move/remove` are in; `rename` is `set name=`; still to come:
   re-running the session for the figure),
   `--json` output and a written description of the manifest, so scripts and AI agents can drive
   everything a person can;

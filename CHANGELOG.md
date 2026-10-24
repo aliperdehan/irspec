@@ -4,6 +4,15 @@ irspec follows the rules in the README's "Versioning" section. Newest first.
 
 ## Unreleased
 
+- New `irspec edit DIR FILE move --to POSITION` and `irspec edit DIR FILE remove`. `move` puts the
+  entry at POSITION in `manifest.json` (1 first, `last`, a number past the end means last, below
+  1 is exit 2) and keeps the order of the others, so the figures move in the report; already
+  there changes nothing. `remove` takes the entry out of the manifest and moves its spectrum
+  file to `DIR/removed/` (never deleted, never overwritten: a name already there is exit 2 and
+  changes nothing; the manifest is put back if the move fails), which `session` does not scan,
+  so the next run does not list the spectrum again. `csv/` and `plain/` copies stay. `--json`
+  prints the position change, or the whole removed entry and its new path. Third part of roadmap
+  item 1a; `rename` is `set name=`, and re-running the session (`--no-build`) is not in it.
 - New `irspec session DIR --preview [--width N] [--height N] [--ascii] [--json]`: the planned file
   moves exactly as `--dry-run` prints them, then every spectrum in the folder (loose, or already in
   `SPA/` and `jdx/`) drawn as `irspec preview` draws it, headed by the title, `csv/` and `plain/`

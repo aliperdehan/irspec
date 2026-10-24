@@ -42,7 +42,7 @@ moves only if the manifest or `figures.json` format breaks; adding optional keys
 
 ### 1a. Editing: `irspec edit`
 
-**Done (Unreleased, `src/irspec/edit.py`, `tests/test_edit.py`, `tests/test_edit_peaks.py`):**
+**Done (Unreleased, `src/irspec/edit.py`, `tests/test_edit.py`, `tests/test_edit_peaks.py`, `tests/test_edit_move_remove.py`):**
 `set KEY=VALUE ...`, `unset KEY ...` and `show [FILE] [--json]` on `manifest.json` only, for the
 keys `title`, `axis`, `name`, `ymin`, `ymax`, `xmin`, `xmax`, `threshold`, `prominence`,
 `distance`; and `peak add X ...`, `peak remove X ...`, `peak clear`, `peak auto`. Atomic write,
@@ -51,7 +51,12 @@ peak code (`ir_organize._finish`/`resolve_peaks`, hence `find_peaks_manual`, `fi
 `assign_label_y`), so `peak auto` on a fresh session changes nothing and a following `session`
 keeps the edit; `remove` matches within 15 cm-1 (the snapping window). To make `clear` survive a
 re-run, `"peaks": []` now means "no peaks" in `resolve_peaks` (it used to be picked again).
-**Not done:** `rename`/`remove`/`move`, re-running the session for the figure (`--no-build`), a
+`move --to POSITION` (1, `last`, past the end = last, below 1 is exit 2; idempotent) reorders the
+entries, hence the figures; `remove` takes the entry out and moves its file to `DIR/removed/`
+(never deleted or overwritten, manifest written first and restored if the move fails; `session`
+scans only `SPA/`, `jdx/`, `img/` and files at the top level, so `removed/` is left alone and the
+spectrum does not come back). `rename` is `set name=`.
+**Not done:** re-running the session for the figure (`--no-build`), `restore`, a
 `--prominence` etc. override on `peak auto` (it uses the entry's keys; `set` them first), and the
 per-figure `xmin`/`xmax`/`ymax` in the drawing code (the keys can be stored today, nothing reads
 them). The command listing below is the original design; the done commands are exactly as written
