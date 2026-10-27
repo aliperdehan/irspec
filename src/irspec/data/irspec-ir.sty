@@ -1,10 +1,10 @@
 % =============================================================================
 % irspec-ir.sty -- GENERATED, do not edit.
-% An excerpt of nulabreport.sty v1.28.20 (2026/10/24): the figure macros
+% An excerpt of nulabreport.sty v1.28.21 (2026/10/27): the figure macros
 % \irspectrum, \irspectrumstack, \irspectrumoverlay, \irspectrumcompare,
 % \irspectrumpage, \labplot and friends, cut out at the `irspec-excerpt'
 % markers by nulabreport's dependencies/make-irspec-excerpt.py.
-% Content sha256 prefix e0aa9d7f8093.
+% Content sha256 prefix 2fa882fdadf9.
 %
 % THE FULL PACKAGE IS THE REFERENCE. This excerpt may lag behind it and may
 % not render identically. When nulabreport.sty is installed, prefer it:
@@ -13,8 +13,8 @@
 % Supported \labsetup keys here: furniture (ignored), captions.
 % =============================================================================
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{irspec-ir}[2026/10/24 excerpt of nulabreport v1.28.20]
-\PackageInfo{irspec-ir}{Using the bundled excerpt of nulabreport v1.28.20, not the full package}
+\ProvidesPackage{irspec-ir}[2026/10/27 excerpt of nulabreport v1.28.21]
+\PackageInfo{irspec-ir}{Using the bundled excerpt of nulabreport v1.28.21, not the full package}
 \RequirePackage{keyval}
 \RequirePackage{xcolor}
 \RequirePackage{etoolbox}
@@ -517,14 +517,51 @@
 % ir: the exact keys \irspectrum/\irspectrumstack hardcoded up to v1.18.1
 % (moved here unchanged; the pixel diff in docs/CHANGELOG.md v1.19.0
 % confirms they still render identically).
+% v1.28.21: no negative y tick LABEL when the plotted data has no negative value.
+% A row of peak labels hanging below the trough makes the author set ymin below
+% zero (ymin=-20), and the tick at -20 then read as a transmittance of -20 %T that
+% the spectrum never reaches. The tick MARK stays; only its number is dropped, and
+% only when the lowest y of the TRACE (not the axis limit, which is the ymin just
+% set, and not the label marks) is >= 0, so a spectrum that does dip below zero
+% keeps its negative labels. The trace minimum is recorded by a `filter point' on
+% an invisible second \addplot of the trace's data (\Lab@tracemin, only for kinds
+% that define \Lab@tracemin@<kind>) into \Lab@ir@trmin, which `nulab ir reset'
+% empties at the start of every axis or panel; with an empty (unrecorded) minimum
+% every label is printed.
+\def\Lab@ir@trmin{}
+\newcommand{\Lab@ir@track}{%
+  \pgfmathfloatparsenumber{\pgfkeysvalueof{/data point/y}}%  fixed or float in, float out
+  \pgfmathfloattofixed{\pgfmathresult}%
+  \let\Lab@ir@y\pgfmathresult
+  \ifx\Lab@ir@trmin\@empty
+    \xdef\Lab@ir@trmin{\Lab@ir@y}%
+  \else
+    \ifdim\Lab@ir@y pt<\Lab@ir@trmin pt \xdef\Lab@ir@trmin{\Lab@ir@y}\fi
+  \fi}
+\newif\ifLab@ir@hide
+\newcommand{\Lab@ir@yticklabel}{%
+  \Lab@ir@hidefalse
+  \ifx\Lab@ir@trmin\@empty\else
+    \ifdim\tick pt<0pt \ifdim\Lab@ir@trmin pt<0pt \else\Lab@ir@hidetrue\fi\fi
+  \fi
+  \ifLab@ir@hide\else\axisdefaultticklabel\fi}
 \labdefineplotkind{ir}{wavenumber}{intensity}{trough}{%
   x dir=reverse, xmin=650, xmax=4000,
   enlarge y limits={upper=0.08,lower=0.15},
+  nulab ir reset, yticklabel={\Lab@ir@yticklabel},
   xlabel={Wavenumber / cm\textsuperscript{-1}},
   axis lines=box, tick align=outside,
   xtick={4000,3500,3000,2500,2000,1500,1000},
   minor x tick num=4,
 }
+\pgfplotsset{nulab ir reset/.code={\gdef\Lab@ir@trmin{}}}
+% The recording plot: the trace's data again, invisible, so the visible trace keeps
+% pgfplots' Lua backend (a TeX filter on it would switch that off and move its
+% anti-aliasing by a grey level). Same data, so the axis bounds are unchanged.
+\def\Lab@tracemin@ir#1{%
+  \addplot[draw=none, forget plot, filter point/.code={\Lab@ir@track}]
+    table[nulab kind ir table,col sep=comma] {#1};}
+\newcommand{\Lab@tracemin}[2]{\ifcsname Lab@tracemin@#1\endcsname\csname Lab@tracemin@#1\endcsname{#2}\fi}
 % Extra keys for a kind when it is drawn as a stack (\labstack and
 % everything built on it), empty unless a kind sets them (v1.20.0).
 % ir: every panel's y label at ONE fixed distance from the axis line. By
@@ -894,6 +931,7 @@
       #2,
     ]
     \addplot[color=\Lab@tc, line join=round] table[nulab kind #1 table,col sep=comma] {#3};
+    \Lab@tracemin{#1}{#3}
     \Lab@inintegrals
     \csname Lab@kind@#1@peaks\endcsname{#4}
     \Lab@inmarks
@@ -918,6 +956,7 @@
     #4,
   ]
   \addplot[color=\Lab@tc, line join=round] table[nulab kind #1 table,col sep=comma] {#3};
+  \Lab@tracemin{#1}{#3}
   \csname Lab@kind@#1@peaks\endcsname{#5}
   \end{axis}%
 }
@@ -1191,9 +1230,11 @@
 %   panels' colours were swapped).
 \newcommand{\Lab@stackpanel}[4]{%
   \nextgroupplot[#4]
+  \gdef\Lab@ir@trmin{}% a stack's kind keys are read once, so each panel resets its own trace minimum
   \Lab@pickstd
   \expanded{\noexpand\addplot[color=\Lab@tc, line join=round]}
     table[nulab kind #1 table,col sep=comma] {#2};
+  \Lab@tracemin{#1}{#2}
   \csname Lab@kind@#1@peaks\endcsname{#3}}
 \newcommand{\Lab@stack@groupplot}[3]{%
     \begin{groupplot}[
@@ -1242,6 +1283,7 @@
   \Lab@ovpick{\the\Lab@ov@i}%
   \expanded{\noexpand\addplot[color=\Lab@tc, line join=round]}
     table[nulab kind #1 table,col sep=comma] {#2};
+  \Lab@tracemin{#1}{#2}
   \csname Lab@kind@#1@peaks\endcsname{#3}}
 \newcommand{\Lab@overlaybody}[3]{%
   \global\Lab@ov@i\z@ \gdef\Lab@ov@axis{}%
