@@ -1,10 +1,10 @@
 % =============================================================================
 % irspec-ir.sty -- GENERATED, do not edit.
-% An excerpt of nulabreport.sty v1.28.22 (2026/10/27): the figure macros
+% An excerpt of nulabreport.sty v1.28.29 (2026/10/31): the figure macros
 % \irspectrum, \irspectrumstack, \irspectrumoverlay, \irspectrumcompare,
 % \irspectrumpage, \labplot and friends, cut out at the `irspec-excerpt'
 % markers by nulabreport's dependencies/make-irspec-excerpt.py.
-% Content sha256 prefix 2fa882fdadf9.
+% Content sha256 prefix 9c1fe9890cfc.
 %
 % THE FULL PACKAGE IS THE REFERENCE. This excerpt may lag behind it and may
 % not render identically. When nulabreport.sty is installed, prefer it:
@@ -13,8 +13,8 @@
 % Supported \labsetup keys here: furniture (ignored), captions.
 % =============================================================================
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{irspec-ir}[2026/10/27 excerpt of nulabreport v1.28.22]
-\PackageInfo{irspec-ir}{Using the bundled excerpt of nulabreport v1.28.22, not the full package}
+\ProvidesPackage{irspec-ir}[2026/10/31 excerpt of nulabreport v1.28.29]
+\PackageInfo{irspec-ir}{Using the bundled excerpt of nulabreport v1.28.29, not the full package}
 \RequirePackage{keyval}
 \RequirePackage{xcolor}
 \RequirePackage{etoolbox}
@@ -963,6 +963,77 @@
 % Internal: [none] -> non-floating, anything else -> a float with that
 % placement. The line breaks (spaces) around #2 reproduce exactly what
 % \irspectrum's two inline copies of this had, so nothing moves.
+%
+% [H] with a float already waiting (v1.28.29): a [t] stack that did not fit
+% is carried to the top of the next page, which cuts that page's room; an [H]
+% figure (with its heading, which LaTeX will not part from it) that is taller
+% than what is left then has no legal break before it, and the page ships
+% overfull, the figure's axis label and caption over the footer (found in
+% LR_sample_plots: Figure 7's stack, then a section heading and the titration
+% plot; \tracingpages: goal 688 pt -> 260 pt, the block 323 pt, "Overfull
+% \vbox (53 pt too high)"). \@deferlist is non-empty whenever a float waits,
+% but a waiting float alone is harmless (the [H] figure still fits the page it
+% is on, and it is placed before the floats), so [H] becomes [t], with a
+% warning, only when BOTH hold: the figure and its caption do not fit what is
+% left of the current page, and, at the top of the next page, behind the
+% floats that page will take from the waiting ones, they would not fit either.
+% Nothing waiting (always the case in landscape): [H] as before. The placement is typed out in each branch: a
+% float option in [..] is not expanded (see \irspectrumcompare).
+\newif\ifLab@hdemote
+\newif\ifLab@hstop
+\newdimen\Lab@hd
+\newdimen\Lab@hh
+% The height the plot will take, read from the call's own `height=` (the
+% default is the 14.5 x 9.5 cm of \Lab@plotbody), plus 12 pt for the x axis
+% label and two lines for the caption. Estimated, not measured: drawing the
+% plot into a box to measure it changes where the waiting floats land (seen
+% in LR_sample_plots: Figure 5 came out before Figure 4). A stack's height is
+% set by its budget, not a `height=` here, so it is under-estimated, which
+% leaves the old [H] behaviour.
+\ExplSyntaxOn
+\cs_new_protected:Npn \Lab@hestimate #1
+  {
+    \tl_set:Nx \l_tmpa_tl { \tl_to_str:n { #1 } }
+    \regex_extract_once:nVNTF
+      { height \s* = \s* ( [0-9.]+ \s* (cm|mm|pt|in|bp) ) }
+      \l_tmpa_tl \l_tmpa_seq
+      { \dim_set:Nn \Lab@hh { \seq_item:Nn \l_tmpa_seq { 2 } } }
+      { \dim_set:Nn \Lab@hh { 9.5cm } }
+    \dim_add:Nn \Lab@hh { 12pt + 2 \baselineskip }
+  }
+\ExplSyntaxOff
+\newcommand{\Lab@hcheck}[1]{%
+  \global\Lab@hdemotefalse
+  \ifx\@deferlist\@empty\else
+    \begingroup
+      \Lab@hestimate{#1}%
+      % the room the next page gives the waiting floats: its top area is
+      % capped by \topfraction and by 1 - \textfraction (as \Lab@stackbody's
+      % budget is), and the first float that does not fit stops the queue
+      \@tempdima=\topfraction\textheight
+      \@tempdimb=\dimexpr\textheight-\textfraction\textheight\relax
+      \ifdim\@tempdimb<\@tempdima \@tempdima=\@tempdimb \fi
+      \Lab@hd=\z@
+      \Lab@hstopfalse
+      \def\@elt##1{%
+        \ifLab@hstop\else
+          \@tempdimb=\dimexpr\Lab@hd+\ht##1+\dp##1\relax
+          \ifdim\@tempdimb>\@tempdima
+            \Lab@hstoptrue
+          \else
+            \Lab@hd=\dimexpr\@tempdimb+\textfloatsep\relax
+          \fi
+        \fi}%
+      \@deferlist
+      \dimen@=\ifdim\pagegoal<\maxdimen\pagegoal\else\@colroom\fi
+      \advance\dimen@-\pagetotal
+      \ifdim\Lab@hh>\dimen@
+        \ifdim\dimexpr\Lab@hh+\Lab@hd\relax>\textheight
+          \global\Lab@hdemotetrue
+        \fi
+      \fi
+    \endgroup
+  \fi}
 \newcommand{\Lab@placeplot}[3]{%
   \ifstrequal{#1}{none}{%
     \begin{center}
@@ -970,11 +1041,32 @@
     \captionof{figure}{#3}
     \end{center}
   }{%
-    \begin{figure}[#1]
-    \centering
-    #2
-    \Lab@figcaption{#3}
-    \end{figure}%
+    \ifstrequal{#1}{H}{%
+      \Lab@hcheck{#2}%
+      \ifLab@hdemote
+        \PackageWarning{nulabreport}{A plot placed [H] would not fit the
+          page it falls on, behind a float that is waiting for a page; placing
+          it [t] instead, so the page does not overflow. Use [none] to keep
+          a plot at this spot}%
+        \begin{figure}[t]
+        \centering
+        #2
+        \Lab@figcaption{#3}
+        \end{figure}%
+      \else
+        \begin{figure}[H]
+        \centering
+        #2
+        \Lab@figcaption{#3}
+        \end{figure}%
+      \fi
+    }{%
+      \begin{figure}[#1]
+      \centering
+      #2
+      \Lab@figcaption{#3}
+      \end{figure}%
+    }%
   }%
 }
 % \labplot[kind=..., pgfplots keys][placement]{csv}{peaks}{caption}
