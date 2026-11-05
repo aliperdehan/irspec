@@ -1,10 +1,10 @@
 % =============================================================================
 % irspec-ir.sty -- GENERATED, do not edit.
-% An excerpt of nulabreport.sty v1.29.2 (2026/10/31): the figure macros
+% An excerpt of nulabreport.sty v1.31.0 (2026/11/05): the figure macros
 % \irspectrum, \irspectrumstack, \irspectrumoverlay, \irspectrumcompare,
 % \irspectrumpage, \labplot and friends, cut out at the `irspec-excerpt'
 % markers by nulabreport's dependencies/make-irspec-excerpt.py.
-% Content sha256 prefix 9c1fe9890cfc.
+% Content sha256 prefix aad2e5a5c506.
 %
 % THE FULL PACKAGE IS THE REFERENCE. This excerpt may lag behind it and may
 % not render identically. When nulabreport.sty is installed, prefer it:
@@ -13,8 +13,8 @@
 % Supported \labsetup keys here: furniture (ignored), captions.
 % =============================================================================
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{irspec-ir}[2026/10/31 excerpt of nulabreport v1.29.2]
-\PackageInfo{irspec-ir}{Using the bundled excerpt of nulabreport v1.29.2, not the full package}
+\ProvidesPackage{irspec-ir}[2026/11/05 excerpt of nulabreport v1.31.0]
+\PackageInfo{irspec-ir}{Using the bundled excerpt of nulabreport v1.31.0, not the full package}
 \RequirePackage{keyval}
 \RequirePackage{xcolor}
 \RequirePackage{etoolbox}
@@ -649,6 +649,51 @@
   enlarge y limits={upper=0.05,lower=0.01},
   minor x tick num=1,
   clip mode=individual,
+}
+% uvvis (v1.31.0): a UV-Vis absorption spectrum, vspd_tool.py convert's CSV
+% (wavelength,absorbance; nm, ascending). Until v1.30 this was the example kind
+% a report defined in its own preamble (manual, plot-kind-demo.tex); the columns
+% are the same, so that definition and this one agree on the data. Labels: the
+% `apex` style (a band's lambda-max above it). Absorbance, not %T, and the x
+% range runs left to right, the way the instrument's own plot does.
+% No xmin/xmax by default: the scan's own start and end are the edges, and
+% xmin=/xmax= in a call narrows it exactly as it does for ir. clip mode=
+% individual for the same reason as gc and nmr (a label near the frame).
+% The window must also cut the DATA, not only the axis: pgfplots takes the y limits
+% from what is in view but still turns every point outside it into a coordinate, and
+% a saturated deep-UV end (A 4.5-4.9 in a real 200-700 nm scan) beside a window a tenth of an
+% absorbance tall is more than 60 times the axis height, past TeX's 16383 pt:
+% "Dimension too large" (found by the smoke test's probe, which uses A = 40 below
+% 300 nm with xmin=350). `restrict x to domain' drops the points outside
+% xmin-2%..xmax+2% of the window (the margin keeps the line running to the frame
+% edges); read when \addplot runs, so the call's own xmin=/xmax= are known. With
+% neither set nothing is dropped; with one, the other side is open (a literal bound,
+% never put through pgfmath: 100000 overflows its fixed-point arithmetic) and the
+% margin is 10 nm.
+\def\Lab@uv@lo{}\def\Lab@uv@hi{}
+\pgfplotsset{nulab uvvis window/.code={%
+  \edef\Lab@uv@lo{\pgfkeysvalueof{/pgfplots/xmin}}%
+  \edef\Lab@uv@hi{\pgfkeysvalueof{/pgfplots/xmax}}%
+  \ifx\Lab@uv@lo\@empty\ifx\Lab@uv@hi\@empty\else\Lab@uv@restrict\fi\else\Lab@uv@restrict\fi}}
+\newcommand{\Lab@uv@restrict}{%
+  \ifx\Lab@uv@lo\@empty
+    \pgfmathsetmacro\Lab@uv@b{\Lab@uv@hi+10}\def\Lab@uv@a{-100000}%
+  \else\ifx\Lab@uv@hi\@empty
+    \pgfmathsetmacro\Lab@uv@a{\Lab@uv@lo-10}\def\Lab@uv@b{100000}%
+  \else
+    \pgfmathsetmacro\Lab@uv@m{0.02*(\Lab@uv@hi-\Lab@uv@lo)}%
+    \pgfmathsetmacro\Lab@uv@a{\Lab@uv@lo-\Lab@uv@m}%
+    \pgfmathsetmacro\Lab@uv@b{\Lab@uv@hi+\Lab@uv@m}%
+  \fi\fi
+  \pgfplotsset{restrict x to domain/.expanded=\Lab@uv@a:\Lab@uv@b}}
+\labdefineplotkind{uvvis}{wavelength}{absorbance}{apex}{%
+  xlabel={Wavelength / nm}, ylabel={Absorbance},
+  axis lines=box, tick align=outside,
+  enlarge x limits=false,
+  enlarge y limits={upper=0.08,lower=0.04},
+  minor x tick num=4,
+  clip mode=individual,
+  every axis plot/.append style={nulab uvvis window},
 }
 % xsize / ysize (v1.28.4): a plot's width / height as a fraction of what it
 % would otherwise be -- the 14.5 x 9.5 cm default, or the call's own width=/
