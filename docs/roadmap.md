@@ -349,7 +349,10 @@ unchecked.
 **Decided (the author, 2026-11-10).** irspec takes over the other plot tools of the private
 `nulabreport` repository (`tools/`): `gc_tool.py` (Thermo Xcalibur `.RAW` chromatograms),
 `vspd_tool.py` (Shimadzu UVProbe `.vspd` UV-Vis), `spectrum_digitize.py` (a mass or NMR spectrum
-published as a picture), `tlc_contour.py` (a TLC plate photo), and what they share. The name stays
+published as a picture), `tlc_contour.py` (a TLC plate photo), `parse_vqud.py` (Shimadzu
+`.vqud`/`.vqum`/`.vqut` UV-Vis quantitation files) and `scan_clean.py` (a phone photo of a page
+made to look like a scan), and what they share. The author's wording (2026-11-10): "vqud and other
+tools from the repo too, if possible". The name stays
 `irspec`. The aim is that nulabreport's `tools/` shrinks to what is really the report, and that
 **nulabreport comes to depend on irspec, not the other way round** (today the IR tools there
 forward to irspec, and nulabreport pins `irspec>=0.1,<0.2`; the rest of the dependency is still the
@@ -368,6 +371,13 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   not move). `session`, `edit`, `preview` and the JSON output work on whatever the registry
   gives; IR becomes the first registered kind, with its own tests unchanged (that is the check
   that the refactor changed no behaviour: the differential and oracle tests stay green).
+- Two of these are not a spectrum: `parse_vqud.py` reads **tables** (standards, unknowns, a
+  calibration curve), and `scan_clean.py` is a picture utility with no x/y at all. So the registry
+  must not insist that a kind is "x, y and peaks": a kind may give a table, and a **tool** (a
+  command that takes a picture or a file and returns a file) may sit beside the kinds. `parse_vqud`
+  goes with UV-Vis (same instrument family, its quantitation tables feed the same report);
+  `scan_clean` goes with the digitizers and TLC, whose pictures it prepares, and becomes a
+  `irspec scan` command, not a kind.
 - Each kind is its own slice, in this order of ease: UV-Vis first (its figure macro already exists
   in nulabreport, v1.31.0: `uvvis`), then GC, then the digitizers, TLC last.
 - A kind's readers are plain Python with numpy and scipy only, like the IR ones; a format that
