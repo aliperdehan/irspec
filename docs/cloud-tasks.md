@@ -288,9 +288,7 @@ Each is one pull request and independent of the others, in the order the roadmap
 
 1. Per-figure `xmin`/`xmax`/`ymax` read by the Python, matplotlib and R drawing code
    (`layout.XLIM` becomes per-figure). Needs R and a TeX build to check, so review locally.
-2. `edit --no-build`'s counterpart: re-run the session for that figure after an edit
-   (`move`/`remove` is the slice above; `rename` is `set name=`).
-3. `--json` on `session`, `peaks` and `show`, and the written schema (roadmap 1b).
+2. `--json` on `session`, `peaks` and `show`, and the written schema (roadmap 1b).
 
 Items 2a/2b (the trace macro, the Lua reader) touch the private `nulabreport`, which a cloud
 session cannot reach: do those locally.

@@ -33,6 +33,8 @@ repositories**: check what they really do and, above all, their licences before 
 | 3 | Optional processing: smoothing, band area, baseline | 0.4.0 | Opt-in, never touches raw files |
 | 4 | Mac app (SwiftUI), in this repository under `app/` | not on PyPI | Go/no-go after a prototype on top of 1 |
 | 5 | Export for publishing a spectra collection (JCAMP-DX writer, per-spectrum metadata, dataset README) | not scheduled; after the author's course ends | The author plans a Zenodo/GitHub collection of their own SPA spectra; see item 5 |
+| 6 | Other plot kinds (GC, UV-Vis, MS/NMR from pictures, TLC), through a registry of kinds | after 1; one kind at a time | Decided 2026-11-10; replaces the old "out of scope". See item 6 |
+| 7 | Format specifications (Kaitai `.ksy`) for the instrument formats irspec reads | not scheduled | Idea 2026-11-10; see item 7 |
 | - | Deconvolution, calculated spectra | not scheduled | See "Not now" |
 
 Everything here is a minor bump (new feature), per the README's versioning rule. `SPEC_VERSION`
@@ -56,7 +58,11 @@ entries, hence the figures; `remove` takes the entry out and moves its file to `
 (never deleted or overwritten, manifest written first and restored if the move fails; `session`
 scans only `SPA/`, `jdx/`, `img/` and files at the top level, so `removed/` is left alone and the
 spectrum does not come back). `rename` is `set name=`.
-**Not done:** re-running the session for the figure (`--no-build`), `restore`, a
+`--build auto|pdfmd|latex|none` (also `--md-name`, `--pdfmd`) re-runs `session` on the folder after
+the edit; exit 3 means the edit is written and the rebuild failed. The design below said the rebuild
+would be the default with `--no-build` to stop it; it is the other way round (opt-in), because
+`edit` is used in scripts and on machines without TeX, and a PDF is a seconds-long step.
+**Not done:** `restore`, a
 `--prominence` etc. override on `peak auto` (it uses the entry's keys; `set` them first), and the
 per-figure `xmin`/`xmax`/`ymax` in the drawing code (the keys can be stored today, nothing reads
 them). The command listing below is the original design; the done commands are exactly as written
@@ -255,7 +261,19 @@ stretch), too stiff and it leaves the slope in. Hence the rules below.
 The author's courses do not ask for baselines, so this ships small first: smoothing and band area,
 then ALS with the visible-baseline check, as a "would be nice" and a learning exercise.
 
-## 4. Mac app
+## 4. Mac app (see the 2026-11-10 note below: this is now a GUI for other people)
+
+**Revised 2026-11-10.** The aim moved from an app for the author to a GUI other people can use,
+and irspec will cover more kinds (item 6). Decided with the author: build a **local web UI served
+by the Python package** (`irspec gui` opens the browser; it calls the same functions as the CLI, so
+it invents nothing), installable with `pipx install irspec[gui]`; it comes after `--json` and the
+schema (1b) and after the registry (6), not before. A **double-click app is wanted anyway** and comes
+later, either Tauri or a thin .NET (Windows) and Swift (Mac) wrapper around the same web UI, using
+whatever browser engine the system has. So the SwiftUI plan below is superseded: its fence (what
+the first version does and does not do) and its distribution notes (App Store sandbox, notarising,
+bundling Python with numpy and scipy is hundreds of MB) still hold for the wrapper.
+
+*The original 2026-10-17 text follows.*
 
 **Decided (the author, 2026-10-17): in this repository, under `app/`, so whoever needs it finds it
 next to the CLI and builds it; and thin. Go/no-go still after item 1**, from a prototype on the
@@ -326,6 +344,59 @@ are the university's); do it after the course ends.
 **Maybe later:** a short data-descriptor paper. Which journals take a collection this size is
 unchecked.
 
+## 6. Other plot kinds, and a registry of kinds
+
+**Decided (the author, 2026-11-10).** irspec takes over the other plot tools of the private
+`nulabreport` repository (`tools/`): `gc_tool.py` (Thermo Xcalibur `.RAW` chromatograms),
+`vspd_tool.py` (Shimadzu UVProbe `.vspd` UV-Vis), `spectrum_digitize.py` (a mass or NMR spectrum
+published as a picture), `tlc_contour.py` (a TLC plate photo), and what they share. The name stays
+`irspec`. The aim is that nulabreport's `tools/` shrinks to what is really the report, and that
+**nulabreport comes to depend on irspec, not the other way round** (today the IR tools there
+forward to irspec, and nulabreport pins `irspec>=0.1,<0.2`; the rest of the dependency is still the
+other way: irspec's `irspec-ir.sty` is cut out of nulabreport's `.sty`).
+
+Out of this: `palleros_figs.py` (pages of a textbook) stays where it is and never comes in, and no
+instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, unchanged).
+
+- **Not hard-wired.** Today everything assumes IR: the axis (wavenumber, 4000-650), %T, the
+  peak picker's defaults, the file kinds (`SPA/`, `jdx/`, `img/`), the figure style. A new kind must
+  not be a copy of `session.py` with other constants. Before the first extra kind lands there is a
+  **registry**: a kind says its readers (file extension to a function giving x, y and metadata),
+  its axis convention and default limits, its peak/feature picking (or none), and how its figure
+  looks (the geometry in `layout.py` becomes per-kind). `manifest.json` entries and `figures.json`
+  gain an optional `kind` (absent means `ir`, so nothing existing changes and `SPEC_VERSION` does
+  not move). `session`, `edit`, `preview` and the JSON output work on whatever the registry
+  gives; IR becomes the first registered kind, with its own tests unchanged (that is the check
+  that the refactor changed no behaviour: the differential and oracle tests stay green).
+- Each kind is its own slice, in this order of ease: UV-Vis first (its figure macro already exists
+  in nulabreport, v1.31.0: `uvvis`), then GC, then the digitizers, TLC last.
+- A kind's readers are plain Python with numpy and scipy only, like the IR ones; a format that
+  cannot be read without a vendor library is not added.
+- `--json` and its written schema (item 1b) come before the second kind, because the schema must
+  say `kind` from the start.
+- The README's scope paragraph and CLAUDE.md's "(that is why ... GC, TLC, UV-Vis tools are out of
+  scope)" change in the commit that lands the first extra kind, not before.
+
+## 7. Format specifications (Kaitai)
+
+**Idea (2026-11-10), not started.** `kaitai-io/kaitai_struct_formats` is a public library of `.ksy`
+files, declarative descriptions of binary formats that compile to parsers in many languages.
+`spa_tool.py` section 2 already is a reverse-engineered description of OMNIC `.SPA` (the magic
+`Spectral Data File\r\n`, a section table at byte 304 of 16-byte entries (uint16 key, uint32
+offset, uint32 size), the spectrum as float32 in section 0x0003, the x-axis endpoints as float32
+at bytes 576 and 580). That, and the same for the Thermo `.RAW` and Shimadzu `.vspd` readers,
+translate almost line for line into `.ksy`.
+
+- Before writing: search that repository for an existing OMNIC/SPA spec (not checked yet; Galactic
+  `.SPC` is a different format).
+- The spec says only what is known (the data block and axis endpoints were checked against a
+  Spectragryph export) and leaves the rest of the header as opaque bytes.
+- The only sample file that may be published is the author's own `PHENACETIN_CRUDE_LR1-2.SPA`;
+  Kaitai keeps its test files in a separate repository with its own contribution rules (not read
+  yet). The license is the author's choice, one the maintainers accept.
+- Local work first, in a scratchpad, checked against the sample with `kaitai-struct-compiler`. No
+  pull request to another project and nothing pushed without the author's say-so.
+
 ## Not now
 
 - **Deconvolution / Lorentzian band fitting.** Reports are %T with band positions; fitted components
@@ -335,7 +406,9 @@ unchecked.
   family. If ever needed: an overlay of a two-column frequency/intensity file, not an ORCA parser.
 - **Functional-group assignment and compound identification.** `ir_corr` is a correlation lookup;
   identifying an unknown is a different product.
-- Still out of scope as in the README: MS, NMR, GC, TLC, UV-Vis, and extracting figures from books.
+- Out of scope still: extracting figures from books (`palleros_figs`) and anything that needs an
+  instructor's or a textbook's page as data. (MS, NMR, GC, TLC and UV-Vis were out of scope until
+  2026-11-10; they are item 6 now.)
 
 ## Later, in nulabreport (not irspec work, recorded because it touches this)
 
@@ -347,6 +420,9 @@ nulabreport (it is private), so keep `% >>> irspec-excerpt:NAME` regions working
 and the smoke test that compares the excerpt page with the full package's.
 
 ## Open
+
+- The registry of kinds (item 6): the exact shape of a kind (a class, or a dict of functions) and
+  where the per-kind figure geometry lives. Decide by writing the IR kind into it first.
 
 - Mac app: go or no-go after item 1 (a prototype answers "how hard").
 - Collection export (item 5): does irspec already write JCAMP-DX, and where do the per-spectrum
