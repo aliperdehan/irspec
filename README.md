@@ -126,6 +126,7 @@ The base name `ir_...` is `ir_<dd-mm>` when the folder's name contains a date
 |---|---|
 | `--dry-run` | print the file moves and stop |
 | `--preview` | `--dry-run`, and then every spectrum drawn as text with its peaks and the names it will get; writes nothing, see [Preview a whole folder](#preview-a-whole-folder-before-filing) (takes `--width`, `--height`, `--ascii`, `--json` as `irspec preview` does) |
+| `--json` | one JSON object on stdout instead of the report (the moves, every spectrum with its peaks and ymin, the files written, how the build went); the usual progress lines go to stderr. Keys: [`docs/schema.md`](docs/schema.md) |
 | `--build auto\|pdfmd\|latex\|none` | how the PDF is made (`--no-pdf` is `none`); the run says which build it used, see [How the PDF is made](#how-the-pdf-is-made) |
 | `--pdfmd PATH` | the `pdfmd` to use (otherwise `$PDFMD`, else `pdfmd` on the PATH) |
 | `--sort time\|name` | order of new files (modification time by default) |
@@ -218,6 +219,9 @@ re-run: your edits stay, new files are appended, vanished files are dropped.
 | `check` | pictures only: the peak table printed under the SDBS plot, typed as `"3490:84,2977:6,…"`, for the digitiser's own cross-check |
 | `args` | pictures only: extra flags for `irspec digitize convert`, as a list. For a book figure: `["--palleros", "--x-ticks", "3500,3000,2500,2000,1500,1000", "--y-ends", "72.7:24.5"]`, with `check` set to the band positions printed under the troughs (`"3027.1,2948.8,..."`); those printed positions then become the peak labels, not the peak finder's |
 
+Every key, its type, the optional `kind`, `figures.json` and the output of every `--json` command are listed in
+[`docs/schema.md`](docs/schema.md), for scripts and agents.
+
 ## Editing the manifest: `irspec edit`
 
 `irspec edit` changes `manifest.json` from the command line, so a script (or an AI agent)
@@ -286,7 +290,7 @@ irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
   newline). A command that changes nothing does not touch the file, so running it twice leaves
   identical bytes; `unset` of a key that is not there is not an error.
 - **What it prints.** Each change as `key: old -> new`. With `--json`, exactly one object on
-  stdout, `{"file": "SPA/X.SPA", "changes": [{"key": "ymin", "old": -5, "new": -7}]}` (`old` is
+  stdout, `{"kind": "ir", "file": "SPA/X.SPA", "changes": [{"key": "ymin", "old": -5, "new": -7}]}` (`old` is
   `null` for a key that was not there, `new` is `null` after `unset`; unchanged keys are not
   listed). `show --json` prints the entry as an object, or all entries as a list.
 - **Exit status.** 0 done; 2 the command cannot be carried out (unknown key, not a number, no
@@ -346,7 +350,7 @@ peaks:   31 (picked automatically); wavenumber/label height
   `threshold`, `prominence`, `distance`, `axis`, `ymin`, and `peak_a` or `cl` for a QUANT-IR
   file), so `irspec edit` followed by `irspec preview` shows the edit. Otherwise the peaks are the
   automatic ones.
-- **`--json`** prints exactly one object and no plot: `file`, `kind` (`spa`, `jdx`, `csv`),
+- **`--json`** prints exactly one object and no plot: `file`, `kind` (`ir`, the plot kind), `format` (`spa`, `jdx`, `csv`: the file's),
   `axis`, `converted_from` (`"Absorbance"` or `null`), `points`, `range` (`x` and `y`, of
   the figure's window for `y`), `ymin`, `peaks` (`[wavenumber, label_y]` pairs) and
   `peaks_from` (`"automatic"` or `"manifest.json"`).
@@ -469,7 +473,7 @@ all you need. Each has its own `--help`.
 | `irspec plot DIR` | the figures drawn by matplotlib or R, no TeX | `irspec plot own-29.09/ --backend r --formats png` |
 | `irspec spa` | `.SPA` → CSVs and peaks; `batch` for several, `plot` for a legacy matplotlib PNG/SVG | `irspec spa convert run.SPA` |
 | `irspec jdx` | `.jdx` → CSVs, one file or a folder | `irspec jdx convert X.jdx --name X --out csv/X.csv --plain-out plain/X.csv` |
-| `irspec peaks` | peak-pick a `.SPA`, `.jdx` or CSV | `irspec peaks plain/X.csv` |
+| `irspec peaks` | peak-pick a `.SPA`, `.jdx` or CSV (`--json` for a script) | `irspec peaks plain/X.csv` |
 | `irspec digitize` | a picture → CSVs, with a redraw check | `irspec digitize convert img/X.gif --name X --out csv/X.csv --plain-out plain/X.csv` |
 | `irspec a2t` | Absorbance → %T (`--to absorbance` for the other way) | `irspec a2t plain/X.csv --out plain/X_T.csv` |
 | `irspec absorptivity` | QUANT-IR absorptivity → Absorbance | `irspec absorptivity X.jdx --name X --out csv/X.csv --plain-out plain/X.csv --peak-a 1` |
@@ -532,8 +536,8 @@ Anything that depends on irspec before 1.0 should pin the minor version
 The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show`, `peak`, `move` and `remove`, `irspec preview FILE` and `irspec session --preview`, exist so far:
 
 - **Editing from the command line** (`irspec edit set/unset/show/peak/move/remove` and `--build` are in; `rename` is `set name=`),
-  `--json` output and a written description of the manifest, so scripts and AI agents can drive
-  everything a person can;
+  `--json` output (`session`, `peaks`, `preview`, `edit` have it) and [a written description of the manifest and the
+  output](docs/schema.md), so scripts and AI agents can drive everything a person can;
 - **A preview in the terminal** (`irspec preview FILE` and `irspec session --preview` are in; still
   to come: `--stack`): the spectrum drawn in text to the width of the terminal, with what the run
   is going to do;

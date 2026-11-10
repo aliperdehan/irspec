@@ -165,12 +165,12 @@ class SetUnset(Base):
         self.assertEqual((code, err), (0, ""))
         self.assertEqual(out.count("\n"), 1)
         self.assertEqual(json.loads(out), {
-            "file": SPA,
+            "kind": "ir", "file": SPA,
             "changes": [{"key": "ymin", "old": -5, "new": -7},
                         {"key": "ymax", "old": None, "new": 100},
                         {"key": "title", "old": "Phenacetin (crude)", "new": "Z"}]})
         code, out, err = run(self.dir, "--json", SPA, "unset", "ymax")
-        self.assertEqual(json.loads(out), {"file": SPA,
+        self.assertEqual(json.loads(out), {"kind": "ir", "file": SPA,
                                            "changes": [{"key": "ymax", "old": 100, "new": None}]})
         code, out, err = run(self.dir, SPA, "unset", "ymax", "--json")
         self.assertEqual(json.loads(out)["changes"], [])

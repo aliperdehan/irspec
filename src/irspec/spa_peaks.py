@@ -128,6 +128,7 @@ Spectragryph export to 0.0000 %T).
 """
 import argparse
 import csv
+import json
 import os
 import struct
 import sys
@@ -354,6 +355,31 @@ def format_review_table(peaks_xyl, ptype="x+y", digits_x=4, digits_y=4, axis_lab
     return lines
 
 
+def peaks_object(args, fmt, axis_label, absorbance, peaks_xyl, written):
+    """The --json object: `peaks` as [wavenumber, label_y] pairs, exactly as a manifest entry and
+    figures.json carry them, and `bands`, the intensity at each (same order), kept apart so one
+    key never means two shapes."""
+    from .figure import KIND
+    suggestion = None
+    if peaks_xyl:
+        if absorbance:
+            suggestion = int(max(ly for _, _, ly in peaks_xyl) // 5 * 5 + 5)
+        else:
+            suggestion = int(min(ly for _, _, ly in peaks_xyl) // 5 * 5 - 5)
+    return {
+        "kind": KIND, "file": args.input, "format": fmt, "axis": axis_label, "mode": args.mode,
+        "peaks": [[round(float(x), 1), round(float(ly), 1)] for x, _, ly in peaks_xyl],
+        "bands": [round(float(y), 4) for _, y, _ in peaks_xyl],
+        "peaklist": format_peaklist(peaks_xyl),
+        "ymin_suggestion": None if absorbance else suggestion,
+        "ymax_suggestion": suggestion if absorbance else None,
+        "settings": {"threshold": args.threshold, "prominence": args.prominence,
+                     "distance": args.distance, "gap": args.gap,
+                     "collision_cm": args.collision_cm, "step": args.step},
+        "written": written,
+    }
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                   formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -372,6 +398,10 @@ def main():
     ap.add_argument("--gap", type=float, default=5.0, help="default label_y offset below (Transmittance) or above (Absorbance) the band")
     ap.add_argument("--collision-cm", type=float, default=45.0, help="wavenumber gap below which neighbouring labels are staggered")
     ap.add_argument("--step", type=float, default=5.0, help="extra label_y offset per staggered collision (native y units -- see --gap)")
+    ap.add_argument("--json", action="store_true", help="print one JSON object (docs/schema.md) "
+                    "instead of the review table: kind, file, format, axis, mode, peaks "
+                    "([wavenumber, label_y] pairs), bands (their intensities, same order), "
+                    "peaklist, the ymin or ymax suggestion, the settings used, the CSVs written")
     args = ap.parse_args()
 
     x, y, axis_label, kind = load_spectrum(args.input, axis_override=args.axis)
@@ -393,9 +423,11 @@ def main():
             f"differences) -- both reproduced and documented 2026-09-22.\n"
         )
 
+    written = []
     if kind == "spa":
         out_stem = args.out or args.input.rsplit(".", 1)[0]
         write_csvs(x, y, out_stem, axis_label)
+        written = [f"{out_stem}.csv", f"{out_stem}_plain.csv"]
     elif args.out:
         sys.stderr.write(f"note: --out is ignored for a .{kind} input -- see module docstring section 0\n")
 
@@ -422,6 +454,10 @@ def main():
     peaks_xyl = assign_label_y(peaks, gap=args.gap, collision_cm=args.collision_cm,
                                 step=args.step, absorbance=absorbance)
 
+    if args.json:
+        print(json.dumps(peaks_object(args, kind, axis_label, absorbance, peaks_xyl, written),
+                         ensure_ascii=False))
+        return
     print(f"# {args.input}  kind={kind}  axis={axis_label}  n_peaks={len(peaks_xyl)}  "
           f"(mode={args.mode}, threshold={args.threshold}%, prominence={args.prominence}, "
           f"distance={args.distance}cm-1, type={args.type}, digits_x={args.digits_x}, "

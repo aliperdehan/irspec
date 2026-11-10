@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 SPEC_VERSION = 1
+KIND = "ir"                     # the plot kind; the only one so far (docs/schema.md, roadmap item 6)
 FIGURES_NAME = "figures.json"   # what `session` writes and every backend reads
 
 
@@ -44,6 +45,9 @@ class Figure:
     def from_entry(cls, entry: dict) -> "Figure":
         """A manifest entry that names its plain CSV (`csv`), carries its axis
         label and peaks as [wavenumber, label_y] pairs."""
+        if entry.get("kind", KIND) != KIND:
+            raise ValueError(f"figure of kind {entry['kind']!r}: this irspec draws only "
+                             f"{KIND!r} figures")
         try:
             csv = entry["csv"]
         except KeyError:

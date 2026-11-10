@@ -100,6 +100,8 @@ tools installed before releasing.
 `docs/roadmap.md`: decided-but-unbuilt work (terminal preview, a Lua reader so `\irspectrum` takes
 `.SPA`/`.jdx`, optional processing, a Mac app) with the order, the rules, and what to check first.
 Read it before starting any of those; update it in the same commit as the code.
+`docs/schema.md`: every key of `manifest.json`, `figures.json` and the `--json` output (`tests/test_json.py`
+fails when a key irspec prints is not in it: add the key there in the same commit).
 `docs/cloud-tasks.md`: how a slice was handed to a cloud session, the prompt template, and the
 ready prompt for the next slice (peak editing).
 

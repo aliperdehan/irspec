@@ -4,6 +4,27 @@ irspec follows the rules in the README's "Versioning" section. Newest first.
 
 ## Unreleased
 
+- New `--json` on `irspec session DIR` (a real run) and on `irspec peaks`. `session --json` prints
+  one object on stdout, `{kind, folder, dry_run, moves, spectra, outputs, build}` (each spectrum:
+  file, title, name, axis, peaks, n_peaks, ymin, csv, plain; `outputs` the files written, `build`
+  the resolved mode and whether it worked), and the usual progress lines go to stderr;
+  `--dry-run --json` gives the moves only. A build that fails after the work was done (for
+  instance `--formats` without a PDF) still prints the object, with `"build": {"ok": false,
+  "error"}`, and exits 1; a stop before the build (a QUANT-IR file with no `peak_a`) prints no
+  object. `peaks --json` prints `{kind, file, format, axis, mode, peaks, bands, peaklist,
+  ymin_suggestion, ymax_suggestion, settings, written}` instead of the review table (without the
+  flag the output is byte for byte what it was); `peaks` are the `[wavenumber, label_y]` pairs
+  everywhere, and the intensity at each is `bands`. Second part of roadmap item 1b.
+- **Changed (unreleased output):** in `irspec preview --json` and `session --preview --json` the
+  key `kind` (`spa`, `jdx`, `csv`) is now called `format`, and `kind` means the plot kind, `"ir"`,
+  which every `--json` object now carries, `irspec edit`'s too. The plot kind is how later kinds
+  (UV-Vis, chromatograms; roadmap item 6) will be told apart. In `manifest.json` and
+  `figures.json` an optional `kind` is read (absent means `ir`; any other value is refused, not
+  drawn as IR) but not yet written, and `SPEC_VERSION` stays 1.
+- New [`docs/schema.md`](docs/schema.md): every key of `manifest.json`, `figures.json` and the
+  `--json` output of `session`, `peaks`, `preview` and `edit`, with the rules for stdout, errors
+  and the two versions. `tests/test_json.py` fails when a key irspec writes or prints is missing
+  from it.
 - New `--build auto|pdfmd|latex|none` on `irspec edit` (with `--md-name` and `--pdfmd`): after the
   edit, re-run `irspec session` on the folder with that build mode, so the markdown,
   `figures.json` and PDF follow it. Off by default (as before: the manifest only); `none` rebuilds

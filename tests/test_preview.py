@@ -330,9 +330,10 @@ class Json(unittest.TestCase):
         self.assertEqual((code, err), (0, ""))
         self.assertEqual(out.count("\n"), 1)
         obj = json.loads(out)
-        self.assertEqual(set(obj), {"file", "kind", "axis", "converted_from", "points", "range",
-                                    "ymin", "peaks", "peaks_from"})
-        self.assertEqual((obj["file"], obj["kind"], obj["axis"]), (SAMPLE, "spa", "Transmittance %"))
+        self.assertEqual(set(obj), {"file", "kind", "format", "axis", "converted_from", "points",
+                                    "range", "ymin", "peaks", "peaks_from"})
+        self.assertEqual((obj["file"], obj["kind"], obj["format"], obj["axis"]),
+                         (SAMPLE, "ir", "spa", "Transmittance %"))
         self.assertEqual((obj["points"], obj["ymin"], obj["peaks_from"]), (3734, -5, "automatic"))
         self.assertEqual(len(obj["peaks"]), 31)
         self.assertEqual(obj["peaks"][0], [740.5, 52.3])
@@ -341,7 +342,7 @@ class Json(unittest.TestCase):
 
     def test_absorbance_jdx_says_what_it_converted(self):
         obj = json.loads(run("phenacetin_A.jdx", "--json")[1])
-        self.assertEqual((obj["kind"], obj["axis"], obj["converted_from"]),
+        self.assertEqual((obj["format"], obj["axis"], obj["converted_from"]),
                          ("jdx", "Transmittance %", "Absorbance"))
         self.assertIsNone(json.loads(run("phenacetin_T.jdx", "--json")[1])["converted_from"])
 
@@ -493,7 +494,7 @@ class Csv(unittest.TestCase):
     def test_plain_and_archival_csv_draw_the_same_spectrum(self):
         a = json.loads(run("golden_plain.csv", "--json")[1])
         b = json.loads(run("golden_archival.csv", "--json")[1])
-        self.assertEqual((a["kind"], a["axis"]), ("csv", "Transmittance %"))
+        self.assertEqual((a["kind"], a["format"], a["axis"]), ("ir", "csv", "Transmittance %"))
         self.assertEqual(a["peaks"], b["peaks"])
         self.assertEqual(len(a["peaks"]), 31)
 

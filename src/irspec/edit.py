@@ -89,6 +89,8 @@ import struct
 import sys
 import tempfile
 
+from .figure import KIND
+
 NUMERIC_KEYS = ("ymin", "ymax", "xmin", "xmax", "threshold", "prominence", "distance")
 TEXT_KEYS = ("title", "axis", "name")
 ALLOWED_KEYS = ("title", "axis", "ymin", "ymax", "xmin", "xmax",
@@ -696,6 +698,7 @@ def main(argv=None):
         if (args.md_name or args.pdfmd) and not args.build:
             raise EditError("--md-name and --pdfmd go with --build")
         payload, lines = run_verb(args, rest)
+        payload = {"kind": KIND, **payload}   # the plot kind of the entry (docs/schema.md)
         failure = None
         if not args.json:
             print(lines)

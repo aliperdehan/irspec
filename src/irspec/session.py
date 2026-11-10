@@ -2,7 +2,7 @@
 
     irspec session DIR [--build auto|pdfmd|latex|none] [--sort time|name]
                        [--title STEM=TITLE ...] [--md-name NAME] [--dry-run]
-                       [--preview [--width N] [--height N] [--ascii] [--json]]
+                       [--preview [--width N] [--height N] [--ascii]] [--json]
                        [--formats png,tiff,svg,svg-text] [--dpi 300]
 
 It does for NIST WebBook files and SDBS pictures what ir_organize.py already
@@ -68,7 +68,7 @@ import numpy as np
 
 from . import ir_organize as _io
 from . import export, jdx_tool, spa_tool, texout
-from .figure import FIGURES_NAME, Figure, write_figures
+from .figure import FIGURES_NAME, KIND, Figure, write_figures
 
 IMG_EXT = (".gif", ".jpg", ".jpeg", ".png", ".bmp")
 CAS_RE = re.compile(r"^(\d{2,7}-\d\d-\d)")
@@ -360,6 +360,15 @@ def _rel(folder, path):
     return os.path.relpath(path, folder).replace(os.sep, "/")
 
 
+def spectrum_record(folder, e, r, fig):
+    """One `spectra` item of the --json object of a real run: what was made of manifest entry `e`
+    (result `r` of `process`, Figure `fig`). Paths are relative to the folder."""
+    return {"file": e["file"], "kind": KIND, "title": fig.title, "name": r["stem"],
+            "axis": fig.axis, "peaks": [[x, ly] for x, ly in fig.peaks], "n_peaks": r["n_peaks"],
+            "ymin": fig.ymin, "csv": _rel(folder, r["archival_path"]),
+            "plain": _rel(folder, r["plain_path"])}
+
+
 def planned_names(folder, e):
     """(name, csv, plain) a spectrum's CSVs get, relative to the folder, as `process` writes them."""
     if e["file"].startswith("SPA/"):
@@ -410,11 +419,11 @@ def preview_folder(folder, titles, sort, width, height, braille, as_json):
         rel = e["file"]
         name, csv, plain = planned_names(folder, e)
         if rel.lower().endswith(IMG_EXT):
-            images.append({"file": rel, "name": name, "csv": csv, "plain": plain,
+            images.append({"file": rel, "kind": KIND, "name": name, "csv": csv, "plain": plain,
                            "note": "digitized by `irspec session`, not drawn here"})
             continue
         src = planned.get(rel) or os.path.join(folder, rel)
-        head = {"will_be_filed_as": rel, "title": e.get("title"), "csv": csv, "plain": plain}
+        head = {"kind": KIND, "will_be_filed_as": rel, "title": e.get("title"), "csv": csv, "plain": plain}
         try:
             info = pv.work_out_entry(src, e, mpath if rel in listed else None)
             info["file"] = _rel(folder, src)
@@ -448,14 +457,22 @@ def preview_folder(folder, titles, sort, width, height, braille, as_json):
 
 
 def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=False, pdfmd=None,
-        formats=(), dpi=300):
-    """Process one folder; returns the list of Figure. Prints what it does."""
+        formats=(), dpi=300, report=None):
+    """Process one folder; returns the list of Figure. Prints what it does.
+
+    `report`, a dict, is filled in as the run goes with what --json prints (docs/schema.md): the
+    caller reads it after the run, or after a SessionError, when "build" in it says how far it got.
+    """
     folder = os.path.abspath(folder)
     if not os.path.isdir(folder):
         raise SessionError(f"not a directory: {folder}")
     moves = organize(folder, dry_run)
     for src, dst in moves:
         print(move_line(folder, src, dst, dry_run))
+    if report is not None:
+        report.update({"kind": KIND, "folder": folder, "dry_run": bool(dry_run),
+                       "moves": [{"from": _rel(folder, a), "to": _rel(folder, b)}
+                                 for a, b in moves]})
     if dry_run:
         return []
     entries = build_manifest(folder, titles or {}, sort)
@@ -480,22 +497,41 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
 
     if build == "auto":
         build = "pdfmd" if (find_pdfmd(pdfmd) and nulabreport_installed()) else "latex"
-    if build in ("pdfmd", "latex"):
-        print(f"building the PDF with {'pdfmd (nulabreport)' if build == 'pdfmd' else 'lualatex alone'}")
-    if build == "pdfmd":
-        exe = find_pdfmd(pdfmd)
-        if not exe:
-            raise SessionError("pdfmd not found (use --pdfmd or $PDFMD, or --build latex)")
-        print(f"wrote {_io.build_pdf(md, exe)}")
-    elif build == "latex":
-        print(f"wrote {build_latex(folder, base, figures)}")
-    if formats:
-        pdf = os.path.join(folder, base + ".pdf")
-        if not os.path.exists(pdf):
-            raise SessionError("--formats needs the PDF: use --build pdfmd or latex")
-        for p in export.export_pdf(pdf, formats, os.path.join(folder, "figures"),
-                                   export.stems_of(figures), dpi):
-            print(f"wrote {p}")
+    out = {"manifest": "manifest.json", "figures": FIGURES_NAME, "markdown": _rel(folder, md),
+           "tex": None, "pdf": None, "pictures": []}
+    if report is not None:
+        report["spectra"] = [spectrum_record(folder, e, r, fig)
+                             for e, r, fig in zip(entries, results, figures)]
+        report["outputs"] = out
+    try:
+        if build in ("pdfmd", "latex"):
+            print(f"building the PDF with {'pdfmd (nulabreport)' if build == 'pdfmd' else 'lualatex alone'}")
+        if build == "pdfmd":
+            exe = find_pdfmd(pdfmd)
+            if not exe:
+                raise SessionError("pdfmd not found (use --pdfmd or $PDFMD, or --build latex)")
+            pdf = _io.build_pdf(md, exe)
+            out["pdf"] = _rel(folder, pdf)
+            print(f"wrote {pdf}")
+        elif build == "latex":
+            tex = os.path.join(folder, base + ".tex")
+            pdf = build_latex(folder, base, figures)
+            out["tex"], out["pdf"] = _rel(folder, tex), _rel(folder, pdf)
+            print(f"wrote {pdf}")
+        if formats:
+            pdf = os.path.join(folder, base + ".pdf")
+            if not os.path.exists(pdf):
+                raise SessionError("--formats needs the PDF: use --build pdfmd or latex")
+            for p in export.export_pdf(pdf, formats, os.path.join(folder, "figures"),
+                                       export.stems_of(figures), dpi):
+                out["pictures"].append(_rel(folder, p))
+                print(f"wrote {p}")
+    except SessionError as err:
+        if report is not None:
+            report["build"] = {"mode": build, "ok": False, "error": str(err)}
+        raise
+    if report is not None:
+        report["build"] = {"mode": build, "ok": True}
     return figures
 
 
@@ -521,8 +557,10 @@ def main(argv=None):
                     "terminal's width, or 80 when piped)")
     ap.add_argument("--height", type=int, metavar="N", help="--preview: rows of plot (default 20)")
     ap.add_argument("--ascii", action="store_true", help="--preview: . : * | instead of Braille")
-    ap.add_argument("--json", action="store_true", help="--preview: one JSON object "
-                    "{moves, spectra, images} on stdout and no plot")
+    ap.add_argument("--json", action="store_true",
+                    help="one JSON object on stdout (docs/schema.md) and the usual progress "
+                         "lines on stderr. With --preview: {moves, spectra, images} and no plot; "
+                         "with --dry-run: the moves only; otherwise what the run made")
     ap.add_argument("--pdfmd", default=None)
     ap.add_argument("--formats", default="", metavar="LIST",
                     help="also write one picture per spectrum into DIR/figures/, from the PDF: "
@@ -542,11 +580,21 @@ def main(argv=None):
             a.width if a.width is not None else pv.default_width(),
             a.height if a.height is not None else pv.DEFAULT_HEIGHT,
             pv.utf8_stdout() and not a.ascii, a.json))
-    for flag in ("width", "height", "ascii", "json"):
+    for flag in ("width", "height", "ascii"):
         if getattr(a, flag) not in (None, False):
             ap.error(f"--{flag} goes with --preview")
-    run(a.folder, "none" if a.no_pdf else a.build, a.sort, titles, a.md_name, a.dry_run, a.pdfmd,
-        export.parse_formats(a.formats), a.dpi)
+    report = {} if a.json else None
+    progress = contextlib.redirect_stdout(sys.stderr) if a.json else contextlib.nullcontext()
+    try:
+        with progress:
+            run(a.folder, "none" if a.no_pdf else a.build, a.sort, titles, a.md_name, a.dry_run,
+                a.pdfmd, export.parse_formats(a.formats), a.dpi, report=report)
+    except SessionError:
+        if report and "build" in report:   # the run got as far as the build, which failed
+            print(json.dumps(report, ensure_ascii=False))
+        raise
+    if report is not None:
+        print(json.dumps(report, ensure_ascii=False))
 
 
 if __name__ == "__main__":

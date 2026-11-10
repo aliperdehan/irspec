@@ -99,6 +99,18 @@ irspec edit DIR show [FILE] [--json]
 output paths, warnings. A written, versioned description of `manifest.json` and `figures.json`
 (the README table is the start) so that no client guesses.
 
+**Done (Unreleased, `docs/schema.md`, `tests/test_json.py`):** `--json` on `session` (a real run,
+`--dry-run`, `--preview`), `peaks`, `preview` and `edit` (`show` is `edit show`); the progress
+lines go to stderr, stdout is one object; a build that fails after the work was done still prints
+the object (`build.ok` false), a stop before it prints none. `docs/schema.md` lists every key of
+`manifest.json`, `figures.json` and the outputs, and a test fails when a key irspec prints is
+missing from it. **`kind` is the plot kind from the start** (every object says `"ir"`; in a file
+it is optional, absent means `ir`, another value is refused by `Figure.from_entry`, and the writers
+do not emit it yet), and the old `kind` of the preview objects (`spa`/`jdx`/`csv`) is `format`.
+Not done: `--json` on the other steps (`spa`, `jdx`, `digitize`, `a2t`, `corr`), which are
+single-file tools a script can already call and read; `session` reports no `warnings` list (the
+Absorbance note of `peaks` is on stderr).
+
 ### 1c. Terminal preview
 
 **Decided.** Read-only preview, not an editor: editing is 1a (commands) and, for humans who like

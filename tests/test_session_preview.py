@@ -221,7 +221,7 @@ class Json(unittest.TestCase):
                               ("62-44-2-IR.jdx", "jdx/62-44-2-IR.jdx"),
                               (SAMPLE, f"SPA/{SAMPLE}")])
             for s in obj["spectra"]:
-                self.assertTrue({"file", "kind", "axis", "converted_from", "points", "range",
+                self.assertTrue({"file", "kind", "format", "axis", "converted_from", "points", "range",
                                  "ymin", "peaks", "peaks_from", "will_be_filed_as"} <= set(s))
                 self.assertFalse(os.path.isabs(s["file"]))
             got = {s["will_be_filed_as"]: s for s in obj["spectra"]}
@@ -304,9 +304,9 @@ class Failures(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             f = loose_folder(d)
             before = tree(f)
-            code, out, err = run_cli(f, "--json", "--dry-run")
+            code, out, err = run_cli(f, "--width", "50", "--dry-run")
             self.assertEqual(code, 2)
-            self.assertIn("--json goes with --preview", err)
+            self.assertIn("--width goes with --preview", err)
             self.assertEqual(tree(f), before)
 
 

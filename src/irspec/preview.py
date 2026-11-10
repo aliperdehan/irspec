@@ -27,7 +27,8 @@ of the session would. Otherwise the peaks are the automatic ones.
 
 --json prints exactly one object on stdout and no plot:
 
-    {"file", "kind", "axis", "converted_from", "points", "range": {"x", "y"},
+    {"file", "kind" ("ir", the plot kind), "format" ("spa", "jdx" or "csv", the file's), "axis",
+     "converted_from", "points", "range": {"x", "y"},
      "ymin", "peaks": [[wavenumber, label_y], ...], "peaks_from"}
 
 Exit status: 0 done; 2 when the file cannot be read or drawn (the reason is on
@@ -44,6 +45,7 @@ import sys
 import numpy as np
 
 from . import layout
+from .figure import KIND   # the plot kind in --json (docs/schema.md); `format` is the file's own
 
 DEFAULT_WIDTH = 80      # columns when stdout is not a terminal
 DEFAULT_HEIGHT = 20     # rows of plot
@@ -171,7 +173,7 @@ def work_out_entry(path, entry, mpath):
     peaks = [[float(a), float(b)] for a, b in probe["peaks"]]
     ymin = result["ymin"]
     return {
-        "file": path, "kind": kind, "axis": axis, "converted_from": converted,
+        "file": path, "kind": KIND, "format": kind, "axis": axis, "converted_from": converted,
         "points": int(x.size),
         "range": {"x": [float(x.min()), float(x.max())],
                   "y": [float(yw.min()), float(yw.max())]},

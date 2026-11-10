@@ -155,10 +155,11 @@ class MoveTest(Base):
         code, out, err = self.run_edit(T, "move", "--to", "last", "--json")
         self.assertEqual((code, err), (0, ""))
         self.assertEqual(json.loads(out),
-                         {"file": T, "changes": [{"key": "position", "old": 2, "new": 3}]})
+                         {"kind": "ir", "file": T,
+                          "changes": [{"key": "position", "old": 2, "new": 3}]})
         self.assertEqual(out.count("\n"), 1)
         code, out, err = self.run_edit(T, "move", "--to", "3", "--json")
-        self.assertEqual(json.loads(out), {"file": T, "changes": []})
+        self.assertEqual(json.loads(out), {"kind": "ir", "file": T, "changes": []})
 
     def test_unknown_file_and_broken_manifest(self):
         before = self.mpath.read_bytes()
@@ -265,7 +266,8 @@ class RemoveTest(Base):
         entry = next(e for e in self.entries() if e["file"] == T)
         code, out, err = self.run_edit(T, "remove", "--json")
         self.assertEqual((code, err), (0, ""))
-        self.assertEqual(json.loads(out), {"file": T, "removed": entry, "moved_to": "removed/62-44-2-IR.jdx"})
+        self.assertEqual(json.loads(out), {"kind": "ir", "file": T, "removed": entry,
+                          "moved_to": "removed/62-44-2-IR.jdx"})
         self.assertIn("peaks", entry)
         self.assertEqual(out.count("\n"), 1)
 
