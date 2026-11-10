@@ -4,6 +4,13 @@ irspec follows the rules in the README's "Versioning" section. Newest first.
 
 ## Unreleased
 
+- New `--build auto|pdfmd|latex|none` on `irspec edit` (with `--md-name` and `--pdfmd`): after the
+  edit, re-run `irspec session` on the folder with that build mode, so the markdown,
+  `figures.json` and PDF follow it. Off by default (as before: the manifest only); `none` rebuilds
+  the markdown and `figures.json` without a PDF. An edit that changes nothing still rebuilds. When
+  the rebuild fails the edit stays written, the reason goes to stderr and the exit status is 3.
+  With `--json` the one object gets `"build": {"mode", "ok"[, "error"]}` and the session's progress
+  goes to stderr. `show` refuses `--build`. Fourth part of roadmap item 1a.
 - New `irspec edit DIR FILE move --to POSITION` and `irspec edit DIR FILE remove`. `move` puts the
   entry at POSITION in `manifest.json` (1 first, `last`, a number past the end means last, below
   1 is exit 2) and keeps the order of the others, so the figures move in the report; already

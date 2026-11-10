@@ -221,8 +221,9 @@ re-run: your edits stay, new files are appended, vanished files are dropped.
 ## Editing the manifest: `irspec edit`
 
 `irspec edit` changes `manifest.json` from the command line, so a script (or an AI agent)
-can do what you do in a text editor. It touches the manifest only; run `irspec session` on the
-folder afterwards to redraw (a re-run keeps what you set).
+can do what you do in a text editor. It touches the manifest only (`remove` also moves one
+file); run `irspec session` on the folder afterwards to redraw (a re-run keeps what you set), or
+add `--build` and `edit` does that for you.
 
 ```
 irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 set title="Phenacetin (crude)" ymin=-5
@@ -234,6 +235,7 @@ irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 peak auto             # pick a
 irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 move --to 1           # first figure in the report
 irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 move --to last
 irspec edit my_lab_folder/ 62-44-2-IR remove                            # out of the manifest, file to removed/
+irspec edit my_lab_folder/ PHENACETIN_CRUDE_LR1-2 set ymin=-5 --build auto   # ...and redraw the report
 irspec edit my_lab_folder/ show                 # every entry, as text
 irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
 ```
@@ -241,6 +243,13 @@ irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
 - **Which entry.** `FILE` is the entry's `file` value (`SPA/X.SPA`), or just its file name or
   stem when only one entry has it; an ambiguous or unknown name is an error that lists the
   candidates.
+- **Redrawing.** `--build auto|pdfmd|latex|none` runs `irspec session` on the folder after the
+  edit (same meaning as for `session --build`; `none` rewrites the markdown and `figures.json`
+  without a PDF), and `--md-name` and `--pdfmd` are passed on. Without `--build` nothing is
+  redrawn, as before. An edit that changes nothing still rebuilds. If the rebuild fails the edit
+  stays written, the reason is on stderr and the exit status is 3. With `--json` the one object
+  gets a `"build"` key: `{"mode": ..., "ok": true}`, or `"ok": false` with an `"error"`; the
+  session's progress lines go to stderr. `show` takes no `--build`.
 - **Which keys.** `set` and `unset` take `title`, `axis`, `name` (text) and `ymin`, `ymax`,
   `xmin`, `xmax`, `threshold`, `prominence`, `distance` (numbers, stored as JSON numbers; a
   value that is not a number is refused). Any other key is an error naming the allowed ones.
@@ -522,8 +531,7 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show`, `peak`, `move` and `remove`, `irspec preview FILE` and `irspec session --preview`, exist so far:
 
-- **Editing from the command line** (`irspec edit set/unset/show/peak/move/remove` are in; `rename` is `set name=`; still to come:
-  re-running the session for the figure),
+- **Editing from the command line** (`irspec edit set/unset/show/peak/move/remove` and `--build` are in; `rename` is `set name=`),
   `--json` output and a written description of the manifest, so scripts and AI agents can drive
   everything a person can;
 - **A preview in the terminal** (`irspec preview FILE` and `irspec session --preview` are in; still

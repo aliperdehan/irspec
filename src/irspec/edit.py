@@ -9,6 +9,7 @@
     irspec edit DIR FILE move --to POSITION
     irspec edit DIR FILE remove
     irspec edit DIR show [FILE] [--json]
+    ... any edit above: [--build auto|pdfmd|latex|none] [--md-name NAME] [--pdfmd PATH]
 
 DIR is a session folder (the one holding manifest.json). FILE names one
 manifest entry: its "file" value (`SPA/PHENACETIN_CRUDE_LR1-2.SPA`), or just
@@ -51,8 +52,13 @@ on disk is just taken out. {"file", "removed": <entry>, "moved_to": "removed/NAM
 `move --json` prints the changes with key "position" ({"key": "position", "old": 3, "new": 1},
 no change listed when it is already there).
 
-It changes manifest.json (and, for `remove`, moves one file) and nothing else; it does not re-run
-the session, so run `irspec session DIR` afterwards to redraw (a re-run keeps what is edited).
+It changes manifest.json (and, for `remove`, moves one file) and nothing else, unless --build is
+given: then it re-runs `irspec session DIR` afterwards (`--build` has the meaning it has there, and
+--md-name and --pdfmd are passed on) so the markdown, figures.json and PDF follow the edit; without
+it, run `irspec session DIR` yourself (a re-run keeps what is edited). An edit that changes nothing
+still rebuilds. If the rebuild fails the edit stays written and the exit status is 3. With --json
+the one object gets "build": {"mode", "ok"} (and "error" when not ok), and the session's progress
+lines go to stderr. `show` takes no --build.
 The write is atomic (a temporary file in the same folder, then a rename), the
 order of the entries and of each entry's keys is kept, a new key goes last, and
 the file keeps its layout: the layout `irspec session` writes (one key per line,
@@ -73,6 +79,7 @@ unreadable.
 JSON object, or all entries as a JSON list, exactly as stored.
 """
 import argparse
+import contextlib
 import json
 import math
 import os
@@ -571,6 +578,22 @@ def show(folder, name=None):
     return entries[find_entry(entries, name)] if name else entries
 
 
+BUILD_MODES = ("auto", "pdfmd", "latex", "none")
+BUILD_FAILED = 3  # the edit is written, the rebuild after it failed
+
+
+def rebuild(folder, mode, md_name=None, pdfmd=None, quiet=False):
+    """Re-run `irspec session` on the folder (what a hand-run `session` does after an edit).
+    With quiet=True its progress lines go to stderr, so stdout stays one JSON object."""
+    from . import session
+    out = sys.stderr if quiet else sys.stdout
+    try:
+        with contextlib.redirect_stdout(out):
+            session.run(folder, mode, md_name=md_name, pdfmd=pdfmd)
+    except (session.SessionError, OSError, ValueError) as err:
+        raise EditError(f"the edit was written, but the rebuild failed: {err}", BUILD_FAILED)
+
+
 def build_parser():
     p = argparse.ArgumentParser(
         prog="irspec edit",
@@ -580,15 +603,17 @@ def build_parser():
               "       irspec edit DIR FILE peak clear|auto\n"
               "       irspec edit DIR FILE move --to POSITION\n"
               "       irspec edit DIR FILE remove\n"
-              "       irspec edit DIR show [FILE] [--json]",
+              "       irspec edit DIR show [FILE] [--json]\n"
+              "       (any edit:) [--build auto|pdfmd|latex|none]",
         description="Change or show a session's manifest.json. Keys: " + ", ".join(ALLOWED_KEYS)
                     + ". FILE is an entry's \"file\" value, or its file name or stem if that is "
                       "unambiguous. `peak` snaps, removes, clears or re-picks the entry's peaks (`peak auto` "
                       "replaces hand edits). `move --to POSITION` reorders the entry (1 is first, or 'last'); "
                       "`remove` takes it out of the manifest and moves its file to DIR/removed/. "
-                      "Changes manifest.json only (and that one file); run `irspec session DIR` to redraw.",
+                      "Changes manifest.json only (and that one file); run `irspec session DIR` to redraw, "
+                      "or give --build.",
         epilog="Exit status: 0 done; 2 the command cannot be carried out; 1 manifest.json missing "
-               "or unreadable.")
+               "or unreadable; 3 the edit is written but the --build rebuild failed.")
     p.add_argument("dir", metavar="DIR", help="the session folder (holds manifest.json)")
     p.add_argument("rest", nargs="*", metavar="FILE ACTION ...",
                    help="FILE set KEY=VALUE ... | FILE unset KEY ... | "
@@ -598,7 +623,42 @@ def build_parser():
                    help="move: the new position of the entry (1 is first, or 'last')")
     p.add_argument("--json", action="store_true",
                    help="print one JSON object (set/unset/peak/move/remove) or the entries (show) on stdout")
+    p.add_argument("--build", choices=BUILD_MODES, default=None,
+                   help="after the edit, re-run `irspec session DIR` with this build mode so the "
+                        "markdown, figures.json and PDF follow (not for show)")
+    p.add_argument("--md-name", default=None, help="--build: the output basename, as for session")
+    p.add_argument("--pdfmd", default=None, help="--build: where pdfmd is, as for session")
     return p
+
+
+def run_verb(args, rest):
+    """Carry out `rest` = [FILE, VERB, ...] (set, unset, peak, move, remove); return the JSON
+    payload and the text printed without --json."""
+    folder, file_arg, verb = args.dir, rest[0], rest[1]
+    if verb == "move":
+        if rest[2:]:
+            raise EditError("move takes no arguments but --to POSITION")
+        file, changes, position = move_entry(folder, file_arg, args.to)
+        text = (format_changes(file, changes) if changes
+                else f"{file}: no change (already at position {position})")
+        return {"file": file, "changes": changes}, text
+    if verb == "remove":
+        if rest[2:]:
+            raise EditError("remove takes no arguments")
+        file, entry, moved_to = remove_entry(folder, file_arg)
+        text = (f"{file}: removed from manifest.json\n"
+                + (f"  moved to {moved_to}" if moved_to else
+                   "  (no such file on disk; only the manifest entry was removed)")
+                + "\n  csv/ and plain/ files made for it are left in place; "
+                  "run `irspec session` to redraw")
+        return {"file": file, "removed": entry, "moved_to": moved_to}, text
+    file, changes = edit(folder, file_arg, verb, rest[2:])
+    text = format_changes(file, changes)
+    if verb == "peak" and rest[2:3] == ["auto"]:
+        dropped = [str(c["old"][0]) for c in changes if c["new"] is None]
+        text += ("\npeak auto replaces the stored peaks, hand edits included"
+                 + (f"; dropped: {', '.join(dropped)}" if dropped else ""))
+    return {"file": file, "changes": changes}, text
 
 
 def main(argv=None):
@@ -609,6 +669,8 @@ def main(argv=None):
         if rest and rest[0] == "show":
             if len(rest) > 2:
                 raise EditError("show takes at most one FILE")
+            if args.build or args.md_name or args.pdfmd:
+                raise EditError("--build goes with an edit, not show")
             result = show(args.dir, rest[1] if len(rest) == 2 else None)
             if args.json:
                 print(json.dumps(result, indent=2, ensure_ascii=False))
@@ -631,40 +693,23 @@ def main(argv=None):
                             "or  irspec edit DIR show [FILE]")
         if args.to is not None and rest[1] != "move":
             raise EditError("--to goes with move only")
-        if rest[1] == "move":
-            if rest[2:]:
-                raise EditError("move takes no arguments but --to POSITION")
-            file, changes, position = move_entry(args.dir, rest[0], args.to)
-            if args.json:
-                print(json.dumps({"file": file, "changes": changes}, ensure_ascii=False))
-            elif changes:
-                print(format_changes(file, changes))
-            else:
-                print(f"{file}: no change (already at position {position})")
-            return 0
-        if rest[1] == "remove":
-            if rest[2:]:
-                raise EditError("remove takes no arguments")
-            file, entry, moved_to = remove_entry(args.dir, rest[0])
-            if args.json:
-                print(json.dumps({"file": file, "removed": entry, "moved_to": moved_to},
-                                 ensure_ascii=False))
-            else:
-                print(f"{file}: removed from manifest.json")
-                print(f"  moved to {moved_to}" if moved_to else
-                      "  (no such file on disk; only the manifest entry was removed)")
-                print("  csv/ and plain/ files made for it are left in place; "
-                      "run `irspec session` to redraw")
-            return 0
-        file, changes = edit(args.dir, rest[0], rest[1], rest[2:])
-        if args.json:
-            print(json.dumps({"file": file, "changes": changes}, ensure_ascii=False))
-        else:
-            print(format_changes(file, changes))
-            if rest[1] == "peak" and rest[2:3] == ["auto"]:
-                dropped = [str(c["old"][0]) for c in changes if c["new"] is None]
-                print("peak auto replaces the stored peaks, hand edits included"
-                      + (f"; dropped: {', '.join(dropped)}" if dropped else ""))
+        if (args.md_name or args.pdfmd) and not args.build:
+            raise EditError("--md-name and --pdfmd go with --build")
+        payload, lines = run_verb(args, rest)
+        failure = None
+        if not args.json:
+            print(lines)
+        if args.build:
+            try:
+                rebuild(args.dir, args.build, args.md_name, args.pdfmd, quiet=args.json)
+                payload["build"] = {"mode": args.build, "ok": True}
+            except EditError as e:
+                failure = e
+                payload["build"] = {"mode": args.build, "ok": False, "error": str(e)}
+        if args.json:   # exactly one object, whether or not the rebuild worked
+            print(json.dumps(payload, ensure_ascii=False))
+        if failure:
+            raise failure
         return 0
     except EditError as e:
         print(f"irspec edit: {e}", file=sys.stderr)
