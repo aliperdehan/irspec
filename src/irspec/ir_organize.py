@@ -223,6 +223,7 @@ def _finish(e, stem, x, y, axis, absorbance, archival, plain):
         "title": e.get("title") or stem, "stem": stem, "axis_label": axis,
         "axis_md": axis, "peaklist": spa_peaks.format_peaklist(peaks_xyl),
         "ymin": ymin, "n_peaks": len(peaks_xyl),
+        "ymax": e.get("ymax"), "xmin": e.get("xmin"), "xmax": e.get("xmax"),
         "archival_path": archival, "plain_path": plain,
     }
 

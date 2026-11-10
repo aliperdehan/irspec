@@ -73,14 +73,15 @@ def draw(fig: Figure, folder, size=layout.DEFAULT_SIZE, caption=True, family=Non
     from matplotlib.ticker import FixedLocator, FuncFormatter, MultipleLocator
     family = family or pick_font()[0]
     x, y = layout.window(*read_plain(os.path.join(folder, fig.csv)))
-    lo, hi = layout.ylimits(y, fig.ymin)
+    lo, hi = layout.ylimits(y, fig.ymin, fig.ymax)
+    xlim = layout.xlimits(fig.xmin, fig.xmax)
     w, h = size
     out = plt.figure(figsize=size)
     ax = out.add_axes([0.85 / w, 1.0 / h, 1 - 0.95 / w, 1 - 1.1 / h])
     mono = layout.TEXT_PT
     ax.plot(x, y, color=layout.TRACE_COLOR, lw=layout.TRACE_PT, solid_joinstyle="round",
             solid_capstyle="butt", zorder=2)
-    ax.set_xlim(*layout.XLIM)
+    ax.set_xlim(*xlim)
     ax.set_ylim(lo, hi)
     ax.xaxis.set_major_locator(FixedLocator(np.arange(4000, 999, -layout.X_MAJOR)))
     ax.xaxis.set_minor_locator(MultipleLocator(layout.X_MINOR))
@@ -99,7 +100,7 @@ def draw(fig: Figure, folder, size=layout.DEFAULT_SIZE, caption=True, family=Non
     ax.set_axisbelow(False)
 
     for px, ly in fig.peaks:
-        if not (min(layout.XLIM) <= px <= max(layout.XLIM)):
+        if not (min(xlim) <= px <= max(xlim)):
             continue
         ax.plot([px, px], [ly, ly + layout.LEADER_UNITS], color=layout.TICK_COLOR,
                 lw=layout.TICK_PT, solid_capstyle="butt", zorder=3)

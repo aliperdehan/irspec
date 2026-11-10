@@ -331,11 +331,14 @@ class Json(unittest.TestCase):
         self.assertEqual(out.count("\n"), 1)
         obj = json.loads(out)
         self.assertEqual(set(obj), {"file", "kind", "format", "axis", "converted_from", "points",
-                                    "range", "ymin", "peaks", "peaks_from"})
+                                    "range", "ymin", "xlim", "ylim", "peaks", "peaks_from"})
         self.assertEqual((obj["file"], obj["kind"], obj["format"], obj["axis"]),
                          (SAMPLE, "ir", "spa", "Transmittance %"))
         self.assertEqual((obj["points"], obj["ymin"], obj["peaks_from"]), (3734, -5, "automatic"))
         self.assertEqual(len(obj["peaks"]), 31)
+        self.assertEqual(obj["xlim"], [4000.0, 650.0])
+        self.assertAlmostEqual(obj["ylim"][0], -15.23, delta=0.05)    # the TeX frame, measured
+        self.assertAlmostEqual(obj["ylim"][1], 99.06, delta=0.05)
         self.assertEqual(obj["peaks"][0], [740.5, 52.3])
         self.assertEqual(set(obj["range"]), {"x", "y"})
         self.assertNotIn("+--", out)

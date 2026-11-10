@@ -4,6 +4,16 @@ irspec follows the rules in the README's "Versioning" section. Newest first.
 
 ## Unreleased
 
+- The manifest keys `xmin`, `xmax` and `ymax` now do what they say, in every drawing. `xmin` and
+  `xmax` crop the x axis (cm⁻¹; `xmax` is the left edge), `ymax` is the top of the y axis, as
+  `ymin` is the bottom; the TeX figure (as pgfplots keys in the `\irspectrum` call), `irspec plot`
+  (matplotlib and R) and `irspec preview` / `session --preview` take them, and so does
+  `figures.json` (optional keys, `SPEC_VERSION` stays 1). The padding of the frame is the same
+  fraction of the span from the bottom to the top whatever sets them, and the y axis still
+  scales to all of the data when a crop is set: both measured on the TeX figure (`ymax` 100 and
+  110, `ymin` 20 with `ymax` 105, crops 950-2930 and 1000-3000). The preview's JSON gains `xlim`
+  and `ylim`. `irspec edit set` refuses a lower limit that is not below its upper one (exit 2,
+  nothing written). Without these keys nothing changes. Roadmap item 1a, last open part.
 - New `--json` on `irspec session DIR` (a real run) and on `irspec peaks`. `session --json` prints
   one object on stdout, `{kind, folder, dry_run, moves, spectra, outputs, build}` (each spectrum:
   file, title, name, axis, peaks, n_peaks, ymin, csv, plain; `outputs` the files written, `build`

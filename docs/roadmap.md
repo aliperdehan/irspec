@@ -62,10 +62,11 @@ spectrum does not come back). `rename` is `set name=`.
 the edit; exit 3 means the edit is written and the rebuild failed. The design below said the rebuild
 would be the default with `--no-build` to stop it; it is the other way round (opt-in), because
 `edit` is used in scripts and on machines without TeX, and a PDF is a seconds-long step.
-**Not done:** `restore`, a
-`--prominence` etc. override on `peak auto` (it uses the entry's keys; `set` them first), and the
-per-figure `xmin`/`xmax`/`ymax` in the drawing code (the keys can be stored today, nothing reads
-them). The command listing below is the original design; the done commands are exactly as written
+**Not done:** `restore`, and a
+`--prominence` etc. override on `peak auto` (it uses the entry's keys; `set` them first). The
+per-figure `xmin`/`xmax`/`ymax` in the drawing code (before: the keys could be stored, nothing read
+them) **is done too** (Unreleased: `layout.xlimits`, `layout.ylimits(..., ymax)`, `Figure`, TeX, matplotlib,
+R, preview, `tests/test_limits.py`; the TeX readings are in the test). The command listing below is the original design; the done commands are exactly as written
 there.
 
 **Decided.** Today the manifest is edited by hand in a text editor, which is the only "edit"

@@ -213,6 +213,8 @@ re-run: your edits stay, new files are appended, vanished files are dropped.
 | `peaks` | `[wavenumber, label_y]` pairs, as picked; edit, add or delete here (or with `irspec edit … peak`). A bare number is snapped to the nearest local band. `[]` means no peaks. Delete the key to pick again |
 | `axis` | y-axis label (default `Transmittance %`) |
 | `ymin` | bottom of the y axis; the tool's suggestion is kept as it is, and may be negative for a strong band |
+| `ymax` | top of the y axis, default the data's own maximum |
+| `xmin`, `xmax` | crop the x axis (cm⁻¹; `xmax` is the left edge), default 650 and 4000; the y axis still scales to all the data unless `ymin`/`ymax` are set |
 | `threshold`, `prominence`, `distance` | peak-picking sensitivity overrides, for a band at the plot edge or noise taken for bands |
 | `name` | the reference name above (written back by the first run) |
 | `peak_a`, `cl` | QUANT-IR files only, see above |
@@ -257,7 +259,8 @@ irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
 - **Which keys.** `set` and `unset` take `title`, `axis`, `name` (text) and `ymin`, `ymax`,
   `xmin`, `xmax`, `threshold`, `prominence`, `distance` (numbers, stored as JSON numbers; a
   value that is not a number is refused). Any other key is an error naming the allowed ones.
-  `xmin`, `xmax` and `ymax` are stored but the drawing code does not read them yet.
+  `xmin`/`xmax` crop the x axis and `ymax` is the top of the y axis, in the TeX figure, in `irspec plot`
+  and in `irspec preview`; `set` refuses a lower limit that is not below its upper one (exit 2).
 - **Peaks.** `peak add X ...` snaps each wavenumber to the nearest local band of that
   spectrum (within 15 cm⁻¹) and adds it with the label height `session` gives a band named by
   its wavenumber alone. `peak remove X ...` takes out the stored peak nearest X, if one is

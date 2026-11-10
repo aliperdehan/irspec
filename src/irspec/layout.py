@@ -40,12 +40,27 @@ def window(x, y):
     return x[m], y[m]
 
 
-def ylimits(y, ymin=None):
-    """(bottom, top) of the y axis. `y` is the windowed intensity; `ymin`, when
-    given, is the lowest value the figure must show (the trace stays above it,
-    and the frame goes a little lower)."""
-    top = float(np.max(y))
+def xlimits(xmin=None, xmax=None):
+    """(left, right) of the x axis, high wavenumber first: the figure's own `xmax` and `xmin`
+    (a crop), else XLIM. The ticks need no change: the majors are the XLIM ones that fall inside,
+    the minors every 100 (measured on the TeX figure for two crops, 2026-11-10)."""
+    left = XLIM[0] if xmax is None else float(xmax)
+    right = XLIM[1] if xmin is None else float(xmin)
+    if not right < left:
+        raise ValueError(f"xmin ({right:g}) must be below xmax ({left:g})")
+    return left, right
+
+
+def ylimits(y, ymin=None, ymax=None):
+    """(bottom, top) of the y axis. `y` is the windowed intensity; `ymin` and `ymax`, when given,
+    are the lowest and the highest value the figure must show (the frame goes a little beyond
+    both). The padding is the same fraction of the span from `ymin` to `ymax`, wherever they
+    come from: measured on the TeX figure with ymax=100 and 110 (ymin -5), ymax=110 alone and
+    ymin=20 with ymax=105, and the crop of x does not change it (TeX scales y on all the data)."""
+    top = float(np.max(y)) if ymax is None else float(ymax)
     base = float(np.min(y)) if ymin is None else float(ymin)
+    if not base < top:
+        raise ValueError(f"ymin ({base:g}) must be below ymax ({top:g})")
     span = top - base
     return base - LOWER_PAD * span, top + UPPER_PAD * span
 

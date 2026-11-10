@@ -35,9 +35,16 @@ LABEL_PT <- 8; TEXT_PT <- 12; CAPTION_PT <- 10; FRAME_PT <- 0.4
 MAJOR_TICK_PT <- 4.2; MINOR_TICK_PT <- 2.1
 MAX_Y_INTERVALS <- 12
 
-y_limits <- function(y, ymin = NULL) {
-  top <- max(y)
+x_limits <- function(xmin = NULL, xmax = NULL) {
+  lim <- c(if (is.null(xmax)) XLIM[1] else xmax, if (is.null(xmin)) XLIM[2] else xmin)
+  if (!(lim[2] < lim[1])) stop(sprintf("xmin (%g) must be below xmax (%g)", lim[2], lim[1]), call. = FALSE)
+  lim
+}
+
+y_limits <- function(y, ymin = NULL, ymax = NULL) {
+  top <- if (is.null(ymax)) max(y) else ymax
   base <- if (is.null(ymin)) min(y) else ymin
+  if (!(base < top)) stop(sprintf("ymin (%g) must be below ymax (%g)", base, top), call. = FALSE)
   span <- top - base
   c(base - LOWER_PAD * span, top + UPPER_PAD * span)
 }
@@ -83,7 +90,7 @@ read_figures <- function(path) {
       matrix(numeric(0), ncol = 2)
     list(csv = file.path(folder, e$csv), title = if (is.null(e$title)) "" else e$title,
          axis = if (is.null(e$axis)) "Transmittance %" else e$axis,
-         peaks = peaks, ymin = e$ymin, stem = sub("_plain$", "", tools::file_path_sans_ext(basename(e$csv))))
+         peaks = peaks, ymin = e$ymin, ymax = e$ymax, xmin = e$xmin, xmax = e$xmax, stem = sub("_plain$", "", tools::file_path_sans_ext(basename(e$csv))))
   })
   list(figures = figs, folder = folder)
 }
@@ -123,9 +130,10 @@ draw <- function(fig, family, caption = TRUE) {
   d <- read.csv(fig$csv)
   names(d)[1:2] <- c("x", "y")
   d <- d[is.finite(d$y) & d$x >= min(XLIM) & d$x <= max(XLIM), ]
-  lim <- y_limits(d$y, fig$ymin)
+  lim <- y_limits(d$y, fig$ymin, fig$ymax)
+  xl <- x_limits(fig$xmin, fig$xmax)
   pk <- as.data.frame(fig$peaks); names(pk) <- c("x", "ly")
-  pk <- pk[pk$x >= min(XLIM) & pk$x <= max(XLIM), ]
+  pk <- pk[pk$x >= min(xl) & pk$x <= max(xl), ]
   pk$label <- sprintf("%.1f", pk$x)
   tick_len <- unit(MAJOR_TICK_PT, "pt")
   p <- ggplot(d, aes(x, y)) +
@@ -140,11 +148,11 @@ draw <- function(fig, family, caption = TRUE) {
                  label.padding = unit(1, "pt"), label.r = unit(0, "pt"))
   }
   p <- p +
-    scale_x_reverse(limits = XLIM, breaks = seq(4000, 1000, by = -X_MAJOR),
+    scale_x_reverse(limits = xl, oob = scales::oob_keep, breaks = seq(4000, 1000, by = -X_MAJOR),
                     minor_breaks = seq(3900, 700, by = -X_MINOR), labels = fmt_number,
                     expand = c(0, 0), guide = guide_axis(minor.ticks = TRUE)) +
-    scale_y_continuous(limits = lim, breaks = y_ticks(lim[1], lim[2]), labels = fmt_number,
-                       expand = c(0, 0)) +
+    scale_y_continuous(limits = lim, oob = scales::oob_keep, breaks = y_ticks(lim[1], lim[2]),
+                       labels = fmt_number, expand = c(0, 0)) +
     guides(x.sec = guide_axis(minor.ticks = TRUE), y.sec = guide_axis()) +
     labs(x = "Wavenumber / cm⁻¹", y = fig$axis, caption = if (caption && nzchar(fig$title)) fig$title) +
     theme_void(base_family = family, base_size = TEXT_PT) +
@@ -255,7 +263,7 @@ main <- function(argv = commandArgs(trailingOnly = TRUE)) {
   if (a$layout) {
     for (f in r$figures) {
       d <- read.csv(f$csv); d <- d[d[[1]] >= min(XLIM) & d[[1]] <= max(XLIM) & is.finite(d[[2]]), ]
-      lim <- y_limits(d[[2]], f$ymin)
+      lim <- y_limits(d[[2]], f$ymin, f$ymax)
       cat(sprintf("%.10f %.10f %s\n", lim[1], lim[2], paste(y_ticks(lim[1], lim[2]), collapse = ",")))
     }
     return(invisible())

@@ -6,8 +6,8 @@ CSV of the house shape ("wavenumber,intensity", comma, dot decimal, clipped
 at 650 cm-1), a y-axis label, peaks, a title and a few size knobs.
 
 The on-disk form is a manifest entry (the JSON that `ir_organize` already keeps
-beside a session): {"file"|"csv", "title", "peaks", "axis", "ymin", "width",
-"height"}. `Figure.from_entry` / `to_entry` are the two directions.
+beside a session): {"file"|"csv", "title", "peaks", "axis", "ymin", "ymax",
+"xmin", "xmax", "width", "height"}. `Figure.from_entry` / `to_entry` are the two directions.
 
 `figures.json` (write_figures / read_figures) is the same list written beside a
 session's manifest, after the run, with every `csv` relative to that file's own
@@ -33,6 +33,9 @@ class Figure:
     axis: str = "Transmittance %"  # y-axis label; Transmittance % or Absorbance
     peaks: List[Tuple[float, float]] = field(default_factory=list)  # (wavenumber, label_y)
     ymin: Optional[float] = None   # None: let the plotting backend choose
+    ymax: Optional[float] = None   # top of the y axis (the frame goes a hair above), else the data's
+    xmin: Optional[float] = None   # wavenumber limits, else 650 and 4000
+    xmax: Optional[float] = None
     width: str = r"\linewidth"
     height: str = "6.8in"
 
@@ -53,14 +56,16 @@ class Figure:
         except KeyError:
             raise ValueError("manifest entry has no 'csv' (the plain CSV to plot)")
         peaks = [(float(p[0]), float(p[1])) for p in entry.get("peaks", [])]
-        kw = {k: entry[k] for k in ("axis", "ymin", "width", "height") if k in entry}
+        kw = {k: entry[k] for k in ("axis", "ymin", "ymax", "xmin", "xmax", "width", "height")
+              if k in entry}
         return cls(csv=csv, title=entry.get("title", ""), peaks=peaks, **kw)
 
     def to_entry(self) -> dict:
         d = {"spec": SPEC_VERSION, "csv": self.csv, "title": self.title,
              "axis": self.axis, "peaks": [[x, ly] for x, ly in self.peaks]}
-        if self.ymin is not None:
-            d["ymin"] = self.ymin
+        for k in ("ymin", "ymax", "xmin", "xmax"):
+            if getattr(self, k) is not None:
+                d[k] = getattr(self, k)
         if self.width != r"\linewidth":
             d["width"] = self.width
         if self.height != "6.8in":
@@ -79,7 +84,8 @@ class Figure:
                 x, ly = item.split("/")
                 peaks.append((float(x), float(ly)))
         return cls(csv=os.path.relpath(r["plain_path"], folder), title=r["title"],
-                   axis=r["axis_md"], peaks=peaks, ymin=r["ymin"])
+                   axis=r["axis_md"], peaks=peaks, ymin=r["ymin"], ymax=r.get("ymax"),
+                   xmin=r.get("xmin"), xmax=r.get("xmax"))
 
 
 def write_figures(figures, path) -> str:

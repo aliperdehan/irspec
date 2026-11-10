@@ -47,7 +47,8 @@ later run keeps it. All keys except `file` are optional.
 | `peaks` | list of `[wavenumber, label_y]` | the labelled bands; `[]` is none, an absent key means "pick them" |
 | `axis` | string | y-axis label, default `Transmittance %` |
 | `ymin` | number | bottom of the y axis |
-| `ymax`, `xmin`, `xmax` | number | stored by `irspec edit`; **no drawing code reads them yet** |
+| `ymax` | number | top of the y axis (the frame goes a hair above); default the data's own maximum |
+| `xmin`, `xmax` | number | crop the x axis, in cm⁻¹ (`xmax` is the left edge); default 650 and 4000. `set` refuses a lower limit that is not below its upper |
 | `threshold` | number | peak picking: % of the dynamic range (default 5) |
 | `prominence` | number | peak picking: scipy prominence in y units (default 3) |
 | `distance` | number | peak picking: least gap between peaks in cm⁻¹ (default 8) |
@@ -69,7 +70,7 @@ A list of objects, in figure order.
 | `title` | string | caption |
 | `axis` | string | y-axis label |
 | `peaks` | list of `[wavenumber, label_y]` | as above |
-| `ymin` | number | present when set |
+| `ymin`, `ymax`, `xmin`, `xmax` | number | present when set, as in the manifest |
 | `width`, `height` | string | TeX lengths; mean nothing outside TeX; present when not the default |
 | `kind` | string | optional; absent means `"ir"` |
 
@@ -122,6 +123,7 @@ not drawn here.
 | `points` | integer | points in the file |
 | `range` | object with `x` and `y` | each `[min, max]`; `y` is the figure's window |
 | `ymin` | number or null | |
+| `xlim`, `ylim` | `[left, right]`, `[bottom, top]` | the frame the figure would have: the crop or 4000 to 650, and the y axis with its padding |
 | `peaks` | list of `[wavenumber, label_y]` | |
 | `peaks_from` | string | `"automatic"` or `"manifest.json"` |
 

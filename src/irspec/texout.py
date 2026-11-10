@@ -27,8 +27,9 @@ EXCERPT_NAME = "irspec-ir.sty"
 
 def _block(f: Figure, esc=spa_tool.latex_escape) -> str:
     opts = f"width={f.width},height={f.height}"
-    if f.ymin is not None:
-        opts += f",ymin={f.ymin}"
+    for key in ("ymin", "ymax", "xmin", "xmax"):   # pgfplots' own keys: the call narrows the axis
+        if getattr(f, key) is not None:
+            opts += f",{key}={getattr(f, key)}"
     return ("\\irspectrum\n"
             f"  [{opts}]\n"
             f"  {{{f.csv}}}\n"

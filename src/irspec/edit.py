@@ -21,8 +21,10 @@ Keys that `set` and `unset` accept:
     ymin, ymax, xmin, xmax              numbers (the axis limits)
     threshold, prominence, distance     numbers (peak-picking sensitivity)
 
-xmin, xmax and ymax are stored for the figure code that will read them (roadmap 1a);
-today only ymin, title, axis, name and the three peak-picking numbers change a figure.
+xmin and xmax (cm-1, wavenumbers; xmax is the left edge) crop the x axis, ymax is the top of the y
+axis (ymin the bottom): the TeX figure, `irspec plot` and `irspec preview` all take them (a crop
+shows less of the spectrum; the y axis still scales to all of it unless ymin/ymax say otherwise).
+`set` refuses a lower limit that is not below its upper one (exit 2, nothing written).
 
 Peaks. `peak add X` snaps each X (a wavenumber) to the nearest local band of the file's own
 spectrum with `find_peaks_manual`, and puts it in the entry's "peaks" with the label height
@@ -476,6 +478,15 @@ def format_changes(file, changes):
 # -----------------------------------------------------------------------------
 # commands
 # -----------------------------------------------------------------------------
+def check_limits(entry):
+    """A figure whose lower limit is not below its upper one cannot be drawn: refuse the edit
+    (nothing has been written yet)."""
+    for lo, hi in (("xmin", "xmax"), ("ymin", "ymax")):
+        a, b = entry.get(lo), entry.get(hi)
+        if isinstance(a, (int, float)) and isinstance(b, (int, float)) and not a < b:
+            raise EditError(f"{lo} ({a:g}) must be below {hi} ({b:g})")
+
+
 def edit(folder, name, verb, items):
     """Run `set`, `unset` or `peak` on the entry `name`. Returns (file, changes); writes only if needed."""
     if verb == "set":
@@ -494,6 +505,8 @@ def edit(folder, name, verb, items):
         changes = apply_peaks(entry, folder, *plan)
     else:
         changes = apply_set(entry, plan) if verb == "set" else apply_unset(entry, plan)
+        if verb == "set":
+            check_limits(entry)
     if changes:
         write_atomic(manifest_path(folder), serialize(entries, text))
     return entry_file(entry), changes

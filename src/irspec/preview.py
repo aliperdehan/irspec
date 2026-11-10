@@ -10,9 +10,9 @@ columns otherwise) and the dot characters (Braille when stdout's encoding is
 UTF-8, else `. : * |`).
 
 The plot has the wavenumber axis from the figure's limits (layout.XLIM, 4000 to
-650 left to right), intensity up, the trace in the figure's window and the
-y limits the figure would use (layout.ylimits, with the `ymin` the session would
-write). Each picked peak gets a symbol (1-9, then A-Z, then a-z) under the band
+650 left to right, or the entry's `xmax` and `xmin`), intensity up, the trace in
+the figure's window and the y limits the figure would use (layout.ylimits, with
+the `ymin` the session would write and the entry's `ymax`). Each picked peak gets a symbol (1-9, then A-Z, then a-z) under the band
 (above it for an absorbance spectrum), and the text block below lists the
 peaks with their symbols. A peak whose cell has no free room near the curve is
 listed with `-` and is not marked.
@@ -29,7 +29,8 @@ of the session would. Otherwise the peaks are the automatic ones.
 
     {"file", "kind" ("ir", the plot kind), "format" ("spa", "jdx" or "csv", the file's), "axis",
      "converted_from", "points", "range": {"x", "y"},
-     "ymin", "peaks": [[wavenumber, label_y], ...], "peaks_from"}
+     "ymin", "xlim" and "ylim" (the frame the figure would have: [left, right], [bottom, top]),
+     "peaks": [[wavenumber, label_y], ...], "peaks_from"}
 
 Exit status: 0 done; 2 when the file cannot be read or drawn (the reason is on
 stderr). The honest limit: shape, ranges, peak positions and which peaks are
@@ -172,12 +173,18 @@ def work_out_entry(path, entry, mpath):
     xw, yw = layout.window(x, y)
     peaks = [[float(a), float(b)] for a, b in probe["peaks"]]
     ymin = result["ymin"]
+    try:
+        xlim = layout.xlimits(probe.get("xmin"), probe.get("xmax"))
+        ylim = layout.ylimits(yw, ymin, probe.get("ymax"))
+    except ValueError as e:
+        raise PreviewError(f"{path}: {e}")
     return {
         "file": path, "kind": KIND, "format": kind, "axis": axis, "converted_from": converted,
         "points": int(x.size),
         "range": {"x": [float(x.min()), float(x.max())],
                   "y": [float(yw.min()), float(yw.max())]},
         "ymin": None if ymin is None else float(ymin),
+        "xlim": [float(v) for v in xlim], "ylim": [float(v) for v in ylim],
         "peaks": peaks,
         "peaks_from": "manifest.json" if from_manifest else "automatic",
         "_xw": xw, "_yw": yw, "_absorbance": absorbance, "_manifest": mpath,
@@ -222,10 +229,11 @@ def _line(dots, x0, y0, x1, y1):
             y0 += sy
 
 
-def trace_dots(xw, yw, cols, rows, lo, hi):
-    """The curve as a (rows*4, cols*2) boolean grid of dots, x from layout.XLIM."""
+def trace_dots(xw, yw, cols, rows, lo, hi, xlim=layout.XLIM):
+    """The curve as a (rows*4, cols*2) boolean grid of dots, x from `xlim` (layout.XLIM unless
+    the figure is cropped). Dots beyond the frame are not drawn."""
     w, h = cols * 2, rows * 4
-    left, right = layout.XLIM
+    left, right = xlim
     px = np.rint((left - xw) / (left - right) * (w - 1)).astype(int)
     py = np.rint((hi - yw) / (hi - lo) * (h - 1)).astype(int)
     dots = np.zeros((h, w), dtype=bool)
@@ -261,16 +269,16 @@ def _fmt_x(v):
     return layout.fmt_number(v).replace("−", "-")
 
 
-def place_peaks(grid, dots, peaks, xw, yw, cols, rows, lo, hi, absorbance):
+def place_peaks(grid, dots, peaks, xw, yw, cols, rows, lo, hi, absorbance, xlim=layout.XLIM):
     """Mark each peak in the character grid; returns the symbol (or "-") of each peak."""
-    left, right = layout.XLIM
+    left, right = xlim
     order = np.argsort(xw)
     xs, ys = xw[order], yw[order]
     step = -1 if absorbance else 1       # a transmittance band points down: the symbol hangs below it
     symbols = [None] * len(peaks)
     for n in sorted(range(len(peaks)), key=lambda i: peaks[i][0], reverse=True):
         px, _ = peaks[n]
-        if not (min(layout.XLIM) <= px <= max(layout.XLIM)):
+        if not (min(xlim) <= px <= max(xlim)):
             symbols[n] = "-"
             continue
         col = int(round((left - px) / (left - right) * (cols * 2 - 1))) // 2
@@ -291,7 +299,8 @@ def place_peaks(grid, dots, peaks, xw, yw, cols, rows, lo, hi, absorbance):
 def draw(info, width, height, braille):
     """The plot as a list of lines."""
     xw, yw, absorbance = info["_xw"], info["_yw"], info["_absorbance"]
-    lo, hi = layout.ylimits(yw, info["ymin"])
+    xlim = info["xlim"]
+    lo, hi = info["ylim"]
     ticks = [t for t in layout.y_ticks(lo, hi)]
     # the y labels: the ticks, top down, at least 2 rows apart
     rows_for = {}
@@ -306,12 +315,12 @@ def draw(info, width, height, braille):
     if cols < 10:
         raise PreviewError(f"--width {width} is too narrow for this plot")
 
-    dots = trace_dots(xw, yw, cols, height, lo, hi)
+    dots = trace_dots(xw, yw, cols, height, lo, hi, xlim)
     grid = [[cell_char(dots[r * 4:r * 4 + 4, c * 2:c * 2 + 2], braille) for c in range(cols)]
             for r in range(height)]
-    symbols = place_peaks(grid, dots, info["peaks"], xw, yw, cols, height, lo, hi, absorbance)
+    symbols = place_peaks(grid, dots, info["peaks"], xw, yw, cols, height, lo, hi, absorbance, xlim)
 
-    left, right = layout.XLIM
+    left, right = xlim
     major = layout.X_MAJOR
     tick_cols = {}
     v = np.floor(left / major) * major
@@ -385,6 +394,11 @@ def render(info, width, height, braille):
                  f"intensity {yr[0]:.4g} to {yr[1]:.4g}")
     ymin = "the data's own minimum" if info["ymin"] is None else f"{info['ymin']:g}"
     lines.append(f"ymin:    {ymin}")
+    entry = info["_entry"] or {}
+    if entry.get("ymax") is not None:
+        lines.append(f"ymax:    {entry['ymax']:g}")
+    if entry.get("xmin") is not None or entry.get("xmax") is not None:
+        lines.append(f"x axis:  {info['xlim'][0]:g} to {info['xlim'][1]:g} cm-1 (cropped)")
     n = len(info["peaks"])
     src = "from manifest.json" if info["peaks_from"] == "manifest.json" else "picked automatically"
     lines.append(f"peaks:   {n} ({src}); wavenumber/label height")
