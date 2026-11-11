@@ -830,6 +830,9 @@ def cmd_convert(args):
         mask[top + 1:bottom, left + 1:right] = dark[top + 1:bottom, left + 1:right]
         mask = drop_small_blobs(mask, args.min_blob)
     pts, pen = extract_trace(mask)
+    if not pts:
+        print("  FAIL   trace is empty")
+        sys.exit(2)
     ncols = (np.nonzero(mask.any(0))[0].max() - np.nonzero(mask.any(0))[0].min() + 1
              if args.layout in ("palleros", "omnic") else right - left - 1)
     print(f"  trace  {len(pts)}/{ncols} columns, pen {pen} px")
