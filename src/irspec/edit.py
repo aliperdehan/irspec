@@ -359,7 +359,7 @@ def load_saved_ir(folder, entry):
     if not f:
         raise EditError("this manifest entry has no \"file\", so there is no spectrum to snap to")
     if f.lower().endswith(_io.SPA_EXT):
-        stem = spa_tool.clean_stem(f)
+        stem = entry.get("name") or spa_tool.clean_stem(f)
         plain = os.path.join(folder, "plain", f"{stem}_plain.csv")
         archival = os.path.join(folder, "csv", f"{stem}.csv")
         x = None

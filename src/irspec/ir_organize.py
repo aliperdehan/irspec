@@ -155,6 +155,8 @@ def build_manifest(folder, titles, sort):
     entries, seen = [], set()
     for e in old:
         r = rel(entry_file(e) or "")
+        if r in disk and r in seen:
+            raise ValueError(f"same input file twice: {r}")
         if r in disk and r not in seen:
             e = {k: v for k, v in e.items() if k not in ("spa", "jdx")}
             e["file"] = r
@@ -235,8 +237,22 @@ def _finish(e, stem, x, y, axis, absorbance, archival, plain):
     }
 
 
+def allocate_output_names(entries, names=None, plain_suffixes=None):
+    """Resolve every archival CSV name before any spectrum writes its output."""
+    from .naming import allocate
+    from .filenames import filename_component
+    paths = [entry_file(e) for e in entries]
+    names = names or [e.get("name") or spa_tool.clean_stem(p) for e, p in zip(entries, paths)]
+    names = [filename_component(name) for name in names]
+    suffixes = plain_suffixes or ["_plain"] * len(entries)
+    allocated = allocate(paths, names, lambda i, n: [("csv", n), ("plain", n + suffixes[i])])
+    for e, old, new in zip(entries, names, allocated):
+        if old != new:
+            e["name"] = new
+
+
 def process_spa(path, e, csv_dir, plain_dir):
-    stem = spa_tool.clean_stem(path)
+    stem = e.get("name") or spa_tool.clean_stem(path)
     x, y = spa_tool.read_spa(path)
     axis = e.get("axis") or spa_tool.axis_of(y, x >= spa_tool.CLIP_CM)
     archival = spa_tool.write_archival_csv(x, y, os.path.join(csv_dir, stem), axis)
@@ -246,7 +262,7 @@ def process_spa(path, e, csv_dir, plain_dir):
 
 def process_jdx(path, e, csv_dir, plain_dir):
     xs, ys, meta = jdx_tool.read_jdx(path)
-    stem = spa_tool.clean_stem(path)
+    stem = e.get("name") or spa_tool.clean_stem(path)
     archival = jdx_tool.write_csv(xs, ys, meta, os.path.join(csv_dir, f"{stem}.csv"), stem)
     # jdx_tool rescales fractional Transmittance x100 in the plain CSV only.
     plain = jdx_tool.write_plain_csv(xs, ys, meta, os.path.join(plain_dir, f"{stem}_plain.csv"))
@@ -364,10 +380,17 @@ def main():
     if not moves:
         print("nothing to file")
 
-    entries = build_manifest(folder, titles, args.sort)
+    try:
+        entries = build_manifest(folder, titles, args.sort)
+    except ValueError as err:
+        sys.exit(str(err))
     if not entries:
         sys.exit("no .SPA/.SPG/.jdx spectra found")
 
+    try:
+        allocate_output_names(entries)
+    except ValueError as err:
+        sys.exit(str(err))
     csv_dir = os.path.join(folder, "csv")
     plain_dir = os.path.join(folder, "plain")
     os.makedirs(csv_dir, exist_ok=True)

@@ -217,6 +217,8 @@ def build_manifest(folder, titles, sort, planned=None):
     entries, seen = [], set()
     for e in old:
         r = rel(_io.entry_file(e) or "")
+        if r in disk and r in seen:
+            raise ValueError(f"same input file twice: {r}")
         if r in disk and r not in seen:
             e = {k: v for k, v in e.items() if k not in ("spa", "jdx")}
             e["file"] = r
@@ -358,7 +360,7 @@ def process_ir(folder, e, csv_dir, plain_dir):
     f = e["file"]
     if f.lower().endswith(_io.SPA_EXT):
         path = os.path.join(folder, f)
-        stem = spa_tool.clean_stem(path)
+        stem = reference_name(folder, e)
         x, y = spa_tool.read_spa(path)
         axis = e.get("axis") or spa_tool.axis_of(y, x >= spa_tool.CLIP_CM)
         archival = spa_tool.write_archival_csv(x, y, os.path.join(csv_dir, stem), axis)
@@ -432,13 +434,22 @@ def spectrum_record(folder, e, r, fig):
             "plain": _rel(folder, r["plain_path"])}
 
 
+def allocate_output_names(folder, entries):
+    try:
+        _io.allocate_output_names(
+            entries, [reference_name(folder, e) for e in entries],
+            ["_plain" if e["file"].lower().endswith(_io.SPA_EXT) else "" for e in entries])
+    except ValueError as err:
+        raise SessionError(str(err)) from err
+
+
 def planned_names(folder, e):
     """(name, csv, plain) a spectrum's CSVs get, relative to the folder, as `process` writes them."""
     if e["file"].startswith("SPA/"):
-        stem = spa_tool.clean_stem(e["file"])
+        stem = reference_name(folder, e)
         return stem, f"csv/{stem}.csv", f"plain/{stem}_plain.csv"
     if kinds.of(e) is not kinds.IR:   # another kind's file keeps its stem, as session writes it
-        stem = spa_tool.clean_stem(e["file"])
+        stem = reference_name(folder, e)
         return stem, f"csv/{stem}.csv", f"plain/{stem}.csv"
     name = reference_name(folder, e)
     return name, f"csv/{name}.csv", f"plain/{name}.csv"
@@ -480,6 +491,7 @@ def preview_folder(folder, titles, sort, width, height, braille, as_json):
     if not entries:
         stop("no spectra found (SPA/, jdx/ or img/)")
 
+    allocate_output_names(folder, entries)
     spectra, images, blocks, failed = [], [], [], False
     for e in entries:
         rel = e["file"]
@@ -549,6 +561,7 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
         raise SessionError(f"manifest.json cannot be used ({err})")
     if not entries:
         raise SessionError("no spectra found (SPA/, jdx/ or img/)")
+    allocate_output_names(folder, entries)
     csv_dir, plain_dir = os.path.join(folder, "csv"), os.path.join(folder, "plain")
     os.makedirs(csv_dir, exist_ok=True)
     os.makedirs(plain_dir, exist_ok=True)

@@ -78,7 +78,7 @@ def process(folder, e, csv_dir, plain_dir):
     """One `uv/` entry -> csv/STEM.csv and plain/STEM.csv, and session's result dict."""
     from .session import SessionError
     path = os.path.join(folder, e["file"])
-    stem = spa_tool.clean_stem(e["file"])
+    stem = e.get("name") or spa_tool.clean_stem(e["file"])
     archival = os.path.join(csv_dir, f"{stem}.csv")
     plain = os.path.join(plain_dir, f"{stem}.csv")
     try:
@@ -114,7 +114,7 @@ def load_saved(folder, entry):
     """(x, y, axis, absorbance) of a session's entry, from its plain/ CSV (irspec edit)."""
     from .edit import EditError
     from .session import read_plain
-    stem = spa_tool.clean_stem(entry["file"])
+    stem = entry.get("name") or spa_tool.clean_stem(entry["file"])
     plain = os.path.join(folder, "plain", f"{stem}.csv")
     if not os.path.exists(plain):
         raise EditError(f"no spectrum for {entry['file']}: plain/{stem}.csv does not exist "

@@ -2,6 +2,13 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.21 (2026-11-12)
+
+- Allocate session and organiser CSV names before processing any spectrum (I2.2).
+  Qualify colliding names with their source path, leave other names intact, and
+  report both inputs and their new names. Saved names survive reordering and
+  re-runs; duplicate inputs are refused. Preview and peak editing use these names.
+
 ## 0.2.20 (2026-11-12)
 
 - Widen equal automatic y bounds by one existing layout tick step on each
