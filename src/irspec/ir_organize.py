@@ -126,15 +126,23 @@ def entry_file(e):
     return e.get("file") or e.get("spa") or e.get("jdx")
 
 
+def load_manifest(folder):
+    mpath = os.path.join(folder, "manifest.json")
+    if not os.path.exists(mpath):
+        return []
+    with open(mpath, encoding="utf-8") as f:
+        old = json.load(f)
+    if not isinstance(old, list) or any(not isinstance(e, dict) for e in old):
+        raise ValueError("expected a list of entry objects")
+    return old
+
+
 def build_manifest(folder, titles, sort):
     """Merge on-disk spectra with any existing manifest.json: existing
     entries keep their order/titles/overrides, new files are appended in
     `sort` order, vanished files are dropped. Returns the entry list."""
     mpath = os.path.join(folder, "manifest.json")
-    old = []
-    if os.path.exists(mpath):
-        with open(mpath, encoding="utf-8") as f:
-            old = json.load(f)
+    old = load_manifest(folder)
 
     # A manifest copied from another machine has absolute paths; match on
     # the SPA/name tail so it still works here.

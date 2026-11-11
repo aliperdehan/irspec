@@ -206,11 +206,7 @@ def build_manifest(folder, titles, sort, planned=None):
     `planned` ({"SPA/x.SPA": current path}) lists files that are not filed yet but will be
     (--preview): they count as on disk, and are read from where they are."""
     planned = planned or {}
-    mpath = os.path.join(folder, "manifest.json")
-    old = []
-    if os.path.exists(mpath):
-        with open(mpath, encoding="utf-8") as f:
-            old = json.load(f)
+    old = _io.load_manifest(folder)
 
     def rel(p):
         p = p.replace("\\", "/")

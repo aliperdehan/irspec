@@ -2,6 +2,10 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.12 (2026-11-11)
+
+- Reject malformed manifest structures with a useful error before merging.
+
 ## 0.2.11 (2026-11-11)
 
 - Session JSON reports expected pdfmd and picture export failures.
