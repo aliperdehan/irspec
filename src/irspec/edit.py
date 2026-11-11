@@ -92,6 +92,7 @@ import struct
 import sys
 import tempfile
 
+from . import kinds
 from .figure import KIND
 
 NUMERIC_KEYS = ("ymin", "ymax", "xmin", "xmax", "threshold", "prominence", "distance")
@@ -339,7 +340,17 @@ def parse_peak_args(items):
 
 
 def load_spectrum(folder, entry):
-    """(x, y, axis, absorbance) of the entry as `irspec session` sees it: for an own .SPA entry
+    """(x, y, axis, absorbance) of the entry as `irspec session` sees it, by its kind's own code
+    (kinds.py). EditError (2) for a kind this irspec does not know."""
+    try:
+        kind = kinds.of(entry)
+    except ValueError as e:
+        raise EditError(str(e))
+    return kind.function("load_saved")(folder, entry)
+
+
+def load_saved_ir(folder, entry):
+    """(x, y, axis, absorbance) of an IR entry as `irspec session` sees it: for an own .SPA entry
     the .SPA itself (session reads that), else the plain/ CSV session wrote, else csv/; for a
     reference spectrum the plain/ CSV. EditError (2) if there is none."""
     from . import ir_organize as _io
@@ -482,8 +493,12 @@ def format_changes(file, changes):
 def check_limits(entry):
     """A figure whose lower limit is not below its upper one cannot be drawn: refuse the edit
     (nothing has been written yet). An x limit set alone is checked against the other one's
-    default (layout.XLIM): `xmin=4000` with no `xmax` meets the default left edge, 4000."""
-    from . import layout
+    default (the kind's xlim, IR's layout.XLIM): `xmin=4000` with no `xmax` meets the default
+    left edge, 4000. A kind this irspec does not know is not checked (it is not drawn either)."""
+    try:
+        xlim = kinds.of(entry).xlim
+    except ValueError:
+        return
     for lo, hi in (("xmin", "xmax"), ("ymin", "ymax")):
         a, b = entry.get(lo), entry.get(hi)
         a = a if isinstance(a, (int, float)) else None
@@ -491,10 +506,10 @@ def check_limits(entry):
         said = {lo: f"{a:g}" if a is not None else "", hi: f"{b:g}" if b is not None else ""}
         if lo == "xmin" and (a is None) != (b is None):
             if a is None:
-                a = min(layout.XLIM)
+                a = min(xlim)
                 said[lo] = f"the default, {a:g}"
             else:
-                b = max(layout.XLIM)
+                b = max(xlim)
                 said[hi] = f"the default, {b:g}"
         if a is not None and b is not None and not a < b:
             raise EditError(f"{lo} ({said[lo]}) must be below {hi} ({said[hi]})")
@@ -663,13 +678,14 @@ def run_verb(args, rest):
     """Carry out `rest` = [FILE, VERB, ...] (set, unset, peak, move, remove); return the JSON
     payload and the text printed without --json."""
     folder, file_arg, verb = args.dir, rest[0], rest[1]
+    kind = stored_kind(folder, file_arg)
     if verb == "move":
         if rest[2:]:
             raise EditError("move takes no arguments but --to POSITION")
         file, changes, position = move_entry(folder, file_arg, args.to)
         text = (format_changes(file, changes) if changes
                 else f"{file}: no change (already at position {position})")
-        return {"file": file, "changes": changes}, text
+        return {"kind": kind, "file": file, "changes": changes}, text
     if verb == "remove":
         if rest[2:]:
             raise EditError("remove takes no arguments")
@@ -679,14 +695,25 @@ def run_verb(args, rest):
                    "  (no such file on disk; only the manifest entry was removed)")
                 + "\n  csv/ and plain/ files made for it are left in place; "
                   "run `irspec session` to redraw")
-        return {"file": file, "removed": entry, "moved_to": moved_to}, text
+        return {"kind": kind, "file": file, "removed": entry, "moved_to": moved_to}, text
     file, changes = edit(folder, file_arg, verb, rest[2:])
     text = format_changes(file, changes)
     if verb == "peak" and rest[2:3] == ["auto"]:
         dropped = [str(c["old"][0]) for c in changes if c["new"] is None]
         text += ("\npeak auto replaces the stored peaks, hand edits included"
                  + (f"; dropped: {', '.join(dropped)}" if dropped else ""))
-    return {"file": file, "changes": changes}, text
+    return {"kind": kind, "file": file, "changes": changes}, text
+
+
+def stored_kind(folder, name):
+    """The `kind` of the entry `name` as manifest.json stores it (absent: the default), for the
+    --json object; the default when there is no such entry (the action then says why)."""
+    try:
+        entries = read_manifest(folder)[0]
+        entry = entries[find_entry(entries, name)]
+    except (EditError, SystemExit):
+        return KIND
+    return entry.get("kind", KIND) if isinstance(entry, dict) else KIND
 
 
 def main(argv=None):
@@ -724,7 +751,6 @@ def main(argv=None):
         if (args.md_name or args.pdfmd) and not args.build:
             raise EditError("--md-name and --pdfmd go with --build")
         payload, lines = run_verb(args, rest)
-        payload = {"kind": KIND, **payload}   # the plot kind of the entry (docs/schema.md)
         failure = None
         if not args.json:
             print(lines)

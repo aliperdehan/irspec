@@ -67,8 +67,7 @@ from . import jdx_tool  # noqa: E402
 from . import spa_peaks  # noqa: E402
 from . import spa_tool  # noqa: E402
 
-SPA_EXT = (".spa", ".spg")
-JDX_EXT = (".jdx", ".dx", ".jcm")
+from .kinds import JDX_EXT, SPA_EXT  # noqa: E402  (the IR kind's file types)
 # Directories/files this tool owns or generates; never filed into other/.
 OWN_DIRS = {"SPA", "jdx", "other", "csv", "plain"}
 GENERATED_EXT = (".md", ".pdf")

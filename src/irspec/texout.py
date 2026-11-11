@@ -19,7 +19,7 @@ import os
 import shutil
 from importlib import resources
 
-from . import fonts, spa_tool
+from . import fonts, kinds, spa_tool
 from .figure import Figure
 
 EXCERPT_NAME = "irspec-ir.sty"
@@ -30,7 +30,7 @@ def _block(f: Figure, esc=spa_tool.latex_escape) -> str:
     for key in ("ymin", "ymax", "xmin", "xmax"):   # pgfplots' own keys: the call narrows the axis
         if getattr(f, key) is not None:
             opts += f",{key}={getattr(f, key)}"
-    return ("\\irspectrum\n"
+    return (f"\\{kinds.get(f.kind).macro}\n"
             f"  [{opts}]\n"
             f"  {{{f.csv}}}\n"
             f"  {{{esc(f.axis)}}}\n"

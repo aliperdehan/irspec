@@ -18,8 +18,10 @@ Two numbers version it:
   Roadmap item 6 adds others (UV-Vis, chromatograms, ...). Every `--json` object says it
   (`kind` on the object, and on each spectrum inside it), so a reader never has to assume. In a
   file (`manifest.json` entry, `figures.json` entry) `kind` is optional and **absent means
-  `"ir"`**; irspec does not write it there yet. A reader that finds another value must refuse
-  rather than draw it as IR (`Figure.from_entry` does).
+  `"ir"`**; irspec writes it there only for a kind other than `ir` (none is registered yet:
+  `src/irspec/kinds.py`). A reader that finds a value it does not know must refuse rather than
+  draw it as IR: `Figure.from_entry`, `session`, `preview` and `edit peak` do (`edit set`, `unset`,
+  `move` and `remove` work on any entry, and their `--json` `kind` is the entry's as stored).
 - **`format` is the file's own format**: `"spa"`, `"jdx"`, `"csv"` (and, for a picture, the
   extension). Not to be confused with `kind`.
 - **Paths** are relative to the session folder and use `/`. The one exception is the top-level

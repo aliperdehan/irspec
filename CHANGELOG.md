@@ -2,6 +2,24 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.2 (2026-11-11)
+
+The registry of plot kinds (roadmap item 6), with IR as its one kind: what irspec had hard-wired
+for IR (the frame, the ticks, the x title, the padding, the TeX macro, the folders and the code
+that reads and processes a file) is now one entry in `src/irspec/kinds.py`, shaped like
+nulabreport's own plot kinds, and `session`, `preview`, `edit`, the TeX writer and the
+matplotlib backend read it from there. Nothing an IR folder makes changes: every output of a test
+session folder (the `--json` objects, the text previews, `.md`, `.tex`, CSVs, `figures.json`, the
+matplotlib SVG and every exit status) is byte for byte what 0.2.1 made.
+
+- A manifest entry whose `kind` this irspec does not know is refused, with the file and the
+  reason, by `irspec session` (exit 1; 0.2.1 drew it as an IR spectrum), `session --preview`,
+  `irspec preview` and `irspec edit … peak` (exit 2). `edit set`, `unset`, `move` and `remove`
+  still work on it, and their `--json` reports the entry's `kind` as stored. A broken
+  `manifest.json` now stops `session` with a message instead of a Python traceback.
+- `irspec preview` takes its x tick labels from the same list as the figures (4,000 to 1,000 every
+  500), so a crop below 1,000 cm⁻¹ no longer shows a 500 tick that the figure does not have.
+
 ## 0.2.1 (2026-11-11)
 
 Fixes, found by comparing every output of one session folder byte for byte before a refactor.

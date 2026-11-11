@@ -1,5 +1,6 @@
 """irspec preview FILE: one spectrum as plain text."""
 import contextlib
+import dataclasses
 import io
 import json
 import os
@@ -13,7 +14,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from irspec import cli, layout, preview  # noqa: E402
+from irspec import cli, kinds, preview  # noqa: E402
 
 DATA = ROOT / "tests" / "data"
 SAMPLE = "PHENACETIN_CRUDE_LR1-2.SPA"
@@ -257,8 +258,9 @@ class Axes(unittest.TestCase):
         self.assertLess(labels.index("4,000"), labels.index("3,000"))
         self.assertLess(labels.index("3,000"), labels.index("650"))
 
-    def test_limits_come_from_layout(self):
-        with mock.patch.object(layout, "XLIM", (3000.0, 1000.0)):
+    def test_limits_come_from_the_kind(self):
+        narrow = dataclasses.replace(kinds.IR, xlim=(3000.0, 1000.0))
+        with mock.patch.dict(kinds.REGISTRY, {"ir": narrow}):
             info = preview.work_out(str(DATA / SAMPLE))
             text = preview.render(info, 56, 8, False)
         labels = next(ln for ln in text.splitlines() if "3,000" in ln and "1,000" in ln)

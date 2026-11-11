@@ -15,10 +15,15 @@ import math
 
 import numpy as np
 
-XLIM = (4000.0, 650.0)           # drawn reversed: high wavenumber on the left
-X_MAJOR, X_MINOR = 500.0, 100.0
-LOWER_PAD = 0.0985               # frame bottom = bottom - this x range  (measured: 0.0984-0.0985 on five ranges)
-UPPER_PAD = 0.0017               # frame top    = top    + this x range  (measured: 0.0016-0.0018)
+from . import kinds
+
+# The IR kind's frame (kinds.IR holds the numbers; these names are kept for the R script's test
+# and the callers that draw IR only). Each function below takes a kind, IR by default.
+XLIM = kinds.IR.xlim             # drawn reversed: high wavenumber on the left
+X_MAJOR, X_MINOR = 500.0, kinds.IR.x_minor
+LOWER_PAD, UPPER_PAD = kinds.IR.pad
+# frame bottom = bottom - LOWER_PAD x range  (measured: 0.0984-0.0985 on five ranges)
+# frame top    = top    + UPPER_PAD x range  (measured: 0.0016-0.0018)
 TRACE_COLOR = "#B03A2E"          # nulabreport's nuirred
 TRACE_PT = 0.5
 TICK_COLOR = "#ACACAC"           # TeX gray!65
@@ -33,25 +38,27 @@ MAX_Y_INTERVALS = 12
 DEFAULT_SIZE = (10.0, 6.6)       # inches, the picture files' own size
 
 
-def window(x, y):
-    """The part of the spectrum the figure shows: 650 to 4000 cm-1."""
+def window(x, y, kind=kinds.IR):
+    """The part of the spectrum the figure shows: the kind's default frame (IR: 650 to 4000 cm-1)."""
     x, y = np.asarray(x, float), np.asarray(y, float)
-    m = (x >= min(XLIM)) & (x <= max(XLIM)) & np.isfinite(y)
+    m = (x >= min(kind.xlim)) & (x <= max(kind.xlim)) & np.isfinite(y)
     return x[m], y[m]
 
 
-def xlimits(xmin=None, xmax=None):
-    """(left, right) of the x axis, high wavenumber first: the figure's own `xmax` and `xmin`
-    (a crop), else XLIM. The ticks need no change: the majors are the XLIM ones that fall inside,
-    the minors every 100 (measured on the TeX figure for two crops, 2026-11-10)."""
-    left = XLIM[0] if xmax is None else float(xmax)
-    right = XLIM[1] if xmin is None else float(xmin)
-    if not right < left:
-        raise ValueError(f"xmin ({right:g}) must be below xmax ({left:g})")
-    return left, right
+def xlimits(xmin=None, xmax=None, kind=kinds.IR):
+    """(left, right) of the x axis: the figure's own `xmin` and `xmax` (a crop), else the kind's
+    xlim, in the kind's direction (IR, reversed: (xmax, xmin), high wavenumber on the left). For
+    IR the ticks need no change: the majors are the XLIM ones that fall inside, the minors every
+    100 (measured on the TeX figure for two crops, 2026-11-10)."""
+    lo = min(kind.xlim) if xmin is None else float(xmin)
+    hi = max(kind.xlim) if xmax is None else float(xmax)
+    if not lo < hi:
+        raise ValueError(f"xmin ({lo:g}) must be below xmax ({hi:g})")
+    reversed_x = kind.xlim[0] > kind.xlim[1]   # IR: high wavenumber on the left
+    return (hi, lo) if reversed_x else (lo, hi)
 
 
-def ylimits(y, ymin=None, ymax=None):
+def ylimits(y, ymin=None, ymax=None, kind=kinds.IR):
     """(bottom, top) of the y axis. `y` is the windowed intensity; `ymin` and `ymax`, when given,
     are the lowest and the highest value the figure must show (the frame goes a little beyond
     both). The padding is the same fraction of the span from `ymin` to `ymax`, wherever they
@@ -62,7 +69,8 @@ def ylimits(y, ymin=None, ymax=None):
     if not base < top:
         raise ValueError(f"ymin ({base:g}) must be below ymax ({top:g})")
     span = top - base
-    return base - LOWER_PAD * span, top + UPPER_PAD * span
+    lower, upper = kind.pad
+    return base - lower * span, top + upper * span
 
 
 def y_step(lo, hi):

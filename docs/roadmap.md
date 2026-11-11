@@ -381,8 +381,10 @@ styles, written as irspec's own `.sty`. nulabreport imports irspec (the Python p
 `.sty` from its `\usepackage`), and its forwarding files, `_superseded/` and
 `make-irspec-excerpt.py` go. So the registry's fields follow nulabreport's
 `\labdefineplotkind{name}{x column}{y column}{trough|apex|fan}{axis keys}` (kinds there today: ir,
-gc, titration, ms, nmr, uvvis), and a kind's TeX keys are generated from the same registry entry
-as its Python geometry. The handover is the last step, after the kinds are in, and is done
+gc, titration, ms, nmr, uvvis), and a kind's TeX keys are kept in the same registry entry as its
+Python geometry (copied verbatim, never worked out from it: the TeX keys are TeX's inputs and the
+geometry is measured on TeX's output; IR's `enlarge y limits` of 0.15/0.08 gives a measured frame
+of 0.0985/0.0017 of the span). The handover is the last step, after the kinds are in, and is done
 together with nulabreport. Until then the excerpt keeps being generated from nulabreport, as now.
 
 Out of this: `palleros_figs.py` (pages of a textbook) stays where it is and never comes in, and no
@@ -398,6 +400,27 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   not move). `session`, `edit`, `preview` and the JSON output work on whatever the registry
   gives; IR becomes the first registered kind, with its own tests unchanged (that is the check
   that the refactor changed no behaviour: the differential and oracle tests stay green).
+
+  **Done (0.2.2, `src/irspec/kinds.py`, `tests/test_kinds.py`):** a `Kind` is a frozen dataclass
+  (the shape nulabreport's `\labdefineplotkind` has: name, x and y column, label style, plus the
+  x title and unit, the default y title, the default frame `xlim` whose order gives the direction,
+  the labelled x ticks and the minor step, the measured frame padding, the TeX macro, session's
+  subfolders and extensions) and three functions named `"module:function"` and imported on first
+  use: `process` (session), `load` (preview), `load_saved` (edit). IR is the one registered kind;
+  `session`, `preview`, `edit`, `figure`, `texout`, `layout` and the matplotlib backend go through
+  `kinds.of(entry)`. The check: one session folder's every output (each `--json`, the text
+  previews, `.md`, `.tex`, CSVs, `figures.json`, the matplotlib SVG, every exit status) compared
+  byte for byte before and after, identical; and a made-up second kind (ascending x, its own
+  functions, ticks and padding) in the tests, which found that the x limits had assumed IR's
+  reversed axis. A `kind` this irspec does not know is now refused by `session` (before, it was
+  drawn as IR), `preview` and `edit peak`; `set`/`unset`/`move`/`remove` still work on it.
+  **Not done:** the R backend (`data/irspec.R`) still draws IR only: per-kind geometry in R comes
+  with the second kind. Tables (`parse_vqud`) and tools (`scan`) are not in the registry yet; they
+  come with UV-Vis and the digitizers. Peak labels are drawn as IR's (`trough`) by every backend.
+  Still IR-only, for the UV-Vis slice to route through the kind: filing a loose file
+  (`ir_organize.classify`: a loose `.vspd` would go to `other/`), `session.planned_names` (its
+  `SPA/` rule), `session.preview_folder` (draws only `SPA/` and `jdx/`, lists `IMG_EXT` as
+  pictures) and the report's name (`ir_<dd-mm>`, `default_md_name`).
 - Two of these are not a spectrum: `parse_vqud.py` reads **tables** (standards, unknowns, a
   calibration curve), and `scan_clean.py` is a picture utility with no x/y at all. So the registry
   must not insist that a kind is "x, y and peaks": a kind may give a table, and a **tool** (a
@@ -457,9 +480,6 @@ nulabreport (it is private), so keep `% >>> irspec-excerpt:NAME` regions working
 and the smoke test that compares the excerpt page with the full package's.
 
 ## Open
-
-- The registry of kinds (item 6): the exact shape of a kind (a class, or a dict of functions) and
-  where the per-kind figure geometry lives. Decide by writing the IR kind into it first.
 
 - Mac app: go or no-go after item 1 (a prototype answers "how hard").
 - Collection export (item 5): does irspec already write JCAMP-DX, and where do the per-spectrum

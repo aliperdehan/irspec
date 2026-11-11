@@ -524,7 +524,9 @@ data and no instructor's material is in this repository.
   figure format changed, a `--json` key renamed or removed.
 - **Patch** (`0.2.0` → `0.2.1`): everything else inside a line, new features
   included. Each change that lands gets its own patch version and its own
-  `CHANGELOG.md` entry, so nothing waits unreleased.
+  `CHANGELOG.md` entry, so nothing waits unreleased. Only the newest version at
+  each push is tagged and uploaded to PyPI, so a version in between may exist only
+  in the changelog.
 - **`SPEC_VERSION`** (in `irspec/figure.py`, now 1) is a separate integer, written
   into figure descriptions. It changes only when the manifest/figure format breaks,
   and it is frozen at 1.0.

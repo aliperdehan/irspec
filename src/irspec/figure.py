@@ -21,8 +21,10 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
+from . import kinds
+
 SPEC_VERSION = 1
-KIND = "ir"                     # the plot kind; the only one so far (docs/schema.md, roadmap item 6)
+KIND = kinds.DEFAULT.name       # the plot kind an entry without `kind` has (docs/schema.md, kinds.py)
 FIGURES_NAME = "figures.json"   # what `session` writes and every backend reads
 
 
@@ -38,6 +40,7 @@ class Figure:
     xmax: Optional[float] = None
     width: str = r"\linewidth"
     height: str = "6.8in"
+    kind: str = KIND               # kinds.py; written only when it is not the default
 
     def peaklist(self) -> str:
         """The `\\irspectrum` peak argument: wavenumber/label_y pairs, one
@@ -48,9 +51,7 @@ class Figure:
     def from_entry(cls, entry: dict) -> "Figure":
         """A manifest entry that names its plain CSV (`csv`), carries its axis
         label and peaks as [wavenumber, label_y] pairs."""
-        if entry.get("kind", KIND) != KIND:
-            raise ValueError(f"figure of kind {entry['kind']!r}: this irspec draws only "
-                             f"{KIND!r} figures")
+        kind = kinds.of(entry).name   # ValueError for a kind this irspec does not know
         try:
             csv = entry["csv"]
         except KeyError:
@@ -58,7 +59,7 @@ class Figure:
         peaks = [(float(p[0]), float(p[1])) for p in entry.get("peaks", [])]
         kw = {k: entry[k] for k in ("axis", "ymin", "ymax", "xmin", "xmax", "width", "height")
               if k in entry}
-        return cls(csv=csv, title=entry.get("title", ""), peaks=peaks, **kw)
+        return cls(csv=csv, title=entry.get("title", ""), peaks=peaks, kind=kind, **kw)
 
     def to_entry(self) -> dict:
         d = {"spec": SPEC_VERSION, "csv": self.csv, "title": self.title,
@@ -70,13 +71,15 @@ class Figure:
             d["width"] = self.width
         if self.height != "6.8in":
             d["height"] = self.height
+        if self.kind != KIND:
+            d["kind"] = self.kind
         return d
 
     @classmethod
-    def from_organize_result(cls, r: dict, folder: str) -> "Figure":
+    def from_organize_result(cls, r: dict, folder: str, kind: str = KIND) -> "Figure":
         """From one `ir_organize` result dict (keys plain_path, axis_md,
         peaklist, title, ymin), so a session folder's figures can be rendered
-        by any backend."""
+        by any backend. `kind` is the manifest entry's (the result does not carry it)."""
         import os
         peaks = []
         for item in r["peaklist"].split(","):
@@ -85,7 +88,7 @@ class Figure:
                 peaks.append((float(x), float(ly)))
         return cls(csv=os.path.relpath(r["plain_path"], folder), title=r["title"],
                    axis=r["axis_md"], peaks=peaks, ymin=r["ymin"], ymax=r.get("ymax"),
-                   xmin=r.get("xmin"), xmax=r.get("xmax"))
+                   xmin=r.get("xmin"), xmax=r.get("xmax"), kind=kind)
 
 
 def write_figures(figures, path) -> str:

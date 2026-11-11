@@ -45,8 +45,7 @@ import sys
 
 import numpy as np
 
-from . import layout
-from .figure import KIND   # the plot kind in --json (docs/schema.md); `format` is the file's own
+from . import kinds, layout   # `kind` in --json is the plot kind (kinds.py); `format` the file's own
 
 DEFAULT_WIDTH = 80      # columns when stdout is not a terminal
 DEFAULT_HEIGHT = 20     # rows of plot
@@ -91,7 +90,13 @@ def find_manifest_entry(path):
 
 
 def load(path, entry):
-    """(x, y, axis, absorbance, kind, converted_from) as `irspec session` would draw FILE."""
+    """(x, y, axis, absorbance, format, converted_from) as `irspec session` would draw FILE, by
+    the entry's kind's own reader (kinds.py; no entry: IR)."""
+    return kinds.of(entry).function("load")(path, entry)
+
+
+def load_ir(path, entry):
+    """(x, y, axis, absorbance, format, converted_from) of an IR spectrum: .SPA, .jdx or CSV."""
     from . import absorbance_to_transmittance as a2t
     from . import jdx_tool, spa_peaks, spa_tool
     ext = os.path.splitext(path)[1].lower()
@@ -135,6 +140,10 @@ def read_spectrum(path, entry):
     if not os.path.isfile(path):
         raise PreviewError(f"{path}: no such file")
     try:
+        kind = kinds.of(entry)
+    except ValueError as e:
+        raise PreviewError(f"{path}: {e}")
+    try:
         loaded = load(path, entry)
     except PreviewError:
         raise
@@ -144,10 +153,10 @@ def read_spectrum(path, entry):
     x, y = np.asarray(loaded[0], float), np.asarray(loaded[1], float)
     if x.size < 3 or x.size != y.size:
         raise PreviewError(f"{path}: not enough data points")
-    xw, _ = layout.window(x, y)
+    xw, _ = layout.window(x, y, kind)
     if xw.size < 3:
-        raise PreviewError(f"{path}: no data between {min(layout.XLIM):g} and "
-                           f"{max(layout.XLIM):g} cm-1")
+        raise PreviewError(f"{path}: no data between {min(kind.xlim):g} and "
+                           f"{max(kind.xlim):g} {kind.x_unit}")
     return (x, y) + loaded[2:]
 
 
@@ -162,7 +171,8 @@ def work_out_entry(path, entry, mpath):
     a caller that already knows them, such as `irspec session --preview`, which previews a file
     from where it will be filed."""
     from . import ir_organize as _io
-    x, y, axis, absorbance, kind, converted = read_spectrum(path, entry)
+    x, y, axis, absorbance, fmt, converted = read_spectrum(path, entry)
+    kind = kinds.of(entry)
     probe = dict(entry) if entry else {}
     from_manifest = bool(entry and "peaks" in entry)
     try:
@@ -170,16 +180,16 @@ def work_out_entry(path, entry, mpath):
         result = _io._finish(probe, "", x, y, axis, absorbance, "", "")
     except Exception as e:
         raise PreviewError(f"{path}: peaks cannot be picked ({str(e) or type(e).__name__})")
-    xw, yw = layout.window(x, y)
+    xw, yw = layout.window(x, y, kind)
     peaks = [[float(a), float(b)] for a, b in probe["peaks"]]
     ymin = result["ymin"]
     try:
-        xlim = layout.xlimits(probe.get("xmin"), probe.get("xmax"))
-        ylim = layout.ylimits(yw, ymin, probe.get("ymax"))
+        xlim = layout.xlimits(probe.get("xmin"), probe.get("xmax"), kind)
+        ylim = layout.ylimits(yw, ymin, probe.get("ymax"), kind)
     except ValueError as e:
         raise PreviewError(f"{path}: {e}")
     return {
-        "file": path, "kind": KIND, "format": kind, "axis": axis, "converted_from": converted,
+        "file": path, "kind": kind.name, "format": fmt, "axis": axis, "converted_from": converted,
         "points": int(x.size),
         "range": {"x": [float(x.min()), float(x.max())],
                   "y": [float(yw.min()), float(yw.max())]},
@@ -188,7 +198,7 @@ def work_out_entry(path, entry, mpath):
         "peaks": peaks,
         "peaks_from": "manifest.json" if from_manifest else "automatic",
         "_xw": xw, "_yw": yw, "_absorbance": absorbance, "_manifest": mpath,
-        "_window_points": int(xw.size), "_entry": entry,
+        "_window_points": int(xw.size), "_entry": entry, "_kind": kind,
     }
 
 
@@ -321,13 +331,10 @@ def draw(info, width, height, braille):
     symbols = place_peaks(grid, dots, info["peaks"], xw, yw, cols, height, lo, hi, absorbance, xlim)
 
     left, right = xlim
-    major = layout.X_MAJOR
-    tick_cols = {}
-    v = np.floor(left / major) * major
-    while v >= right:
-        if v <= left:
+    tick_cols = {}   # the kind's labelled ticks inside the frame, as the figure has them
+    for v in info["_kind"].x_ticks:
+        if min(xlim) <= v <= max(xlim):
             tick_cols[v] = int(round((left - v) / (left - right) * (cols * 2 - 1))) // 2
-        v -= major
     axis_line = ["-"] * cols
     for c in tick_cols.values():
         axis_line[c] = "+"
@@ -343,7 +350,7 @@ def draw(info, width, height, braille):
             taken[start + i] = True
     end = _fmt_x(right)                   # the right-hand end is always labelled; the ticks give way
     put(end, cols - len(end))
-    for v, c in sorted(tick_cols.items(), reverse=True):
+    for v, c in sorted(tick_cols.items(), key=lambda vc: vc[1]):   # left to right
         text = _fmt_x(v)
         put(text, c - len(text) // 2)
 
@@ -375,8 +382,9 @@ def pack(items, width, indent="  "):
 def render(info, width, height, braille):
     """The whole text: header, plot, block."""
     plot, symbols = draw(info, width, height, braille)
-    absorbance = info["_absorbance"]
-    lines = [f"{os.path.basename(info['file'])}  --  {info['axis']} against wavenumber (cm-1)"
+    absorbance, kind = info["_absorbance"], info["_kind"]
+    lines = [f"{os.path.basename(info['file'])}  --  {info['axis']} against {kind.x_column} "
+             f"({kind.x_unit})"
              + ("" if info["_manifest"] is None else "  (manifest.json entry used)"), ""]
     lines += plot
     lines.append("")
@@ -389,8 +397,9 @@ def render(info, width, height, braille):
         axis += " (drawn as absorbance, bands point up)"
     lines.append(f"axis:    {axis}")
     lines.append(f"points:  {info['points']} ({info['_window_points']} between "
-                 f"{min(layout.XLIM):g} and {max(layout.XLIM):g} cm-1)")
-    lines.append(f"range:   {xr[1]:g} to {xr[0]:g} cm-1; "
+                 f"{min(kind.xlim):g} and {max(kind.xlim):g} {kind.x_unit})")
+    first, last = (xr[1], xr[0]) if kind.xlim[0] > kind.xlim[1] else (xr[0], xr[1])   # as drawn
+    lines.append(f"range:   {first:g} to {last:g} {kind.x_unit}; "
                  f"intensity {yr[0]:.4g} to {yr[1]:.4g}")
     ymin = "the data's own minimum" if info["ymin"] is None else f"{info['ymin']:g}"
     lines.append(f"ymin:    {ymin}")
@@ -398,10 +407,10 @@ def render(info, width, height, braille):
     if entry.get("ymax") is not None:
         lines.append(f"ymax:    {entry['ymax']:g}")
     if entry.get("xmin") is not None or entry.get("xmax") is not None:
-        lines.append(f"x axis:  {info['xlim'][0]:g} to {info['xlim'][1]:g} cm-1 (cropped)")
+        lines.append(f"x axis:  {info['xlim'][0]:g} to {info['xlim'][1]:g} {kind.x_unit} (cropped)")
     n = len(info["peaks"])
     src = "from manifest.json" if info["peaks_from"] == "manifest.json" else "picked automatically"
-    lines.append(f"peaks:   {n} ({src}); wavenumber/label height")
+    lines.append(f"peaks:   {n} ({src}); {kind.x_column}/label height")
     if n:
         items = [f"{s} {px:.1f}/{ly:.1f}" for s, (px, ly) in zip(symbols, info["peaks"])]
         lines += pack(items, width)

@@ -67,12 +67,17 @@ import sys
 import numpy as np
 
 from . import ir_organize as _io
-from . import export, jdx_tool, layout, spa_tool, texout
+from . import export, jdx_tool, kinds, layout, spa_tool, texout
 from .figure import FIGURES_NAME, KIND, Figure, write_figures
 
-IMG_EXT = (".gif", ".jpg", ".jpeg", ".png", ".bmp")
+IMG_EXT = kinds.IMG_EXT
 CAS_RE = re.compile(r"^(\d{2,7}-\d\d-\d)")
-KIND_DIRS = (("SPA", _io.SPA_EXT), ("jdx", _io.JDX_EXT), ("img", IMG_EXT))
+KIND_DIRS = kinds.IR.folders   # SPA/, jdx/, img/: IR's; kind_dirs() has every registered kind's
+
+
+def kind_dirs():
+    """(subfolder, extensions) of every registered kind, read now (a kind may be registered late)."""
+    return tuple(d for k in kinds.all_kinds() for d in k.folders)
 TRANSMITTANCE = "Transmittance %"
 
 
@@ -144,7 +149,7 @@ def organize(folder, dry_run=False):
 # -----------------------------------------------------------------------------
 def spectra_on_disk(folder):
     out = []
-    for sub, exts in KIND_DIRS:
+    for sub, exts in kind_dirs():
         d = os.path.join(folder, sub)
         if os.path.isdir(d):
             out += [f"{sub}/{n}" for n in os.listdir(d)
@@ -189,7 +194,7 @@ def build_manifest(folder, titles, sort, planned=None):
 
     def rel(p):
         p = p.replace("\\", "/")
-        m = re.search(r"(?:^|/)((?:SPA|jdx|img)/[^/]+)$", p)
+        m = re.search(r"(?:^|/)((?:%s)/[^/]+)$" % "|".join(re.escape(s) for s, _ in kind_dirs()), p)
         return m.group(1) if m else p
 
     disk = set(spectra_on_disk(folder)) | set(planned)
@@ -214,6 +219,10 @@ def build_manifest(folder, titles, sort, planned=None):
         stem = spa_tool.clean_stem(_io.entry_file(e))
         if stem in titles:
             e["title"] = titles[stem]
+        try:
+            kinds.of(e)
+        except ValueError as err:   # a `kind` this irspec does not draw: refused, never drawn as IR
+            raise ValueError(f"{e['file']}: {err}")
     return entries
 
 
@@ -309,6 +318,11 @@ def process_image(folder, e, csv_dir, plain_dir):
 
 
 def process(folder, e, csv_dir, plain_dir):
+    """One manifest entry -> its CSVs, by its kind's own code (kinds.py)."""
+    return kinds.of(e).function("process")(folder, e, csv_dir, plain_dir)
+
+
+def process_ir(folder, e, csv_dir, plain_dir):
     f = e["file"]
     if f.lower().endswith(_io.SPA_EXT):
         return _io.process_spa(os.path.join(folder, f), e, csv_dir, plain_dir)
@@ -352,6 +366,13 @@ def build_latex(folder, base, figures):
     return pdf
 
 
+def check_frame(fig, plain_path):
+    """ValueError when the figure's limits make no frame, in its own kind's geometry."""
+    kind = kinds.get(fig.kind)
+    layout.xlimits(fig.xmin, fig.xmax, kind)
+    layout.ylimits(layout.window(*read_plain(plain_path), kind)[1], fig.ymin, fig.ymax, kind)
+
+
 def move_line(folder, src, dst, dry_run):
     return (f"{'would move' if dry_run else 'moved'}: "
             f"{os.path.relpath(src, folder)} -> {os.path.relpath(dst, folder)}")
@@ -367,7 +388,7 @@ def _rel(folder, path):
 def spectrum_record(folder, e, r, fig):
     """One `spectra` item of the --json object of a real run: what was made of manifest entry `e`
     (result `r` of `process`, Figure `fig`). Paths are relative to the folder."""
-    return {"file": e["file"], "kind": KIND, "title": fig.title, "name": r["stem"],
+    return {"file": e["file"], "kind": fig.kind, "title": fig.title, "name": r["stem"],
             "axis": fig.axis, "peaks": [[x, ly] for x, ly in fig.peaks], "n_peaks": r["n_peaks"],
             "ymin": fig.ymin, "csv": _rel(folder, r["archival_path"]),
             "plain": _rel(folder, r["plain_path"])}
@@ -423,11 +444,11 @@ def preview_folder(folder, titles, sort, width, height, braille, as_json):
         rel = e["file"]
         name, csv, plain = planned_names(folder, e)
         if rel.lower().endswith(IMG_EXT):
-            images.append({"file": rel, "kind": KIND, "name": name, "csv": csv, "plain": plain,
+            images.append({"file": rel, "kind": kinds.of(e).name, "name": name, "csv": csv, "plain": plain,
                            "note": "digitized by `irspec session`, not drawn here"})
             continue
         src = planned.get(rel) or os.path.join(folder, rel)
-        head = {"kind": KIND, "will_be_filed_as": rel, "title": e.get("title"), "csv": csv, "plain": plain}
+        head = {"kind": kinds.of(e).name, "will_be_filed_as": rel, "title": e.get("title"), "csv": csv, "plain": plain}
         try:
             info = pv.work_out_entry(src, e, mpath if rel in listed else None)
             info["file"] = _rel(folder, src)
@@ -480,7 +501,10 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
                                  for a, b in moves]})
     if dry_run:
         return []
-    entries = build_manifest(folder, titles or {}, sort)
+    try:
+        entries = build_manifest(folder, titles or {}, sort)
+    except ValueError as err:
+        raise SessionError(f"manifest.json cannot be used ({err})")
     if not entries:
         raise SessionError("no spectra found (SPA/, jdx/ or img/)")
     csv_dir, plain_dir = os.path.join(folder, "csv"), os.path.join(folder, "plain")
@@ -492,11 +516,11 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
         results.append(r)
         print(f"# {r['stem']}: axis={r['axis_label']} peaks={r['n_peaks']} ymin={r['ymin']}")
     _io.save_manifest(folder, entries)
-    figures = [Figure.from_organize_result(r, folder) for r in results]
+    figures = [Figure.from_organize_result(r, folder, kinds.of(e).name)
+               for e, r in zip(entries, results)]
     for e, r, fig in zip(entries, results, figures):
         try:  # a hand-edited limit that cannot make a frame stops here, not inside lualatex
-            layout.xlimits(fig.xmin, fig.xmax)
-            layout.ylimits(layout.window(*read_plain(r["plain_path"]))[1], fig.ymin, fig.ymax)
+            check_frame(fig, r["plain_path"])
         except (TypeError, ValueError) as err:
             raise SessionError(f"{e['file']}: {err} (in manifest.json; `irspec edit` can "
                                f"change or unset it)")
