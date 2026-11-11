@@ -57,7 +57,7 @@ later run keeps it. All keys except `file` are optional.
 | `threshold` | number | peak picking: % of the dynamic range (default 5) |
 | `prominence` | number | peak picking: scipy prominence in y units (default 3) |
 | `distance` | number | peak picking: least gap between peaks in cm⁻¹ (default 8) |
-| `name` | string | the name of a reference spectrum (written back by the first run) |
+| `name` | string | the name of a reference spectrum (written back by the first run); a single filename component, with no path separators or drive prefix |
 | `peak_a`, `cl` | number | QUANT-IR files only: the scale (never invented) |
 | `check` | string | pictures only: the printed peak table, `"3490:84,2977:6"` |
 | `args` | list of string | pictures only: extra flags for `irspec digitize convert` |

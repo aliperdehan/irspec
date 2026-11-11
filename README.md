@@ -235,7 +235,7 @@ re-run: your edits stay, new files are appended, vanished files are dropped.
 | `ymax` | top of the y axis, default the data's own maximum |
 | `xmin`, `xmax` | crop the x axis (cm⁻¹; `xmax` is the left edge), default 650 and 4000; the y axis still scales to all the data unless `ymin`/`ymax` are set |
 | `threshold`, `prominence`, `distance` | peak-picking sensitivity overrides, for a band at the plot edge or noise taken for bands |
-| `name` | the reference name above (written back by the first run) |
+| `name` | the reference name above (written back by the first run); one filename component, with no path separators or drive prefix, including names in `cas_names.json` |
 | `peak_a`, `cl` | QUANT-IR files only, see above |
 | `check` | pictures only: the peak table printed under the SDBS plot, typed as `"3490:84,2977:6,…"`, for the digitiser's own cross-check |
 | `args` | pictures only: extra flags for `irspec digitize convert`, as a list. For a book figure: `["--palleros", "--x-ticks", "3500,3000,2500,2000,1500,1000", "--y-ends", "72.7:24.5"]`, with `check` set to the band positions printed under the troughs (`"3027.1,2948.8,..."`); those printed positions then become the peak labels, not the peak finder's |

@@ -2,6 +2,12 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.8 (2026-11-11)
+
+- Sessions reject reference names that are paths, including names from `cas_names.json`.
+  Reference CSVs, image overlays and logs must resolve inside their destination directories;
+  an existing symlink pointing outside is refused before conversion starts.
+
 ## 0.2.7 (2026-11-11)
 
 - Sessions classify QUANT-IR absorptivity from the full parsed JCAMP header, including units

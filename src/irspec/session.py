@@ -69,6 +69,7 @@ import numpy as np
 from . import ir_organize as _io
 from . import export, jdx_tool, kinds, layout, spa_tool, texout
 from .figure import FIGURES_NAME, Figure, write_figures
+from .filenames import contained_path, filename_component
 
 IMG_EXT = kinds.IMG_EXT
 CAS_RE = re.compile(r"^(\d{2,7}-\d\d-\d)")
@@ -253,17 +254,26 @@ def build_manifest(folder, titles, sort, planned=None):
 
 def reference_name(folder, e):
     """The NAME of a jdx/img spectrum: manifest, else cas_names.json, else stem."""
-    if e.get("name"):
-        return e["name"]
     stem = spa_tool.clean_stem(e["file"])
-    cas = CAS_RE.match(stem)
-    mp = os.path.join(folder, "cas_names.json")
-    if cas and os.path.exists(mp):
-        with open(mp, encoding="utf-8") as f:
-            names = json.load(f)
-        if cas.group(1) in names:
-            return names[cas.group(1)]
-    return stem
+    name = e.get("name", stem)
+    if "name" not in e:
+        cas = CAS_RE.match(stem)
+        mp = os.path.join(folder, "cas_names.json")
+        if cas and os.path.exists(mp):
+            with open(mp, encoding="utf-8") as f:
+                names = json.load(f)
+            name = names.get(cas.group(1), stem)
+    try:
+        return filename_component(name)
+    except ValueError as err:
+        raise SessionError(f"{e['file']}: invalid reference name: {err}") from err
+
+
+def reference_output(directory, filename, e):
+    try:
+        return contained_path(directory, filename)
+    except ValueError as err:
+        raise SessionError(f"{e['file']}: {err}") from err
 
 
 # -----------------------------------------------------------------------------
@@ -285,7 +295,8 @@ def process_jdx_reference(folder, e, csv_dir, plain_dir):
     path = os.path.join(folder, e["file"])
     name = reference_name(folder, e)
     e["name"] = name
-    csv, plain = (os.path.join(csv_dir, f"{name}.csv"), os.path.join(plain_dir, f"{name}.csv"))
+    csv, plain = (reference_output(csv_dir, f"{name}.csv", e),
+                  reference_output(plain_dir, f"{name}.csv", e))
     kind = _jdx_kind(path)
     if kind == "quantir":
         if "peak_a" in e:
@@ -313,10 +324,13 @@ def process_image(folder, e, csv_dir, plain_dir):
     name = reference_name(folder, e)
     e["name"] = name
     check_dir = os.path.join(folder, "check")
+    overlay = reference_output(check_dir, f"{name}_overlay.png", e)
+    log = reference_output(check_dir, f"{name}.log", e)
     os.makedirs(check_dir, exist_ok=True)
-    csv, plain = (os.path.join(csv_dir, f"{name}.csv"), os.path.join(plain_dir, f"{name}.csv"))
+    csv, plain = (reference_output(csv_dir, f"{name}.csv", e),
+                  reference_output(plain_dir, f"{name}.csv", e))
     argv = ["convert", path, "--name", name, "--out", csv, "--plain-out", plain,
-            "--overlay", os.path.join(check_dir, f"{name}_overlay.png")]
+            "--overlay", overlay]
     if e.get("check"):
         argv += ["--check", e["check"]]
     argv += [str(a) for a in e.get("args", [])]
@@ -326,7 +340,7 @@ def process_image(folder, e, csv_dir, plain_dir):
     if book:
         argv.append("--peaklist")
     code, out, err = call("ir_digitize", argv)
-    with open(os.path.join(check_dir, f"{name}.log"), "w", encoding="utf-8") as f:
+    with open(log, "w", encoding="utf-8") as f:
         f.write(out + err)
     if code:
         raise SessionError(f"{e['file']}: ir_digitize stopped (exit {code}); "
