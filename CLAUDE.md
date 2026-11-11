@@ -56,6 +56,11 @@ tests/        unittest; PYTHONPATH=src python3 -m unittest discover -s tests   (
 
 ## Things that bit before
 
+- **A mutation harness must run the tests with `sys.executable`**, and run them unmutated first
+  (they must pass). One that called `python3` with a trimmed `PATH` got `/usr/bin/python3`, which
+  has no numpy: every mutant "failed" on the import, and the checks of 0.2.1-0.2.3 proved nothing
+  until they were re-run (2026-11-11). Count an import error as a broken harness, not a catch.
+
 - **`irspec-ir.sty` is generated, never edited.** It is cut out of nulabreport's `nulabreport.sty`
   at `% >>> irspec-excerpt:NAME` markers: `python3 ~/dev/tex/nulabreport/dependencies/make-irspec-excerpt.py
   --out src/irspec/data/irspec-ir.sty` (and `--check` to compare). Its header names nulabreport's

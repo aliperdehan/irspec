@@ -155,9 +155,18 @@ def read_spectrum(path, entry):
         raise PreviewError(f"{path}: not enough data points")
     xw, _ = layout.window(x, y, kind)
     if xw.size < 3:
-        raise PreviewError(f"{path}: no data between {min(kind.xlim):g} and "
-                           f"{max(kind.xlim):g} {kind.x_unit}")
+        where = (f"between {min(kind.xlim):g} and {max(kind.xlim):g} {kind.x_unit}"
+                 if kind.xlim is not None else "with a value")
+        raise PreviewError(f"{path}: no data {where}")
     return (x, y) + loaded[2:]
+
+
+def pick_ir(entry, x, y, axis, absorbance):
+    """session's own IR code on a copy of the entry: {"peaks", "ymin", "ymax"} as session has them."""
+    from . import ir_organize as _io
+    probe = dict(entry or {})
+    result = _io._finish(probe, "", x, y, axis, absorbance, "", "")
+    return {"peaks": probe["peaks"], "ymin": result["ymin"], "ymax": result.get("ymax")}
 
 
 def work_out(path):
@@ -170,22 +179,20 @@ def work_out_entry(path, entry, mpath):
     """work_out with the manifest entry given (None for none) and the manifest it came from, for
     a caller that already knows them, such as `irspec session --preview`, which previews a file
     from where it will be filed."""
-    from . import ir_organize as _io
     x, y, axis, absorbance, fmt, converted = read_spectrum(path, entry)
     kind = kinds.of(entry)
     probe = dict(entry) if entry else {}
     from_manifest = bool(entry and "peaks" in entry)
     try:
-        # session's own code, so the picks, label heights and ymin are session's
-        result = _io._finish(probe, "", x, y, axis, absorbance, "", "")
+        # session's own code (the kind's), so the picks, label heights and limits are session's
+        result = kind.function("pick")(probe, x, y, axis, absorbance)
     except Exception as e:
         raise PreviewError(f"{path}: peaks cannot be picked ({str(e) or type(e).__name__})")
-    xw, yw = layout.window(x, y, kind)
-    peaks = [[float(a), float(b)] for a, b in probe["peaks"]]
+    peaks = [[float(a), float(b)] for a, b in result["peaks"]]
     ymin = result["ymin"]
     try:
-        xlim = layout.xlimits(probe.get("xmin"), probe.get("xmax"), kind)
-        ylim = layout.ylimits(yw, ymin, probe.get("ymax"), kind)
+        xlim, ylim, xw, yw = layout.frame(x, y, kind, probe.get("xmin"), probe.get("xmax"),
+                                          ymin, result.get("ymax"))
     except ValueError as e:
         raise PreviewError(f"{path}: {e}")
     return {
@@ -331,10 +338,9 @@ def draw(info, width, height, braille):
     symbols = place_peaks(grid, dots, info["peaks"], xw, yw, cols, height, lo, hi, absorbance, xlim)
 
     left, right = xlim
-    tick_cols = {}   # the kind's labelled ticks inside the frame, as the figure has them
-    for v in info["_kind"].x_ticks:
-        if min(xlim) <= v <= max(xlim):
-            tick_cols[v] = int(round((left - v) / (left - right) * (cols * 2 - 1))) // 2
+    tick_cols = {}   # the labelled ticks inside the frame, as the figure has them
+    for v in layout.x_ticks(xlim, info["_kind"])[0]:
+        tick_cols[v] = int(round((left - v) / (left - right) * (cols * 2 - 1))) // 2
     axis_line = ["-"] * cols
     for c in tick_cols.values():
         axis_line[c] = "+"
@@ -396,9 +402,12 @@ def render(info, width, height, braille):
     elif absorbance:
         axis += " (drawn as absorbance, bands point up)"
     lines.append(f"axis:    {axis}")
-    lines.append(f"points:  {info['points']} ({info['_window_points']} between "
-                 f"{min(kind.xlim):g} and {max(kind.xlim):g} {kind.x_unit})")
-    first, last = (xr[1], xr[0]) if kind.xlim[0] > kind.xlim[1] else (xr[0], xr[1])   # as drawn
+    if kind.xlim is not None:
+        lines.append(f"points:  {info['points']} ({info['_window_points']} between "
+                     f"{min(kind.xlim):g} and {max(kind.xlim):g} {kind.x_unit})")
+    else:
+        lines.append(f"points:  {info['points']}")
+    first, last = (xr[1], xr[0]) if kind.x_descending else (xr[0], xr[1])   # as drawn
     lines.append(f"range:   {first:g} to {last:g} {kind.x_unit}; "
                  f"intensity {yr[0]:.4g} to {yr[1]:.4g}")
     ymin = "the data's own minimum" if info["ymin"] is None else f"{info['ymin']:g}"

@@ -13,19 +13,19 @@ they are TeX's inputs and the numbers below are measurements of TeX's output; ne
 worked out from the other.
 
 A manifest or figures.json entry names its kind in `kind`; absent means "ir" (docs/schema.md).
-A kind's functions are named by "module:function" and imported when first used, so this module
+A kind's four functions are named by "module:function" and imported when first used, so this module
 imports nothing of irspec's and every other module can import it; tests/test_kinds.py checks
 that each name resolves.
 """
 import importlib
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Optional, Tuple
 
 SPA_EXT = (".spa", ".spg")
 JDX_EXT = (".jdx", ".dx", ".jcm")
 IMG_EXT = (".gif", ".jpg", ".jpeg", ".png", ".bmp")
 
-ROLES = ("process", "load", "load_saved")
+ROLES = ("process", "load", "load_saved", "pick")
 
 
 @dataclass(frozen=True)
@@ -37,15 +37,19 @@ class Kind:
     x_label: str                    # the x-axis title, plain text
     x_unit: str                     # in messages: "no data between 650 and 4000 cm-1"
     y_label: str                    # the y-axis title a figure gets unless its entry says another
-    xlim: Tuple[float, float]       # the default frame, (left, right): IR is drawn reversed
-    x_ticks: Tuple[float, ...]      # the labelled x ticks inside the default frame
-    x_minor: float                  # minor x tick step
+    xlim: Optional[Tuple[float, float]]   # the default frame (low, high); None: the data's own ends
+    x_descending: bool              # drawn high to low, left to right (IR)
+    x_ticks: Optional[Tuple[float, ...]]  # the labelled x ticks; None: layout.x_ticks's rule
+    x_minor: Optional[float]        # minor x tick step; None: a fifth of the labelled step
     pad: Tuple[float, float]        # frame below / above the y limits, as a fraction of their span
+    y_scope: str                    # the data the y axis scales on: "all" (what the default frame
+    #                                 shows, whatever the crop: IR) or "frame" (inside the x frame)
     macro: str                      # the TeX command a figure is written as
     folders: Tuple[Tuple[str, Tuple[str, ...]], ...]   # session's subfolders and their extensions
     process: str                    # one manifest entry -> its CSVs and result (irspec session)
     load: str                       # a file -> what the preview draws (irspec preview)
     load_saved: str                 # a session's entry -> its spectrum, from what session wrote (edit)
+    pick: str                       # (entry, x, y, axis, absorbance) -> session's peaks, ymin, ymax
 
     def function(self, role):
         """The function a role names, imported now."""
@@ -58,18 +62,30 @@ IR = Kind(
     x_column="wavenumber", y_column="intensity", labels="trough",
     x_label="Wavenumber / cm⁻¹", x_unit="cm-1", y_label="Transmittance %",
     # Measured on the TeX figure (layout.py says how): the frame, the ticks, the padding.
-    xlim=(4000.0, 650.0),
+    xlim=(650.0, 4000.0), x_descending=True,
     x_ticks=(4000.0, 3500.0, 3000.0, 2500.0, 2000.0, 1500.0, 1000.0), x_minor=100.0,
-    pad=(0.0985, 0.0017),
+    pad=(0.0985, 0.0017), y_scope="all",
     macro="irspectrum",
     folders=(("SPA", SPA_EXT), ("jdx", JDX_EXT), ("img", IMG_EXT)),
     process="irspec.session:process_ir",
     load="irspec.preview:load_ir",
     load_saved="irspec.edit:load_saved_ir",
+    pick="irspec.preview:pick_ir",
 )
 
 REGISTRY = {IR.name: IR}
 DEFAULT = IR
+
+
+def for_path(rel):
+    """The kind whose folder and extensions `rel` ("SPA/x.SPA") is in, or None."""
+    sub, _, name = rel.replace("\\", "/").rpartition("/")
+    sub = sub.rsplit("/", 1)[-1]
+    for k in REGISTRY.values():
+        for folder, exts in k.folders:
+            if sub == folder and name.lower().endswith(exts):
+                return k
+    return None
 
 
 def get(name):

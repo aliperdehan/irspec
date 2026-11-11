@@ -30,7 +30,44 @@ def r_script_path():
     return str(resources.files("irspec").joinpath("data", "irspec.R"))
 
 
+def r_target(argv):
+    """The session folder or figures.json among the R backend's arguments (the first that is not
+    an option or an option's value), or None."""
+    takes_value = {"--formats", "--out", "--size", "--dpi"}
+    skip = False
+    for a in argv:
+        if skip:
+            skip = False
+        elif a in takes_value:
+            skip = True
+        elif not a.startswith("-"):
+            return a
+    return None
+
+
+def refuse_other_kinds(argv):
+    """The R script draws IR figures only: say so before R starts, for a figure of another kind."""
+    import os
+
+    from .figure import FIGURES_NAME, read_figures
+    target = r_target(argv)
+    if target is None:
+        return
+    path = os.path.join(target, FIGURES_NAME) if os.path.isdir(target) else target
+    if not os.path.exists(path):
+        return   # the R script says what is missing
+    try:
+        figures, _ = read_figures(path)
+    except ValueError as e:
+        raise ExportError(str(e))
+    for f in figures:
+        if f.kind != "ir":
+            raise ExportError(f"{f.csv} is a {f.kind} figure; the R backend draws IR figures only "
+                              f"so far (use the PDF: irspec session)")
+
+
 def run_r(argv):
+    refuse_other_kinds(argv)
     exe = shutil.which("Rscript")
     if not exe:
         raise ExportError("Rscript not found: install R (https://cran.r-project.org) and "

@@ -2,6 +2,27 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.4 (2026-11-11)
+
+The registry of plot kinds learns what UV-Vis needs, before UV-Vis is registered; IR, still the
+one kind, draws byte for byte what 0.2.3 drew (every output of a test session folder compared).
+
+- A kind may have no fixed frame (the data's own ends), its own direction, no fixed tick list
+  (then the smallest 1-2-5 step with at most 25 intervals), y scaled on the data inside the x
+  frame instead of on all of it, and peak labels above the band: `figures.json` gains `apex`,
+  the trace's height at each peak, beside `peaks`, and the TeX writer writes such a kind as
+  nulabreport's `\labplot[kind=...]` with `x/apex/label/{}` peaks. One function works the frame
+  out for `session`, `preview`, `edit` and matplotlib. The UV-Vis numbers were measured on the
+  TeX figure first (docs/roadmap.md, item 6).
+- A kind owns its folders: a loose file of its type is filed there, `session` writes the kind
+  into a manifest entry in such a folder and refuses an entry whose `kind` is another kind's,
+  and `session --json` says the folder's kind (`"mixed"` for several).
+- `irspec plot` refuses a figure it cannot draw yet, with a message: the R backend (and
+  `irspec.R` run on its own) draws IR figures only, matplotlib only IR's hanging labels.
+- Tests: the mutation checks of 0.2.1-0.2.3 had run under an interpreter without numpy, so they
+  showed nothing; re-run properly, they found three gaps, now covered (and CLAUDE.md says how a
+  harness must run).
+
 ## 0.2.3 (2026-11-11)
 
 The first UV-Vis tools (roadmap item 6), moved from the author's lab-report package with their

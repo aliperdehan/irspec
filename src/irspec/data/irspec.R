@@ -86,6 +86,9 @@ read_figures <- function(path) {
   figs <- lapply(entries, function(e) {
     if (!is.null(e$spec) && e$spec != 1)
       stop(sprintf("%s: figure spec %s is not the one this script reads (1)", path, e$spec), call. = FALSE)
+    if (!is.null(e$kind) && e$kind != "ir")   # absent means ir; this script draws IR figures only
+      stop(sprintf("%s: %s is a %s figure; this script draws IR figures only (use the PDF: irspec session)",
+                   path, e$csv, e$kind), call. = FALSE)
     peaks <- if (length(e$peaks)) do.call(rbind, lapply(e$peaks, function(p) c(p[[1]], p[[2]]))) else
       matrix(numeric(0), ncol = 2)
     list(csv = file.path(folder, e$csv), title = if (is.null(e$title)) "" else e$title,

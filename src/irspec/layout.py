@@ -19,7 +19,7 @@ from . import kinds
 
 # The IR kind's frame (kinds.IR holds the numbers; these names are kept for the R script's test
 # and the callers that draw IR only). Each function below takes a kind, IR by default.
-XLIM = kinds.IR.xlim             # drawn reversed: high wavenumber on the left
+XLIM = kinds.IR.xlim[::-1]       # (left, right): drawn reversed, high wavenumber on the left
 X_MAJOR, X_MINOR = 500.0, kinds.IR.x_minor
 LOWER_PAD, UPPER_PAD = kinds.IR.pad
 # frame bottom = bottom - LOWER_PAD x range  (measured: 0.0984-0.0985 on five ranges)
@@ -35,27 +35,53 @@ CAPTION_PT = 10.0
 FRAME_PT = 0.4
 MAJOR_TICK_PT, MINOR_TICK_PT = 4.2, 2.1   # measured: 4.2 pt major ticks in the PDF
 MAX_Y_INTERVALS = 12
+MAX_X_INTERVALS = 25             # x ticks of a kind with no tick list (x_ticks)
 DEFAULT_SIZE = (10.0, 6.6)       # inches, the picture files' own size
 
 
 def window(x, y, kind=kinds.IR):
-    """The part of the spectrum the figure shows: the kind's default frame (IR: 650 to 4000 cm-1)."""
+    """The part of the spectrum the figure shows: the kind's default frame (IR: 650 to 4000 cm-1),
+    or, for a kind whose frame is the data's own ends, every point with a value."""
     x, y = np.asarray(x, float), np.asarray(y, float)
-    m = (x >= min(kind.xlim)) & (x <= max(kind.xlim)) & np.isfinite(y)
+    m = np.isfinite(x) & np.isfinite(y)
+    if kind.xlim is not None:
+        m &= (x >= min(kind.xlim)) & (x <= max(kind.xlim))
     return x[m], y[m]
 
 
-def xlimits(xmin=None, xmax=None, kind=kinds.IR):
+def xlimits(xmin=None, xmax=None, kind=kinds.IR, x=None):
     """(left, right) of the x axis: the figure's own `xmin` and `xmax` (a crop), else the kind's
-    xlim, in the kind's direction (IR, reversed: (xmax, xmin), high wavenumber on the left). For
-    IR the ticks need no change: the majors are the XLIM ones that fall inside, the minors every
-    100 (measured on the TeX figure for two crops, 2026-11-10)."""
-    lo = min(kind.xlim) if xmin is None else float(xmin)
-    hi = max(kind.xlim) if xmax is None else float(xmax)
+    xlim, or the data's own ends (`x`) for a kind without one; in the kind's direction (IR,
+    descending: (xmax, xmin), high wavenumber on the left). For IR the ticks need no change:
+    the majors are the XLIM ones that fall inside, the minors every 100 (measured on the TeX
+    figure for two crops, 2026-11-10)."""
+    if kind.xlim is not None:
+        low, high = kind.xlim
+    elif x is not None and np.size(x):
+        low, high = float(np.nanmin(x)), float(np.nanmax(x))
+    else:
+        raise ValueError(f"the {kind.name} frame is the data's own ends, and there is no data")
+    lo = low if xmin is None else float(xmin)
+    hi = high if xmax is None else float(xmax)
     if not lo < hi:
         raise ValueError(f"xmin ({lo:g}) must be below xmax ({hi:g})")
-    reversed_x = kind.xlim[0] > kind.xlim[1]   # IR: high wavenumber on the left
-    return (hi, lo) if reversed_x else (lo, hi)
+    return (hi, lo) if kind.x_descending else (lo, hi)
+
+
+def frame(x, y, kind=kinds.IR, xmin=None, xmax=None, ymin=None, ymax=None):
+    """(xlim, ylim, xw, yw): the frame of a figure of `kind` and the data it draws, from the
+    spectrum (x, y) and the figure's limits. The one place every caller (session, preview, edit,
+    matplotlib) works the frame out. The y axis scales on the kind's y_scope: IR on all it shows
+    by default, whatever the crop (TeX does so); UV-Vis on what is inside the x frame (nulabreport's
+    uvvis kind cuts the data to it), both measured on the TeX figure."""
+    xw, yw = window(x, y, kind)
+    xlim = xlimits(xmin, xmax, kind, xw)
+    ys = yw
+    if kind.y_scope == "frame":
+        ys = yw[(xw >= min(xlim)) & (xw <= max(xlim))]
+        if not ys.size:
+            raise ValueError(f"no data between {min(xlim):g} and {max(xlim):g} {kind.x_unit}")
+    return xlim, ylimits(ys, ymin, ymax, kind), xw, yw
 
 
 def ylimits(y, ymin=None, ymax=None, kind=kinds.IR):
@@ -82,6 +108,25 @@ def y_step(lo, hi):
         if span / step <= MAX_Y_INTERVALS + 1e-9:
             return step
     return 10.0 ** (k + 2)
+
+
+def x_ticks(xlim, kind=kinds.IR):
+    """(labelled ticks, minor step) of the x axis: the kind's own list, the ones inside the frame;
+    for a kind without one, the multiples of the smallest 1-2-5 step that gives at most
+    MAX_X_INTERVALS intervals (20 nm for 200-700 nm and 350-700 nm, which is what pgfplots drew
+    for the uvvis kind at the session's figure size: same figure, not same pixels elsewhere), the
+    minor step a fifth of it (pgfplots' `minor x tick num=4`)."""
+    lo, hi = min(xlim), max(xlim)
+    if kind.x_ticks is not None:
+        return [t for t in kind.x_ticks if lo <= t <= hi], kind.x_minor
+    span = hi - lo
+    k = math.floor(math.log10(span / MAX_X_INTERVALS)) if span > 0 else 0
+    step = next((m * 10.0 ** k for m in (1, 2, 5, 10) if span / (m * 10.0 ** k) <= MAX_X_INTERVALS + 1e-9),
+                10.0 ** (k + 1))
+    ticks = [round(i * step, 10) for i in range(math.ceil(lo / step - 1e-9), math.floor(hi / step + 1e-9) + 1)]
+    if kind.x_descending:
+        ticks.reverse()
+    return ticks, kind.x_minor if kind.x_minor is not None else step / 5
 
 
 def y_ticks(lo, hi):

@@ -68,7 +68,7 @@ import numpy as np
 
 from . import ir_organize as _io
 from . import export, jdx_tool, kinds, layout, spa_tool, texout
-from .figure import FIGURES_NAME, KIND, Figure, write_figures
+from .figure import FIGURES_NAME, Figure, write_figures
 
 IMG_EXT = kinds.IMG_EXT
 CAS_RE = re.compile(r"^(\d{2,7}-\d\d-\d)")
@@ -122,6 +122,25 @@ KEEP_IN_PLACE = {"manifest.json", "cas_names.json", FIGURES_NAME}
 GENERATED_EXT = _io.GENERATED_EXT + (".tex", ".sty", ".aux", ".log")
 
 
+def filing_folder(name):
+    """The subfolder a loose file goes to: a kind's own (other than IR's, whose filing is
+    ir_organize.classify: SPA/, jdx/, other/, and pictures are not filed), else classify's."""
+    for k in kinds.all_kinds():
+        if k is kinds.IR:
+            continue
+        for sub, exts in k.folders:
+            if name.lower().endswith(exts):
+                return sub
+    return _io.classify(name)
+
+
+def folder_kind(rels):
+    """The `kind` of a folder's --json object: the one kind of all its spectra, the default when
+    there are none, "mixed" when there are several. Files no kind owns (other/) do not count."""
+    names = {k.name for k in map(kinds.for_path, rels) if k is not None}
+    return names.pop() if len(names) == 1 else ("mixed" if names else kinds.DEFAULT.name)
+
+
 def organize(folder, dry_run=False):
     """ir_organize.organize, except manifest.json, cas_names.json, figures.json and what a
     build writes (GENERATED_EXT) stay put (the original would file the name map into other/
@@ -133,7 +152,7 @@ def organize(folder, dry_run=False):
         if (not os.path.isfile(src) or name.startswith(".") or name in KEEP_IN_PLACE
                 or name.lower().endswith(GENERATED_EXT)):
             continue
-        dst = os.path.join(folder, _io.classify(name), name)
+        dst = os.path.join(folder, filing_folder(name), name)
         if os.path.exists(dst):
             print(f"warning: {dst} already exists; leaving {name} in place", file=sys.stderr)
             continue
@@ -220,9 +239,15 @@ def build_manifest(folder, titles, sort, planned=None):
         if stem in titles:
             e["title"] = titles[stem]
         try:
-            kinds.of(e)
+            stated = kinds.of(e)
         except ValueError as err:   # a `kind` this irspec does not draw: refused, never drawn as IR
             raise ValueError(f"{e['file']}: {err}")
+        owner = kinds.for_path(e["file"])
+        if "kind" not in e and owner is not None and owner is not kinds.DEFAULT:
+            e["kind"] = owner.name      # absent means IR, so a file of another kind says so
+        elif owner is not None and stated is not owner:
+            raise ValueError(f"{e['file']}: its kind is {stated.name!r}, but it is in "
+                             f"{e['file'].rsplit('/', 1)[0]}/, the folder of {owner.name!r} files")
     return entries
 
 
@@ -368,9 +393,7 @@ def build_latex(folder, base, figures):
 
 def check_frame(fig, plain_path):
     """ValueError when the figure's limits make no frame, in its own kind's geometry."""
-    kind = kinds.get(fig.kind)
-    layout.xlimits(fig.xmin, fig.xmax, kind)
-    layout.ylimits(layout.window(*read_plain(plain_path), kind)[1], fig.ymin, fig.ymax, kind)
+    layout.frame(*read_plain(plain_path), kinds.get(fig.kind), fig.xmin, fig.xmax, fig.ymin, fig.ymax)
 
 
 def move_line(folder, src, dst, dry_run):
@@ -399,6 +422,9 @@ def planned_names(folder, e):
     if e["file"].startswith("SPA/"):
         stem = spa_tool.clean_stem(e["file"])
         return stem, f"csv/{stem}.csv", f"plain/{stem}_plain.csv"
+    if kinds.of(e) is not kinds.IR:   # another kind's file keeps its stem, as session writes it
+        stem = spa_tool.clean_stem(e["file"])
+        return stem, f"csv/{stem}.csv", f"plain/{stem}.csv"
     name = reference_name(folder, e)
     return name, f"csv/{name}.csv", f"plain/{name}.csv"
 
@@ -425,7 +451,7 @@ def preview_folder(folder, titles, sort, width, height, braille, as_json):
     planned = {}
     for src, dst in moves:
         r = _rel(folder, dst)
-        if r.startswith(("SPA/", "jdx/")):
+        if kinds.for_path(r) is not None and not r.lower().endswith(IMG_EXT):
             planned[r] = src
     mpath = os.path.join(folder, "manifest.json")
     listed = set()
@@ -464,7 +490,7 @@ def preview_folder(folder, titles, sort, width, height, braille, as_json):
         blocks.append(f"=== {rel}  ({where}) ===\ntitle:   {head['title']}\n"
                       f"csv:     {csv}\nplain:   {plain}\n\n{text}")
     if as_json:
-        print(json.dumps({"kind": KIND,
+        print(json.dumps({"kind": folder_kind(e["file"] for e in entries),
                           "moves": [{"from": _rel(folder, a), "to": _rel(folder, b)}
                                     for a, b in moves],
                           "spectra": spectra, "images": images}, ensure_ascii=False))
@@ -496,7 +522,8 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
     for src, dst in moves:
         print(move_line(folder, src, dst, dry_run))
     if report is not None:
-        report.update({"kind": KIND, "folder": folder, "dry_run": bool(dry_run),
+        report.update({"kind": folder_kind([*spectra_on_disk(folder), *(_rel(folder, b) for _, b in moves)]),
+                       "folder": folder, "dry_run": bool(dry_run),
                        "moves": [{"from": _rel(folder, a), "to": _rel(folder, b)}
                                  for a, b in moves]})
     if dry_run:
@@ -516,6 +543,8 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
         results.append(r)
         print(f"# {r['stem']}: axis={r['axis_label']} peaks={r['n_peaks']} ymin={r['ymin']}")
     _io.save_manifest(folder, entries)
+    if report is not None:
+        report["kind"] = folder_kind(e["file"] for e in entries)
     figures = [Figure.from_organize_result(r, folder, kinds.of(e).name)
                for e, r in zip(entries, results)]
     for e, r, fig in zip(entries, results, figures):

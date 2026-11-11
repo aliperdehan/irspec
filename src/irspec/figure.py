@@ -41,10 +41,16 @@ class Figure:
     width: str = r"\linewidth"
     height: str = "6.8in"
     kind: str = KIND               # kinds.py; written only when it is not the default
+    apex: List[float] = field(default_factory=list)   # labels above the band: the trace's height
+    #                                                   at each peak, same order (written when set)
 
     def peaklist(self) -> str:
-        """The `\\irspectrum` peak argument: wavenumber/label_y pairs, one
-        decimal each (identical to spa_peaks.format_peaklist)."""
+        """The TeX peak argument. Labels hanging below the band (IR, `trough`): wavenumber/label_y
+        pairs, one decimal each (identical to spa_peaks.format_peaklist). Labels above it (`apex`):
+        x/apex_y/label_y/{} (an empty name prints x), as nulabreport's vspd_tool.py peaks writes it."""
+        if kinds.get(self.kind).labels == "apex":
+            return ",".join(f"{x:g}/{round(a, 4):g}/{round(ly, 4):g}/{{}}"
+                            for (x, ly), a in zip(self.peaks, self.apex))
         return ",".join(f"{x:.1f}/{ly:.1f}" for x, ly in self.peaks)
 
     @classmethod
@@ -59,7 +65,8 @@ class Figure:
         peaks = [(float(p[0]), float(p[1])) for p in entry.get("peaks", [])]
         kw = {k: entry[k] for k in ("axis", "ymin", "ymax", "xmin", "xmax", "width", "height")
               if k in entry}
-        return cls(csv=csv, title=entry.get("title", ""), peaks=peaks, kind=kind, **kw)
+        apex = [float(a) for a in entry.get("apex", [])]
+        return cls(csv=csv, title=entry.get("title", ""), peaks=peaks, kind=kind, apex=apex, **kw)
 
     def to_entry(self) -> dict:
         d = {"spec": SPEC_VERSION, "csv": self.csv, "title": self.title,
@@ -73,6 +80,8 @@ class Figure:
             d["height"] = self.height
         if self.kind != KIND:
             d["kind"] = self.kind
+        if self.apex:
+            d["apex"] = list(self.apex)
         return d
 
     @classmethod
@@ -88,7 +97,7 @@ class Figure:
                 peaks.append((float(x), float(ly)))
         return cls(csv=os.path.relpath(r["plain_path"], folder), title=r["title"],
                    axis=r["axis_md"], peaks=peaks, ymin=r["ymin"], ymax=r.get("ymax"),
-                   xmin=r.get("xmin"), xmax=r.get("xmax"), kind=kind)
+                   xmin=r.get("xmin"), xmax=r.get("xmax"), kind=kind, apex=list(r.get("apex", [])))
 
 
 def write_figures(figures, path) -> str:

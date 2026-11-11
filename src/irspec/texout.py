@@ -26,11 +26,20 @@ EXCERPT_NAME = "irspec-ir.sty"
 
 
 def _block(f: Figure, esc=spa_tool.latex_escape) -> str:
+    kind = kinds.get(f.kind)
     opts = f"width={f.width},height={f.height}"
     for key in ("ymin", "ymax", "xmin", "xmax"):   # pgfplots' own keys: the call narrows the axis
         if getattr(f, key) is not None:
             opts += f",{key}={getattr(f, key)}"
-    return (f"\\{kinds.get(f.kind).macro}\n"
+    if kind.macro == "labplot":   # nulabreport's generic plot: the kind names its axes
+        ylabel = "" if f.axis == kind.y_label else f",ylabel={{{esc(f.axis)}}}"
+        return ("\\labplot\n"
+                f"  [kind={kind.name},{opts}{ylabel}]\n"
+                f"  {{{f.csv}}}\n"
+                f"  {{{f.peaklist()}}}\n"
+                f"  {{{esc(f.title)}}}\n"
+                "\\clearpage\n")
+    return (f"\\{kind.macro}\n"
             f"  [{opts}]\n"
             f"  {{{f.csv}}}\n"
             f"  {{{esc(f.axis)}}}\n"

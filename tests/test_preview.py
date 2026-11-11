@@ -259,7 +259,7 @@ class Axes(unittest.TestCase):
         self.assertLess(labels.index("3,000"), labels.index("650"))
 
     def test_limits_come_from_the_kind(self):
-        narrow = dataclasses.replace(kinds.IR, xlim=(3000.0, 1000.0))
+        narrow = dataclasses.replace(kinds.IR, xlim=(1000.0, 3000.0))   # (low, high)
         with mock.patch.dict(kinds.REGISTRY, {"ir": narrow}):
             info = preview.work_out(str(DATA / SAMPLE))
             text = preview.render(info, 56, 8, False)

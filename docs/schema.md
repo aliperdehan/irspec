@@ -18,8 +18,9 @@ Two numbers version it:
   Roadmap item 6 adds others (UV-Vis, chromatograms, ...). Every `--json` object says it
   (`kind` on the object, and on each spectrum inside it), so a reader never has to assume. In a
   file (`manifest.json` entry, `figures.json` entry) `kind` is optional and **absent means
-  `"ir"`**; irspec writes it there only for a kind other than `ir` (none is registered yet:
-  `src/irspec/kinds.py`). A reader that finds a value it does not know must refuse rather than
+  `"ir"`**; irspec writes it there only for a kind other than `ir` (`src/irspec/kinds.py`; a
+  kind owns folders, and `session` fills in the kind of a file in another kind's folder, and
+  refuses an entry whose stated kind does not own its folder). A reader that finds a value it does not know must refuse rather than
   draw it as IR: `Figure.from_entry`, `session`, `preview` and `edit peak` do (`edit set`, `unset`,
   `move` and `remove` work on any entry, and their `--json` `kind` is the entry's as stored).
 - **`format` is the file's own format**: `"spa"`, `"jdx"`, `"csv"` (and, for a picture, the
@@ -33,8 +34,9 @@ Two numbers version it:
   non-zero, printing no object. The one exception is a build that fails after the work was done
   (`session`, `edit --build`): the object is printed with `"build": {"ok": false, "error": ...}`
   and the exit status is non-zero (`session`: 1; `edit`: 3).
-- **Peaks** are `[wavenumber, label_y]` pairs, wavenumber in cm⁻¹ and `label_y` in the y units
-  of the figure, one decimal. Always this shape, under the key `peaks`.
+- **Peaks** are `[x, label_y]` pairs (for IR, the wavenumber in cm⁻¹), `label_y` in the y units
+  of the figure: one decimal for IR, four for a kind whose labels stand above the band. Always
+  this shape, under the key `peaks`; such a kind's apex heights are a separate list, `apex`.
 - Text (`title`, `axis`) is plain, never LaTeX-escaped.
 
 ## `manifest.json`
@@ -75,6 +77,7 @@ A list of objects, in figure order.
 | `ymin`, `ymax`, `xmin`, `xmax` | number | present when set, as in the manifest |
 | `width`, `height` | string | TeX lengths; mean nothing outside TeX; present when not the default |
 | `kind` | string | optional; absent means `"ir"` |
+| `apex` | list of number | a kind whose labels stand above the band: the trace's height at each peak, same order as `peaks`; absent for IR |
 
 ## `irspec session DIR --json`
 
@@ -82,7 +85,7 @@ A real run, `--dry-run`, or (with `--preview`) the preview below. The progress l
 
 | Key | Type | Meaning |
 |---|---|---|
-| `kind` | string | `"ir"` |
+| `kind` | string | the one kind of the folder's spectra (`"ir"`), or `"mixed"` |
 | `folder` | string | the folder, absolute |
 | `dry_run` | boolean | true under `--dry-run`: then only `kind`, `folder`, `dry_run` and `moves` exist |
 | `moves` | list of objects with `from` and `to` | loose files filed into `SPA/`, `jdx/`, … (made, or planned) |
@@ -107,7 +110,7 @@ made), `pictures` (list of strings, from `--formats`).
 
 ## `irspec session DIR --preview --json`
 
-Writes nothing. `{kind, moves, spectra, images}`: `kind` `"ir"`; `moves` as above; `spectra` one object per `.SPA` or
+Writes nothing. `{kind, moves, spectra, images}`: `kind` as in a real run; `moves` as above; `spectra` one object per `.SPA` or
 `.jdx`, each the `irspec preview` object (below) plus `will_be_filed_as`, `title`, `csv`, `plain`
 (or `error`, with the exit status 1, for one that could not be read); `images` one object per
 picture (`file`, `kind`, `name`, `csv`, `plain`, `note`): pictures are digitized by a real run,

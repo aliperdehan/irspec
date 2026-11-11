@@ -494,7 +494,9 @@ def check_limits(entry):
     """A figure whose lower limit is not below its upper one cannot be drawn: refuse the edit
     (nothing has been written yet). An x limit set alone is checked against the other one's
     default (the kind's xlim, IR's layout.XLIM): `xmin=4000` with no `xmax` meets the default
-    left edge, 4000. A kind this irspec does not know is not checked (it is not drawn either)."""
+    left edge, 4000. A kind this irspec does not know is not checked (it is not drawn either); a
+    kind whose frame is the data's own ends is checked when both are set (`irspec session` checks
+    the rest against the data)."""
     try:
         xlim = kinds.of(entry).xlim
     except ValueError:
@@ -504,7 +506,7 @@ def check_limits(entry):
         a = a if isinstance(a, (int, float)) else None
         b = b if isinstance(b, (int, float)) else None
         said = {lo: f"{a:g}" if a is not None else "", hi: f"{b:g}" if b is not None else ""}
-        if lo == "xmin" and (a is None) != (b is None):
+        if lo == "xmin" and xlim is not None and (a is None) != (b is None):
             if a is None:
                 a = min(xlim)
                 said[lo] = f"the default, {a:g}"

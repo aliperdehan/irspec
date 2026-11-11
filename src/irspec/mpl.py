@@ -72,10 +72,13 @@ def draw(fig: Figure, folder, size=layout.DEFAULT_SIZE, caption=True, family=Non
     matplotlib, plt = _pyplot()
     from matplotlib.ticker import FixedLocator, FuncFormatter, MultipleLocator
     family = family or pick_font()[0]
-    kind = kinds.get(fig.kind)   # the frame, the ticks and the x title; labels hang as IR's (trough)
-    x, y = layout.window(*read_plain(os.path.join(folder, fig.csv)), kind)
-    lo, hi = layout.ylimits(y, fig.ymin, fig.ymax, kind)
-    xlim = layout.xlimits(fig.xmin, fig.xmax, kind)
+    kind = kinds.get(fig.kind)   # the frame, the ticks and the x title
+    if kind.labels != "trough":
+        raise ExportError(f"{fig.csv}: matplotlib draws peak labels only as IR's (hanging below "
+                          f"the band); a {kind.name} figure's labels ({kind.labels}) are not in yet: "
+                          f"use the PDF (irspec session)")
+    xlim, (lo, hi), x, y = layout.frame(*read_plain(os.path.join(folder, fig.csv)), kind,
+                                       fig.xmin, fig.xmax, fig.ymin, fig.ymax)
     w, h = size
     out = plt.figure(figsize=size)
     ax = out.add_axes([0.85 / w, 1.0 / h, 1 - 0.95 / w, 1 - 1.1 / h])
@@ -84,8 +87,9 @@ def draw(fig: Figure, folder, size=layout.DEFAULT_SIZE, caption=True, family=Non
             solid_capstyle="butt", zorder=2)
     ax.set_xlim(*xlim)
     ax.set_ylim(lo, hi)
-    ax.xaxis.set_major_locator(FixedLocator(kind.x_ticks))
-    ax.xaxis.set_minor_locator(MultipleLocator(kind.x_minor))
+    majors, minor = layout.x_ticks(xlim, kind)
+    ax.xaxis.set_major_locator(FixedLocator(majors))
+    ax.xaxis.set_minor_locator(MultipleLocator(minor))
     ax.yaxis.set_major_locator(FixedLocator(layout.y_ticks(lo, hi)))
     fmt = FuncFormatter(lambda v, _: layout.fmt_number(v))
     ax.xaxis.set_major_formatter(fmt)

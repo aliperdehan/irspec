@@ -414,13 +414,27 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   functions, ticks and padding) in the tests, which found that the x limits had assumed IR's
   reversed axis. A `kind` this irspec does not know is now refused by `session` (before, it was
   drawn as IR), `preview` and `edit peak`; `set`/`unset`/`move`/`remove` still work on it.
-  **Not done:** the R backend (`data/irspec.R`) still draws IR only: per-kind geometry in R comes
-  with the second kind. Tables (`parse_vqud`) and tools (`scan`) are not in the registry yet; they
-  come with UV-Vis and the digitizers. Peak labels are drawn as IR's (`trough`) by every backend.
-  Still IR-only, for the UV-Vis slice to route through the kind: filing a loose file
-  (`ir_organize.classify`: a loose `.vspd` would go to `other/`), `session.planned_names` (its
-  `SPA/` rule), `session.preview_folder` (draws only `SPA/` and `jdx/`, lists `IMG_EXT` as
-  pictures) and the report's name (`ir_<dd-mm>`, `default_md_name`).
+  **Generalised (0.2.4), still with IR the one registered kind:** a kind may have no fixed frame
+  (`xlim` None: the data's own ends), its own direction (`x_descending`), no tick list (then
+  `layout.x_ticks`'s 1-2-5 rule, at most 25 intervals), its y scope (`"all"`, IR: TeX scales y on
+  all it shows whatever the crop; `"frame"`, nulabreport's uvvis: on the data inside the x frame),
+  labels above the band (`apex`: `figures.json` gains `apex`, the heights, beside `peaks`), the
+  `\labplot` macro, and a fourth function, `pick` (preview's peaks). One function,
+  `layout.frame`, works the frame out for session, preview, edit and matplotlib. A kind owns its
+  folders: loose files of its extensions are filed there, `session` writes `kind` into an entry
+  in such a folder and refuses a stated kind that does not own it, `--preview` and the CSV names
+  follow it, and the --json `kind` of a folder is its one kind or `"mixed"`. The uvvis frame was
+  measured on the TeX figure (2026-11-11, `\labplot[kind=uvvis]` on the author's scan, five limit
+  settings): the padding is IR's (0.0985 below, 0.0017 above the span), x has none, the labels
+  are every 20 nm with minor ticks every 4 for 200-700 and 350-700 nm, y follows the data inside
+  the crop exactly (not the 2 % margin the kind keeps for drawing), and without a `ymax` the
+  labels above the bands push the plot onto a page of its own (so session will set the
+  suggested `ymax`). Checked: the IR snapshot byte-identical, a data-ended apex kind and one whose
+  data lies below IR's window in the tests.
+  **Not done:** the R backend and matplotlib refuse a kind other than IR, and one with `apex`
+  labels, with a message (R: drawing another kind; matplotlib: the TeX look of the apex labels,
+  to be measured first). Tables and tools are not in the registry. The report's name is
+  `ir_<dd-mm>` whatever the kinds (`default_md_name`).
 - Two of these are not a spectrum: `parse_vqud.py` reads **tables** (standards, unknowns, a
   calibration curve), and `scan_clean.py` is a picture utility with no x/y at all. So the registry
   must not insist that a kind is "x, y and peaks": a kind may give a table, and a **tool** (a
@@ -434,12 +448,11 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   **UV-Vis, first part done (0.2.3):** the readers, as tools beside the kinds: `irspec vspd`
   (`vspd_tool.py`) and `irspec vqud` (`vqud_tool.py`, nulabreport's `parse_vqud.py`), output byte
   for byte the scripts', with three anonymised test files of the author's own
-  (`tests/data/README.md`) and `olefile` as a dependency. **Next (0.2.4): the `uvvis` kind** in
-  `session`, the figures (`\labplot[kind=uvvis]`, already in the bundled excerpt) and
-  `preview`. Two things to settle first: labels above the band (`apex`) need the apex height, and
-  `peaks` must keep its `[x, label_y]` shape within 0.2.x (docs/schema.md), so the apex heights go
-  in a parallel key or are read off the trace when drawing; and UV-Vis has no fixed default frame
-  (the scan's own ends), which `Kind.xlim` cannot say yet.
+  (`tests/data/README.md`) and `olefile` as a dependency. The registry learnt what UV-Vis needs
+  in 0.2.4 (above). **Next (0.2.5): the `uvvis` kind** registered: `uv/` and `.vspd`, its process
+  (the CSVs, the stored peak picks within the frame, apex heights off the trace, the suggested
+  `ymax`), its preview and edit readers, a lualatex test that a session of the scan is one page
+  per figure with the measured frame, and the bundled excerpt checked against the full package.
 - A kind's readers are plain Python with numpy and scipy only, like the IR ones; a format that
   cannot be read without a vendor library is not added.
 - `--json` and its written schema (item 1b) come before the second kind, because the schema must
