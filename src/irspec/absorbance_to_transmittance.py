@@ -48,7 +48,7 @@ USAGE
     python3 absorbance_to_transmittance.py IN.csv --out OUT.csv --to absorbance
 
     IN.csv and OUT.csv may be the same path (the file is fully read before
-    anything is written).
+    anything is written; the output is replaced atomically).
 
 EXAMPLE (this report's actual use, 2026-09-18)
     literature/webbook/plain/PROPIOPHENONE.csv was decoded from the NIST
@@ -72,6 +72,9 @@ EXAMPLE (this report's actual use, 2026-09-18)
 import argparse
 import csv
 import math
+import os
+import tempfile
+from pathlib import Path
 
 
 def convert_series(intensities, to="transmittance"):
@@ -107,11 +110,22 @@ def read_plain_csv(path):
 
 
 def write_plain_csv(path, header, wavenumbers, intensities, digits=4):
-    with open(path, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        for wn, inten in zip(wavenumbers, intensities):
-            writer.writerow([wn, f"{inten:.{digits}f}"])
+    if digits < 0:
+        raise ValueError("digits must be non-negative")
+    path = Path(path)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", newline="", dir=path.parent,
+                                         delete=False) as f:
+            temporary = f.name
+            writer = csv.writer(f)
+            writer.writerow(header)
+            for wn, inten in zip(wavenumbers, intensities):
+                writer.writerow([wn, f"{inten:.{digits}f}"])
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None and os.path.exists(temporary):
+            os.unlink(temporary)
 
 
 def main():
@@ -129,6 +143,8 @@ def main():
     )
     ap.add_argument("--digits", type=int, default=4, help="decimal places on output")
     args = ap.parse_args()
+    if args.digits < 0:
+        ap.error("--digits must be non-negative")
 
     header, rows = read_plain_csv(args.csv_in)
     wavenumbers = [wn for wn, _ in rows]

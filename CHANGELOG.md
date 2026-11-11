@@ -2,6 +2,11 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.6 (2026-11-11)
+
+- `a2t` rejects negative decimal precision before opening its output. CSV writes replace the
+  destination atomically, so a formatting failure preserves an existing or in-place input file.
+
 ## 0.2.5 (2026-11-11)
 
 UV-Vis figures in a session: the second plot kind (roadmap item 6).
