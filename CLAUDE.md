@@ -19,10 +19,15 @@ which now forward to it. Read `PROVENANCE.md` for where the code came from.
 - **Do not `pip install` into the system python** (Homebrew's, externally managed) unasked. The
   author runs the checkout through a shell alias: `PYTHONPATH=src python3 -m irspec ...`. Use a
   throwaway venv in the scratchpad for anything that needs an install.
-- **Data.** The only published sample is the author's own `tests/data/PHENACETIN_CRUDE_LR1-2.SPA`
-  (the `.jdx` fixtures are generated from it by `tests/make_fixtures.py`). Never add a classmate's
-  `.SPA`, an instructor's images, or a page of a textbook (that is why `palleros_figs`,
-  `spectrum_digitize`, GC, TLC, UV-Vis tools are out of scope). The coursework folders (OneDrive,
+- **Data.** The published samples are the author's own: `tests/data/PHENACETIN_CRUDE_LR1-2.SPA`
+  (the `.jdx` fixtures are generated from it by `tests/make_fixtures.py`), and, approved by the
+  author 2026-11-11, `uvvis.vspd`, `quant_510nm.vqud` and `quant_540nm_blocks.vqud`, anonymised
+  (`tests/data/README.md`: which rows are the author's, what was blanked; `tests/anonymise_ole.py`).
+  The other groups' rows in those instrument files, the `.vqut` template (it names classmates) and
+  the scrub settings (they hold the instrument serial number and the institution) stay out. Never
+  add a classmate's file, an instructor's images, or a page of a textbook (that is why
+  `palleros_figs` stays out); every new instrument file is checked for names first, in every OLE
+  stream and in the raw bytes. The coursework folders (OneDrive,
   `LR6/...`) are read-only: copy to the scratchpad and run there. `IRSPEC_LR6_IR=<LR6/ir>` turns on
   three oracle tests that compare with the author's hand-made CSVs byte for byte.
 - **Measure, never guess.** Constants in `layout.py` were measured on the TeX figure; say how

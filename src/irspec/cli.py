@@ -12,6 +12,8 @@
     irspec a2t ...          Absorbance <-> %Transmittance             (absorbance_to_transmittance)
     irspec absorptivity ... QUANT-IR absorptivity -> Absorbance       (absorptivity_to_absorbance)
     irspec corr ...         Pearson r between spectra                 (ir_corr)
+    irspec vspd ...         Shimadzu UV-Vis .vspd -> CSV, stored picks (vspd_tool)
+    irspec vqud ...         Shimadzu UV-Vis quantitation tables -> CSVs (vqud_tool)
 
 `session` is the command most people want; the others are its steps, for when
 one step is all that is needed (`irspec jdx convert X.jdx`). Each takes its
@@ -35,6 +37,8 @@ COMMANDS = {
     "a2t": "absorbance_to_transmittance",
     "absorptivity": "absorptivity_to_absorbance",
     "corr": "ir_corr",
+    "vspd": "vspd_tool",
+    "vqud": "vqud_tool",
 }
 
 

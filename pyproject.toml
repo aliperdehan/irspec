@@ -11,7 +11,7 @@ license = { text = "MIT" }
 keywords = ["infrared", "IR", "FTIR", "spectroscopy", "chemistry", "OMNIC", "SPA", "JCAMP-DX", "teaching"]
 authors = [{ name = "Ali Perdekhan" }]
 requires-python = ">=3.9"
-dependencies = ["numpy", "scipy", "Pillow"]
+dependencies = ["numpy", "scipy", "Pillow", "olefile"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Education",

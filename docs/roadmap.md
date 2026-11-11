@@ -430,6 +430,16 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   `irspec scan` command, not a kind.
 - Each kind is its own slice, in this order of ease: UV-Vis first (its figure macro already exists
   in nulabreport, v1.31.0: `uvvis`), then GC, then the digitizers, TLC last.
+
+  **UV-Vis, first part done (0.2.3):** the readers, as tools beside the kinds: `irspec vspd`
+  (`vspd_tool.py`) and `irspec vqud` (`vqud_tool.py`, nulabreport's `parse_vqud.py`), output byte
+  for byte the scripts', with three anonymised test files of the author's own
+  (`tests/data/README.md`) and `olefile` as a dependency. **Next (0.2.4): the `uvvis` kind** in
+  `session`, the figures (`\labplot[kind=uvvis]`, already in the bundled excerpt) and
+  `preview`. Two things to settle first: labels above the band (`apex`) need the apex height, and
+  `peaks` must keep its `[x, label_y]` shape within 0.2.x (docs/schema.md), so the apex heights go
+  in a parallel key or are read off the trace when drawing; and UV-Vis has no fixed default frame
+  (the scan's own ends), which `Kind.xlim` cannot say yet.
 - A kind's readers are plain Python with numpy and scipy only, like the IR ones; a format that
   cannot be read without a vendor library is not added.
 - `--json` and its written schema (item 1b) come before the second kind, because the schema must

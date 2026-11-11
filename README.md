@@ -44,7 +44,12 @@ It does:
 - make a PDF with one spectrum per landscape page, and PNG/TIFF/SVG copies of
   each page named after the spectrum;
 - or draw the same figures without TeX, with matplotlib or with R (ggplot2), if
-  you would rather have those ([below](#drawing-without-tex-matplotlib-and-r)).
+  you would rather have those ([below](#drawing-without-tex-matplotlib-and-r));
+- read Shimadzu LabSolutions UV-Vis files (a UV-2600): a `.vspd` spectrum as a CSV with the
+  peak picks stored in it (`irspec vspd`), and the quantitation tables of a `.vqud`
+  (standards, unknowns and the calibration line) as CSVs (`irspec vqud`). UV-Vis figures in
+  a session come next ([Roadmap](#roadmap)); irspec is growing from IR to the other plots of a
+  chemistry lab report, one kind at a time.
 
 It does not interpret spectra, assign bands or identify compounds. The peak
 labels are wavenumbers; deciding what a band is stays your job. Peak picking is a
@@ -62,7 +67,7 @@ irspec --version         # python -m irspec --version does the same
 From a checkout of [the repository](https://github.com/aliperdehan/irspec) instead:
 `pip install .` (or `pip install -e .` while developing).
 
-This pulls in numpy, scipy and Pillow. The rest are programs irspec calls, and
+This pulls in numpy, scipy, Pillow and olefile (for the UV-Vis files). The rest are programs irspec calls, and
 only the ones for the output you ask for are needed:
 
 | You want | Needs | macOS | Debian/Ubuntu |
@@ -482,6 +487,8 @@ all you need. Each has its own `--help`.
 | `irspec a2t` | Absorbance → %T (`--to absorbance` for the other way) | `irspec a2t plain/X.csv --out plain/X_T.csv` |
 | `irspec absorptivity` | QUANT-IR absorptivity → Absorbance | `irspec absorptivity X.jdx --name X --out csv/X.csv --plain-out plain/X.csv --peak-a 1` |
 | `irspec corr` | Pearson r between spectra (the first is the reference) | `irspec corr plain/REF.csv plain/UNKNOWN.csv` |
+| `irspec vspd` | a Shimadzu UV-Vis `.vspd` → `wavelength,absorbance` CSV; `info`, `peaks` (the picks stored in the file, as a `\labplot[kind=uvvis]` peak list), `verify` against the instrument's text export | `irspec vspd convert scan.vspd --out scan.csv` |
+| `irspec vqud` | a Shimadzu quantitation file (`.vqud`) → CSVs of the standards, the unknowns and the calibration (refitted, and compared with the fit the file stores); `info` reads a `.vqud`, `.vqut` or `.vqum` without writing | `irspec vqud run.vqud out/run` |
 
 `digitize` has two more layouts than SDBS: `--palleros` for book figures and
 `--omnic` for OMNIC screenshots (this one reads the tick labels with tesseract).
@@ -511,8 +518,14 @@ Three more checks run on the author's own coursework folders (the environment
 variable `IRSPEC_LR6_IR` points at them) and are skipped everywhere else; they
 are how the WebBook and SDBS paths were shown to give byte-identical CSVs.
 
-The one sample spectrum in `tests/data/` is the author's own. No other student's
-data and no instructor's material is in this repository.
+`irspec vspd` and `irspec vqud` were moved from the same package; their output on
+the test files is compared with what the original scripts wrote, and was compared
+on the author's original instrument files too, byte for byte.
+
+The sample files in `tests/data/` are the author's own measurements: one IR
+spectrum, one UV-Vis spectrum and two UV-Vis quantitation files, the last three
+anonymised ([`tests/data/README.md`](tests/data/README.md) says how). No other
+student's data and no instructor's material is in this repository.
 
 ## Versioning
 
@@ -560,8 +573,9 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 The reasons and the design are in [`docs/roadmap.md`](docs/roadmap.md).
 
-Out of scope: MS, NMR, GC and TLC tools, identifying compounds, and anything that extracts figures
-from copyrighted books.
+Coming, one kind at a time ([`docs/roadmap.md`](docs/roadmap.md), item 6): UV-Vis figures (the
+readers are in), GC, MS and NMR spectra digitized from pictures, TLC plates. Out of scope:
+identifying compounds, and anything that extracts figures from copyrighted books.
 
 ## Development
 

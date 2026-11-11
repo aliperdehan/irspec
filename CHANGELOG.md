@@ -2,6 +2,26 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.3 (2026-11-11)
+
+The first UV-Vis tools (roadmap item 6), moved from the author's lab-report package with their
+output unchanged:
+
+- New `irspec vspd`: a Shimadzu LabSolutions UV-Vis spectrum (`.vspd`) to a `wavelength,absorbance`
+  CSV (`convert`), what the file says (`info`), the peak picks stored in it as a
+  `\labplot[kind=uvvis]` peak list with a `ymax` suggestion (`peaks`), and a check against the
+  instrument's own text export (`verify`).
+- New `irspec vqud`: a quantitation file (`.vqud`) to CSVs of the standards, the unknowns and the
+  calibration line (refitted from each block of standards and compared with the fit the file
+  stores); `info` reads a `.vqud`, `.vqut` or `.vqum` without writing anything. A reading cell
+  made only of stars (any number) counts as no reading.
+- New dependency: `olefile` (BSD, pure Python, 115 kB), which reads the OLE2 container both
+  formats are.
+- Test files: the author's own UV-Vis scan and two quantitation files, anonymised (other groups'
+  rows, names, the instrument serial number and the institution removed; `tests/data/README.md`).
+  The output of both commands on them, and on the original files, is byte for byte what the
+  original scripts wrote.
+
 ## 0.2.2 (2026-11-11)
 
 The registry of plot kinds (roadmap item 6), with IR as its one kind: what irspec had hard-wired
