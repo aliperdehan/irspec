@@ -435,16 +435,8 @@ def main():
         if not args.peaks:
             sys.exit("manual mode needs --peaks 3320.8,1650.8,...")
         wanted = [float(v) for v in args.peaks.split(",")]
-        peaks = []
-        for wn in wanted:
-            win = (x >= wn - 15) & (x <= wn + 15)
-            if absorbance:
-                i_local = np.argmax(y[win])
-            else:
-                i_local = np.argmin(y[win])
-            y_at = y[win][i_local]
-            x_at = x[win][i_local]
-            peaks.append((float(x_at), float(y_at)))
+        from .spa_tool import find_peaks_manual
+        peaks = find_peaks_manual(x, y, wanted, axis_label)
     else:
         peaks = find_peaks_auto(x, y, threshold_pct=args.threshold,
                                  prominence=args.prominence,

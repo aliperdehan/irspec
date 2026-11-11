@@ -2,6 +2,12 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.17 (2026-11-12)
+
+- Manual `peaks` requests reuse the nearest-local-extremum picker, avoiding a
+  neighbouring band's slope (I3.3). Retain its existing 15 cm⁻¹ window and
+  three-sample extremum order so all manual picking follows the same rule.
+
 ## 0.2.16 (2026-11-12)
 
 - SPA convert and batch use the detected axis for automatic band picking and label
