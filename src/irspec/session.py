@@ -295,15 +295,15 @@ def process_jdx_reference(folder, e, csv_dir, plain_dir):
                   reference_output(plain_dir, f"{name}.csv", e))
     kind = _jdx_kind(path)
     if kind == "quantir":
-        if "peak_a" in e:
-            scale = ["--peak-a", e["peak_a"]]
-        elif "cl" in e:
-            scale = ["--cl", e["cl"]]
-        else:
+        from .absorptivity_to_absorbance import scale_option
+        try:
+            key, value = scale_option(e)
+        except ValueError as err:
             raise SessionError(
                 f"{e['file']} is a NIST QUANT-IR gas file (absorptivity, not an absorbance): "
-                f"its c x L is not in the file. Put \"peak_a\": 1 in its manifest entry to scale "
-                f"the strongest band to A = 1 (and say so in the caption), or \"cl\": <c x L>.")
+                f'its c x L is not in the file. Put "peak_a": 1 in its manifest entry to scale '
+                f'the strongest band to A = 1 (and say so in the caption), or "cl": <c x L>.') from err
+        scale = ["--" + key.replace("_", "-"), value]
         must("absorptivity_to_absorbance",
              [path, "--name", name, "--out", csv, "--plain-out", plain, *scale], e["file"])
     else:

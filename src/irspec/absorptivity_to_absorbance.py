@@ -61,6 +61,14 @@ import sys
 from . import jdx_tool  # noqa: E402  (decoder and house CSV writers)
 
 
+def scale_option(entry):
+    """The manifest's QUANT-IR scale, with peak_a taking precedence over cl."""
+    for key in ("peak_a", "cl"):
+        if key in entry:
+            return key, float(entry[key])
+    raise ValueError('QUANT-IR needs "peak_a" or "cl" in its manifest entry')
+
+
 def main():
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

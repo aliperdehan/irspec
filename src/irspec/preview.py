@@ -113,16 +113,15 @@ def load_ir(path, entry):
         xs, ys, meta = jdx_tool.read_jdx(path)
         kind = session._jdx_kind(path)
         if kind == "quantir":  # absorptivity: scaled to an absorbance as the session does
-            e = entry or {}
+            from .absorptivity_to_absorbance import scale_option
+            try:
+                key, value = scale_option(entry or {})
+            except ValueError as err:
+                raise PreviewError(f"{path}: {err}") from err
             top = max(ys)
-            if "cl" in e:
-                cl = float(e["cl"])
-            elif "peak_a" in e and top > 0:
-                cl = float(e["peak_a"]) / top
-            else:
-                raise PreviewError(
-                    f"{path} is a NIST QUANT-IR gas file (absorptivity, not an absorbance): it "
-                    f"is drawn only when a manifest entry for it has \"peak_a\" or \"cl\"")
+            if top <= 0:
+                raise PreviewError(f"{path}: no positive band in the spectrum")
+            cl = value / top if key == "peak_a" else value
             ys = [v * cl for v in ys]
         rows = sorted(((float(a), float(b)) for a, b in zip(xs, ys)), key=lambda p: p[0])
         x = np.array([round(a, 3) for a, _ in rows])

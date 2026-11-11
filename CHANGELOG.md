@@ -2,6 +2,11 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.18 (2026-11-12)
+
+- Preview and session share QUANT-IR scale selection: `peak_a` takes precedence
+  over `cl` when both are present (I4.1).
+
 ## 0.2.17 (2026-11-12)
 
 - Manual `peaks` requests reuse the nearest-local-extremum picker, avoiding a
