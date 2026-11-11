@@ -449,10 +449,16 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   (`vspd_tool.py`) and `irspec vqud` (`vqud_tool.py`, nulabreport's `parse_vqud.py`), output byte
   for byte the scripts', with three anonymised test files of the author's own
   (`tests/data/README.md`) and `olefile` as a dependency. The registry learnt what UV-Vis needs
-  in 0.2.4 (above). **Next (0.2.5): the `uvvis` kind** registered: `uv/` and `.vspd`, its process
-  (the CSVs, the stored peak picks within the frame, apex heights off the trace, the suggested
-  `ymax`), its preview and edit readers, a lualatex test that a session of the scan is one page
-  per figure with the measured frame, and the bundled excerpt checked against the full package.
+  in 0.2.4 (above). **The `uvvis` kind is registered (0.2.5, `src/irspec/uvvis.py`,
+  `tests/test_uvvis.py`):** `uv/` and `.vspd`; the CSVs as `irspec vspd convert`; the stored peak
+  picks inside the frame, labelled as `irspec vspd peaks` labels them (the figure's peak list is
+  that command's output, a test), apex heights off the trace, the suggested `ymax`; preview and
+  edit read it; a loose file's extension names its kind. A lualatex test: a session of the scan
+  is one page, the frame as measured, with the full package and with the bundled excerpt.
+  **Not done:** `edit … peak` for UV-Vis (refused with a message; the manifest's `peaks` are
+  edited by hand), matplotlib and R drawing it (refused with a message), the `vqud` tables in a
+  session (a calibration figure: nulabreport has no macro for it yet), `--json` on `vspd`/`vqud`,
+  and the report's name (`ir_<dd-mm>`). Next kind: GC.
 - A kind's readers are plain Python with numpy and scipy only, like the IR ones; a format that
   cannot be read without a vendor library is not added.
 - `--json` and its written schema (item 1b) come before the second kind, because the schema must

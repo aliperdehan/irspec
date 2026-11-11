@@ -47,9 +47,9 @@ It does:
   you would rather have those ([below](#drawing-without-tex-matplotlib-and-r));
 - read Shimadzu LabSolutions UV-Vis files (a UV-2600): a `.vspd` spectrum as a CSV with the
   peak picks stored in it (`irspec vspd`), and the quantitation tables of a `.vqud`
-  (standards, unknowns and the calibration line) as CSVs (`irspec vqud`). UV-Vis figures in
-  a session come next ([Roadmap](#roadmap)); irspec is growing from IR to the other plots of a
-  chemistry lab report, one kind at a time.
+  (standards, unknowns and the calibration line) as CSVs (`irspec vqud`); a `.vspd` in a
+  session folder becomes a UV-Vis figure beside the IR ones ([below](#uv-vis-scans)). irspec is
+  growing from IR to the other plots of a chemistry lab report, one kind at a time.
 
 It does not interpret spectra, assign bands or identify compounds. The peak
 labels are wavenumbers; deciding what a band is stays your job. Peak picking is a
@@ -149,6 +149,20 @@ The base name `ir_...` is `ir_<dd-mm>` when the folder's name contains a date
 
 `.jdx` files that use JCAMP's compressed number formats (SQZ/DIF/DUP) are
 refused with a message rather than decoded wrongly.
+
+### UV-Vis scans
+
+A Shimadzu LabSolutions `.vspd` (a UV-2600 scan) in the folder is filed into `uv/` and drawn as
+a UV-Vis figure: absorbance against wavelength over the scan's own range (nulabreport's
+`\labplot[kind=uvvis]`). It stays absorbance; the %T rule is IR's. Its CSVs are
+`csv/STEM.csv` and `plain/STEM.csv` (the same file: `wavelength,absorbance`, ascending, as
+`irspec vspd convert` writes). Its peaks are the peak picks stored in the file, in LabSolutions
+(irspec does not pick UV-Vis bands itself: no pick, no label); the first run writes them into the
+manifest as `peaks`, where they are edited as IR's are, and each is labelled above its band.
+The figure gets the `ymax` that leaves room for those labels unless the manifest sets one;
+`xmin`/`xmax` crop it, and then the picks outside the crop are left out. `irspec edit … peak`
+is for IR entries only so far, and `irspec plot` (matplotlib, R) does not draw UV-Vis figures
+yet: use the PDF. A folder may hold IR and UV-Vis spectra together.
 
 ### QUANT-IR gas-phase files
 

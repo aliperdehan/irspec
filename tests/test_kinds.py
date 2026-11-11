@@ -55,7 +55,7 @@ def fake_load_saved(folder, entry):
     raise edit.EditError("fake load_saved called")
 
 
-def fake_pick(entry, x, y, axis, absorbance):
+def fake_pick(entry, x, y, axis, absorbance, path=None):
     CALLS.append(("pick", None))
     return {"peaks": [[450.0, 1.1]], "ymin": None, "ymax": entry.get("ymax")}
 
@@ -127,10 +127,10 @@ class Registry(unittest.TestCase):
         self.assertIs(kinds.of({"kind": "ir"}), kinds.IR)
 
     def test_an_unknown_kind_is_refused(self):
-        for bad in ("uvvis", "", None, ["ir"], 3):
+        for bad in ("chromatogram", "", None, ["ir"], 3):
             with self.subTest(kind=bad), self.assertRaises(ValueError) as cm:
                 kinds.of({"kind": bad})
-            self.assertIn("this irspec draws only 'ir' figures", str(cm.exception))
+            self.assertIn("this irspec draws only 'ir', 'uvvis' figures", str(cm.exception))
 
     def test_the_old_names_are_irs_numbers(self):
         # layout's constants (the R script's test reads them), ir_organize's and session's
@@ -422,31 +422,31 @@ class UnknownKindInAFolder(unittest.TestCase):
 
     def test_session_refuses(self):
         with tempfile.TemporaryDirectory() as d:
-            f = ir_session(d, kind="uvvis")
+            f = ir_session(d, kind="chromatogram")
             code, out, err = run("session", f, "--build", "none")
             self.assertEqual((code, out), (1, ""))
-            self.assertIn(f"manifest.json cannot be used (SPA/{SAMPLE}: figure of kind 'uvvis'", err)
+            self.assertIn(f"manifest.json cannot be used (SPA/{SAMPLE}: figure of kind 'chromatogram'", err)
             self.assertNotIn("Traceback", err)
             code, out, err = run("session", f, "--preview", "--json")
             self.assertEqual(code, 2)
-            self.assertIn("figure of kind 'uvvis'", err)
+            self.assertIn("figure of kind 'chromatogram'", err)
 
     def test_preview_refuses(self):
         with tempfile.TemporaryDirectory() as d:
-            f = ir_session(d, kind="uvvis")
+            f = ir_session(d, kind="chromatogram")
             code, out, err = run("preview", f / "SPA" / SAMPLE)
             self.assertEqual((code, out), (2, ""))
-            self.assertIn("figure of kind 'uvvis'", err)
+            self.assertIn("figure of kind 'chromatogram'", err)
 
     def test_edit_peak_refuses_and_set_reports_the_stored_kind(self):
         with tempfile.TemporaryDirectory() as d:
-            f = ir_session(d, kind="uvvis")
+            f = ir_session(d, kind="chromatogram")
             code, out, err = run("edit", f, SAMPLE, "peak", "add", "1650")
             self.assertEqual((code, out), (2, ""))
-            self.assertIn("figure of kind 'uvvis'", err)
+            self.assertIn("figure of kind 'chromatogram'", err)
             code, out, err = run("edit", f, SAMPLE, "set", "title=New", "--json")
             self.assertEqual(code, 0, err)
-            self.assertEqual(json.loads(out)["kind"], "uvvis")
+            self.assertEqual(json.loads(out)["kind"], "chromatogram")
             code, out, err = run("edit", f, SAMPLE, "set", "xmin=4000")   # not checked: not drawn
             self.assertEqual(code, 0, err)
 

@@ -532,6 +532,11 @@ def edit(folder, name, verb, items):
     i = find_entry(entries, name)
     entry = entries[i]
     if verb == "peak":
+        kind = kinds.of(entry) if entry.get("kind", kinds.DEFAULT.name) in kinds.REGISTRY else None
+        if kind is not None and kind.labels != "trough":
+            raise EditError(f"`peak` edits IR spectra only so far; for a {kind.name} entry, edit its "
+                            f"\"peaks\" in manifest.json ([x, label_y] pairs), or delete that key "
+                            f"to take the file's stored picks again")
         changes = apply_peaks(entry, folder, *plan)
     else:
         changes = apply_set(entry, plan) if verb == "set" else apply_unset(entry, plan)

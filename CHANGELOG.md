@@ -2,6 +2,26 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.5 (2026-11-11)
+
+UV-Vis figures in a session: the second plot kind (roadmap item 6).
+
+- A Shimadzu `.vspd` scan in a session folder is filed into `uv/` and drawn as a UV-Vis figure
+  (absorbance against wavelength, the scan's own range, nulabreport's `\labplot[kind=uvvis]`),
+  beside any IR spectra in the same folder. Its CSVs are what `irspec vspd convert` writes; its
+  peaks are the picks stored in the file, written into the manifest on the first run and labelled
+  above their bands; the figure gets the `ymax` that leaves room for the labels (without it they
+  push the plot onto a page of its own). `xmin`/`xmax` crop it and leave out the picks outside.
+  The figure's peak list is, character for character, what `irspec vspd peaks` prints for the same
+  range, and the frame of the TeX figure is the measured one (one page; with the full package
+  and with the bundled excerpt).
+- `irspec preview` and `session --preview` draw a `.vspd` (left to right, bands up); a loose file
+  with no manifest entry takes the kind of its extension. `irspec edit` sets and unsets keys on a
+  UV-Vis entry; `peak` is refused with a message (edit `peaks` in the manifest), as matplotlib
+  and R refuse to draw one: use the PDF.
+- `session` stops with the file and the reason, not a traceback, when a UV-Vis crop leaves no
+  data or the file cannot be read.
+
 ## 0.2.4 (2026-11-11)
 
 The registry of plot kinds learns what UV-Vis needs, before UV-Vis is registered; IR, still the

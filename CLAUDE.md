@@ -45,8 +45,10 @@ src/irspec/   cli.py (the `irspec` command), session.py (the one command most pe
               figure.py (Figure, figures.json, SPEC_VERSION), texout.py (markdown + plain TeX),
               export.py (PNG/TIFF/SVG from the PDF), plot.py + mpl.py + data/irspec.R (the
               TeX-free backends), layout.py (shared geometry), fonts.py,
-              kinds.py (the registry of plot kinds: IR's axis, frame, ticks, macro, folders
-              and its process/load/load_saved functions; a new kind is an entry there),
+              kinds.py (the registry of plot kinds: each kind's axis, frame, ticks, macro,
+              folders and its process/load/load_saved/pick functions; a new kind is an entry
+              there), uvvis.py (the UV-Vis kind's functions), vspd_tool, vqud_tool (the
+              Shimadzu readers, `irspec vspd`/`vqud`),
               data/irspec-ir.sty (GENERATED), data/fonts/ (STIX Two, SIL OFL 1.1)
 tests/        unittest; PYTHONPATH=src python3 -m unittest discover -s tests   (~1 min)
               test_differential.py compares 16 commands with tests/data/differential_expected.json

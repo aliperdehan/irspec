@@ -92,7 +92,7 @@ def find_manifest_entry(path):
 def load(path, entry):
     """(x, y, axis, absorbance, format, converted_from) as `irspec session` would draw FILE, by
     the entry's kind's own reader (kinds.py; no entry: IR)."""
-    return kinds.of(entry).function("load")(path, entry)
+    return kinds.for_entry(path, entry).function("load")(path, entry)
 
 
 def load_ir(path, entry):
@@ -140,7 +140,7 @@ def read_spectrum(path, entry):
     if not os.path.isfile(path):
         raise PreviewError(f"{path}: no such file")
     try:
-        kind = kinds.of(entry)
+        kind = kinds.for_entry(path, entry)
     except ValueError as e:
         raise PreviewError(f"{path}: {e}")
     try:
@@ -161,7 +161,7 @@ def read_spectrum(path, entry):
     return (x, y) + loaded[2:]
 
 
-def pick_ir(entry, x, y, axis, absorbance):
+def pick_ir(entry, x, y, axis, absorbance, path=None):
     """session's own IR code on a copy of the entry: {"peaks", "ymin", "ymax"} as session has them."""
     from . import ir_organize as _io
     probe = dict(entry or {})
@@ -180,12 +180,12 @@ def work_out_entry(path, entry, mpath):
     a caller that already knows them, such as `irspec session --preview`, which previews a file
     from where it will be filed."""
     x, y, axis, absorbance, fmt, converted = read_spectrum(path, entry)
-    kind = kinds.of(entry)
+    kind = kinds.for_entry(path, entry)
     probe = dict(entry) if entry else {}
     from_manifest = bool(entry and "peaks" in entry)
     try:
         # session's own code (the kind's), so the picks, label heights and limits are session's
-        result = kind.function("pick")(probe, x, y, axis, absorbance)
+        result = kind.function("pick")(probe, x, y, axis, absorbance, path)
     except Exception as e:
         raise PreviewError(f"{path}: peaks cannot be picked ({str(e) or type(e).__name__})")
     peaks = [[float(a), float(b)] for a, b in result["peaks"]]

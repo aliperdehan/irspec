@@ -262,13 +262,13 @@ class KindInFiles(unittest.TestCase):
 
     def test_another_kind_is_refused_not_drawn_as_ir(self):
         with self.assertRaises(ValueError) as cm:
-            figure.Figure.from_entry({**self.ENTRY, "kind": "uvvis"})
-        self.assertIn("uvvis", str(cm.exception))
+            figure.Figure.from_entry({**self.ENTRY, "kind": "chromatogram"})
+        self.assertIn("chromatogram", str(cm.exception))
 
     def test_read_figures_refuses_it_too(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "figures.json"
-            p.write_text(json.dumps([{**self.ENTRY, "kind": "uvvis"}]))
+            p.write_text(json.dumps([{**self.ENTRY, "kind": "chromatogram"}]))
             with self.assertRaises(ValueError):
                 figure.read_figures(p)
 

@@ -49,7 +49,7 @@ class Kind:
     process: str                    # one manifest entry -> its CSVs and result (irspec session)
     load: str                       # a file -> what the preview draws (irspec preview)
     load_saved: str                 # a session's entry -> its spectrum, from what session wrote (edit)
-    pick: str                       # (entry, x, y, axis, absorbance) -> session's peaks, ymin, ymax
+    pick: str                       # (entry, x, y, axis, absorbance, path) -> session's peaks, ymin, ymax
 
     def function(self, role):
         """The function a role names, imported now."""
@@ -73,7 +73,23 @@ IR = Kind(
     pick="irspec.preview:pick_ir",
 )
 
-REGISTRY = {IR.name: IR}
+UVVIS = Kind(
+    name="uvvis",
+    x_column="wavelength", y_column="absorbance", labels="apex",
+    x_label="Wavelength / nm", x_unit="nm", y_label="Absorbance",
+    # nulabreport's uvvis kind, measured on the TeX figure (2026-11-11, docs/roadmap.md item 6):
+    # the frame is the scan's own ends, IR's y padding, y on the data inside the x frame
+    xlim=None, x_descending=False, x_ticks=None, x_minor=None,
+    pad=(0.0985, 0.0017), y_scope="frame",
+    macro="labplot",
+    folders=(("uv", (".vspd",)),),
+    process="irspec.uvvis:process",
+    load="irspec.uvvis:load",
+    load_saved="irspec.uvvis:load_saved",
+    pick="irspec.uvvis:pick",
+)
+
+REGISTRY = {IR.name: IR, UVVIS.name: UVVIS}
 DEFAULT = IR
 
 
@@ -86,6 +102,24 @@ def for_path(rel):
             if sub == folder and name.lower().endswith(exts):
                 return k
     return None
+
+
+def for_extension(path):
+    """The kind whose files have `path`'s extension (a loose file, no manifest entry), or None."""
+    name = str(path).lower()
+    for k in REGISTRY.values():
+        if any(name.endswith(exts) for _, exts in k.folders):
+            return k
+    return None
+
+
+def for_entry(path, entry):
+    """The kind of a file being read: its manifest entry's `kind`, else (no entry, or one without
+    `kind`) the kind its folder or extension belongs to, else the default."""
+    if entry and "kind" in entry:
+        return of(entry)
+    rel = (entry or {}).get("file") or ""
+    return for_path(rel) or for_extension(path) or DEFAULT
 
 
 def get(name):
