@@ -2,6 +2,11 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.26 (2026-11-12)
+
+- Resolve SPA batch CSV references from the Markdown location (I3.5), a deliberate
+  departure from the legacy scripts recorded in the spa_batch_md oracle case.
+
 ## 0.2.25 (2026-11-12)
 
 - Report unreadable figure descriptions and CSV files as matplotlib export errors (I5.4).

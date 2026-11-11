@@ -562,7 +562,7 @@ def batch(manifest, out_dir, md_path, csv_subdir="csv", plain_subdir="plain"):
 
     body = ["\\begin{landscape}"]
     for r in results:
-        csv_rel = os.path.relpath(r["plain_path"], out_dir)
+        csv_rel = os.path.relpath(r["plain_path"], os.path.dirname(os.path.abspath(md_path)))
         body.append(IRSPECTRUM_TEMPLATE.format(
             ymin=r["ymin"], csv_rel=csv_rel,
             axis_label=latex_escape(r["axis_label"]),
