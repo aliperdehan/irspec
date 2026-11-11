@@ -128,7 +128,10 @@ def render(path, formats, outdir=None, size=layout.DEFAULT_SIZE, dpi=300, captio
         path = os.path.join(path, FIGURES_NAME)
     if not os.path.exists(path):
         raise ExportError(f"{path} not found: run `irspec session DIR` first")
-    figures, folder = read_figures(path)
+    try:
+        figures, folder = read_figures(path)
+    except (ValueError, OSError) as e:
+        raise ExportError(f"{path}: {e}") from e
     outdir = outdir or os.path.join(folder, "figures", "matplotlib")
     destinations = filenames([f.csv for f in figures], stems_of(figures), formats, EXT, SUFFIX)
     os.makedirs(outdir, exist_ok=True)
@@ -139,7 +142,7 @@ def render(path, formats, outdir=None, size=layout.DEFAULT_SIZE, dpi=300, captio
         for fmt in formats:
             try:
                 f = draw(fig, folder, size, caption, family)
-            except ValueError as e:   # limits that cannot make a frame (layout.xlimits, ylimits)
+            except (ValueError, OSError) as e:   # invalid limits or unreadable CSV
                 raise ExportError(f"{fig.csv}: {e}")
             dest = os.path.join(outdir, destinations[i, fmt])
             kw = {}

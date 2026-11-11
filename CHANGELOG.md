@@ -2,6 +2,10 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.25 (2026-11-12)
+
+- Report unreadable figure descriptions and CSV files as matplotlib export errors (I5.4).
+
 ## 0.2.24 (2026-11-12)
 
 - Preserve an explicit empty peak selection when clearing an empty automatic list (I4.5).
