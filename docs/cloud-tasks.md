@@ -44,9 +44,9 @@ Do NOT implement <the neighbouring items>.
 Requirements:
 - <behaviour: exit codes, --json, stdout vs stderr, idempotence, atomic writes>
 - Register the command in `cli.py` like the others; add a README section (`tests/test_docs.py`
-  requires every command to be mentioned as `irspec <cmd>`); add a line under `## Unreleased`
-  in CHANGELOG.md; update the roadmap to say what is done. Do NOT bump `__version__`, tag or
-  release.
+  requires every command to be mentioned as `irspec <cmd>`); bump `__version__` to the next
+  patch (`0.2.N`) and add a `## 0.2.N (date)` heading with the entry in CHANGELOG.md, in the
+  same commit; update the roadmap to say what is done. Do NOT tag, push a tag or release.
 - Code in a new module (or the module named); tests in `tests/` (unittest,
   `PYTHONPATH=src python3 -m unittest discover -s tests`). Mutation-check each new test (break
   the code, see the test fail, restore). Tests that need lualatex/R/poppler skip themselves.
@@ -96,7 +96,7 @@ Requirements:
   a command that cannot be carried out and 1 for a missing or broken manifest. `peak auto` says
   that it replaces hand edits and lists what it dropped.
 - Register in `cli.py` as for the merged ones, extend the README section "Editing the manifest:
-  `irspec edit`", add a line under `## Unreleased` in CHANGELOG.md, and update the roadmap's 1a
+  `irspec edit`", add a line under a new `## 0.2.N (date)` heading in CHANGELOG.md, and update the roadmap's 1a
   "Done/Not done" paragraph. Do NOT bump `__version__`, tag or release.
 - Tests in `tests/test_edit.py` or a new `tests/test_edit_peaks.py`, using only the sample
   `tests/data/PHENACETIN_CRUDE_LR1-2.SPA` (copy it into a temp dir and build a manifest, or run
@@ -146,7 +146,7 @@ Requirements:
   plot is left out. `--help` says the honest limit: shape, ranges, peak positions and which are
   labelled; not fonts, exact label placement or tick spacing.
 - Register in `cli.py` like the others; add a README section (`tests/test_docs.py` requires every
-  command to be mentioned as `irspec <cmd>`) and a line under `## Unreleased` in CHANGELOG.md;
+  command to be mentioned as `irspec <cmd>`) and a line under a new `## 0.2.N (date)` heading in CHANGELOG.md;
   update the roadmap's 1c to say what is done. Do NOT bump `__version__`, tag or release.
 - Code in a new module `src/irspec/preview.py`. Tests in `tests/test_preview.py` (unittest,
   `PYTHONPATH=src python3 -m unittest discover -s tests`): golden strings for the ASCII output at a
@@ -198,7 +198,7 @@ Requirements:
   reason on stderr when DIR is not a folder or has no spectra; one unreadable file does not stop
   the others: it is listed with its error, and the exit code is then 1.
 - Register the flag in `cli.py`/`session.py` like the others, document it in the README (the
-  options table of `irspec session`), a line under `## Unreleased` in CHANGELOG.md, and update
+  options table of `irspec session`), a line under a new `## 0.2.N (date)` heading in CHANGELOG.md, and update
   the roadmap's 1c. Do NOT bump `__version__`, tag or release.
 - Tests in `tests/test_session_preview.py` (unittest): a folder made from the sample
   `tests/data/PHENACETIN_CRUDE_LR1-2.SPA` (copied to a temp dir as a loose file) and the `.jdx`
@@ -256,7 +256,7 @@ Requirements:
 - `--json` prints exactly one object like the other subcommands do (old and new position for
   `move`; the removed entry and its new path for `remove`) and nothing else on stdout.
 - Register nothing new in `cli.py` if `edit` already dispatches subcommands; otherwise follow its
-  pattern. README: add both to the `irspec edit` section. A line under `## Unreleased` in
+  pattern. README: add both to the `irspec edit` section. A line under a new `## 0.2.N (date)` heading in
   CHANGELOG.md; update the roadmap's 1a ("Done / Not done"). Do NOT bump `__version__`, tag or
   release.
 - Tests in `tests/test_edit_move_remove.py` (unittest): a session folder made from the sample

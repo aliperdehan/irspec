@@ -44,7 +44,7 @@ moves only if the manifest or `figures.json` format breaks; adding optional keys
 
 ### 1a. Editing: `irspec edit`
 
-**Done (Unreleased, `src/irspec/edit.py`, `tests/test_edit.py`, `tests/test_edit_peaks.py`, `tests/test_edit_move_remove.py`):**
+**Done (0.2.0, `src/irspec/edit.py`, `tests/test_edit.py`, `tests/test_edit_peaks.py`, `tests/test_edit_move_remove.py`):**
 `set KEY=VALUE ...`, `unset KEY ...` and `show [FILE] [--json]` on `manifest.json` only, for the
 keys `title`, `axis`, `name`, `ymin`, `ymax`, `xmin`, `xmax`, `threshold`, `prominence`,
 `distance`; and `peak add X ...`, `peak remove X ...`, `peak clear`, `peak auto`. Atomic write,
@@ -65,7 +65,7 @@ would be the default with `--no-build` to stop it; it is the other way round (op
 **Not done:** `restore`, and a
 `--prominence` etc. override on `peak auto` (it uses the entry's keys; `set` them first). The
 per-figure `xmin`/`xmax`/`ymax` in the drawing code (before: the keys could be stored, nothing read
-them) **is done too** (Unreleased: `layout.xlimits`, `layout.ylimits(..., ymax)`, `Figure`, TeX, matplotlib,
+them) **is done too** (0.2.0: `layout.xlimits`, `layout.ylimits(..., ymax)`, `Figure`, TeX, matplotlib,
 R, preview, `tests/test_limits.py`; the TeX readings are in the test). The command listing below is the original design; the done commands are exactly as written
 there.
 
@@ -100,7 +100,7 @@ irspec edit DIR show [FILE] [--json]
 output paths, warnings. A written, versioned description of `manifest.json` and `figures.json`
 (the README table is the start) so that no client guesses.
 
-**Done (Unreleased, `docs/schema.md`, `tests/test_json.py`):** `--json` on `session` (a real run,
+**Done (0.2.0, `docs/schema.md`, `tests/test_json.py`):** `--json` on `session` (a real run,
 `--dry-run`, `--preview`), `peaks`, `preview` and `edit` (`show` is `edit show`); the progress
 lines go to stderr, stdout is one object; a build that fails after the work was done still prints
 the object (`build.ok` false), a stop before it prints none. `docs/schema.md` lists every key of
@@ -138,13 +138,13 @@ clicking, item 4. A curses editor would be a third way to do the same thing.
   Not fonts, exact label placement or tick spacing.
 - Test with golden strings on the sample `.SPA`; mutation-check.
 
-**Done (Unreleased, `src/irspec/preview.py`, `tests/test_preview.py`):** `irspec preview FILE
+**Done (0.2.0, `src/irspec/preview.py`, `tests/test_preview.py`):** `irspec preview FILE
 [--width N] [--height N] [--ascii] [--json]` for one `.SPA`, `.jdx` or CSV: Braille on a UTF-8
 stdout, `. : * |` otherwise, the terminal's width on a terminal and 80 columns when piped, the x
 limits from `layout.XLIM` and the y limits from `layout.ylimits`, peaks and `ymin` from
 `ir_organize._finish` (session's own code) or from the file's manifest entry, a `.jdx` converted as
 session converts it (`tests/test_preview.py` pins the peaks of the three fixtures to the session's).
-**Done too (Unreleased, `session.preview_folder`, `tests/test_session_preview.py`):** `irspec
+**Done too (0.2.0, `session.preview_folder`, `tests/test_session_preview.py`):** `irspec
 session DIR --preview [--width N] [--height N] [--ascii] [--json]` prints the planned moves as
 `--dry-run` does, then for every spectrum in the folder (loose, or filed in `SPA/`/`jdx/`) the
 `irspec preview` text, headed by the title, `csv/` and `plain/` names it will get; `img/` pictures
@@ -368,8 +368,22 @@ made to look like a scan), and what they share. The author's wording (2026-11-10
 tools from the repo too, if possible". The name stays
 `irspec`. The aim is that nulabreport's `tools/` shrinks to what is really the report, and that
 **nulabreport comes to depend on irspec, not the other way round** (today the IR tools there
-forward to irspec, and nulabreport pins `irspec>=0.1,<0.2`; the rest of the dependency is still the
+forward to whatever irspec is installed, with no version pin; the rest of the dependency is still the
 other way: irspec's `irspec-ir.sty` is cut out of nulabreport's `.sty`).
+
+**Most plot kinds move here, TeX side included** (the author, 2026-11-11: "we are migrating most of
+the plot kinds from nulabreport to here so in future nulabreport will import irspec, not the
+kludge as today"). Today's arrangement is a stopgap in both directions: nulabreport's `tools/`
+forward to irspec with `_superseded/` copies as a fallback, and irspec's `.sty` is generated from
+nulabreport's. The end state is one direction only. irspec owns each kind whole: the Python
+reader, picker and figure geometry, and its `\labdefineplotkind` definition with the label
+styles, written as irspec's own `.sty`. nulabreport imports irspec (the Python package, and that
+`.sty` from its `\usepackage`), and its forwarding files, `_superseded/` and
+`make-irspec-excerpt.py` go. So the registry's fields follow nulabreport's
+`\labdefineplotkind{name}{x column}{y column}{trough|apex|fan}{axis keys}` (kinds there today: ir,
+gc, titration, ms, nmr, uvvis), and a kind's TeX keys are generated from the same registry entry
+as its Python geometry. The handover is the last step, after the kinds are in, and is done
+together with nulabreport. Until then the excerpt keeps being generated from nulabreport, as now.
 
 Out of this: `palleros_figs.py` (pages of a textbook) stays where it is and never comes in, and no
 instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, unchanged).

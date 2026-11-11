@@ -89,7 +89,14 @@ version is in the changelog) in one commit on `main`; tests green; then
 `.github/workflows/publish.yml` (tag must equal `__version__`; tests; build; upload by PyPI
 trusted publishing: the pending/registered publisher is this repo, `publish.yml`, environment
 `pypi`: do not rename either). **Never move or re-push a published tag**; a PyPI file cannot be
-replaced, fix forward with the next patch. nulabreport pins `irspec>=0.1,<0.2`.
+replaced, fix forward with the next patch. nulabreport pins no version: its `tools/` forward
+to whatever irspec is installed or on `PYTHONPATH`.
+
+**One version per landed slice** (the author's choice, 2026-11-11, pdfmd's convention): a slice
+that is committed gets its own patch bump (`0.2.N`) and its own `## 0.2.N (date)` changelog
+heading in the same commit, and the push the author asks for includes its tag, so it reaches
+PyPI. No `## Unreleased` pile. A new minor (`0.3.0`) only for a break (README
+"Versioning"). Tell the author when a new minor line seems due.
 
 CI (`test.yml`): Linux and macOS, Python 3.9 and 3.13; tests that need lualatex, R, poppler or
 MuPDF skip themselves, so a green CI does not cover the TeX/R paths: run the suite locally with the

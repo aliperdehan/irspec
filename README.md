@@ -23,8 +23,8 @@ irspec session my_lab_folder/ --formats png,svg
 
 ## Status
 
-**Alpha, version 0.1.0.** The command line and the folder layout below work and are
-tested, but before 1.0 a new minor version (0.2, 0.3, ...) may change them: pin
+**Alpha, version 0.2.** The command line and the folder layout below work and are
+tested, but before 1.0 a new minor version (0.3, 0.4, ...) may change them: pin
 the minor version if something depends on irspec. The Python code (`import
 irspec`) is not a stable interface before 1.0: use the command line. See
 [Versioning](#versioning) and `CHANGELOG.md`.
@@ -517,26 +517,30 @@ data and no instructor's material is in this repository.
 
 `0.MINOR.PATCH` until 1.0, then [Semantic Versioning](https://semver.org).
 
-- **Minor** (`0.1.0` → `0.2.0`): a new feature, or anything that could break a
-  folder or a script someone already has: a command-line flag renamed or removed,
-  a manifest key or the folder layout changed, the CSV or figure format changed.
-- **Patch** (`0.1.0` → `0.1.1`): a fix, documentation, tests, a regenerated
-  excerpt that draws the same page.
+- **Minor** (`0.2.x` → `0.3.0`): opens a new line, and only for something that
+  could break a folder or a script someone already has: a command-line flag
+  renamed or removed, a manifest key or the folder layout changed, the CSV or
+  figure format changed, a `--json` key renamed or removed.
+- **Patch** (`0.2.0` → `0.2.1`): everything else inside a line, new features
+  included. Each change that lands gets its own patch version and its own
+  `CHANGELOG.md` entry, so nothing waits unreleased.
 - **`SPEC_VERSION`** (in `irspec/figure.py`, now 1) is a separate integer, written
   into figure descriptions. It changes only when the manifest/figure format breaks,
   and it is frozen at 1.0.
-- **0.1.0** is the first release: the TeX pipeline, the exports and the matplotlib
-  and R backends; **1.0.0** is planned for when the formats have settled.
+- **0.1.0** was the first release: the TeX pipeline, the exports and the matplotlib
+  and R backends. **0.2.0** added the command-line foundation: `irspec edit`,
+  `irspec preview`, `--json` and [`docs/schema.md`](docs/schema.md). **1.0.0** is
+  planned for when the formats have settled.
 - The version lives in one place, `irspec.__version__`. A release is a git tag
   `vX.Y.Z` plus an entry in `CHANGELOG.md`. The bundled excerpt records which
   nulabreport version it was cut from.
 
 Anything that depends on irspec before 1.0 should pin the minor version
-(`irspec>=0.1,<0.2`).
+(`irspec>=0.2,<0.3`).
 
 ## Roadmap
 
-The first release is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show`, `peak`, `move` and `remove`, `irspec preview FILE` and `irspec session --preview`, exist so far:
+0.2.0 is out (PyPI, public repository). Planned, in this order; of this, only `irspec edit set`, `unset`, `show`, `peak`, `move` and `remove`, `irspec preview FILE` and `irspec session --preview`, exist so far:
 
 - **Editing from the command line** (`irspec edit set/unset/show/peak/move/remove` and `--build` are in; `rename` is `set name=`),
   `--json` output (`session`, `peaks`, `preview`, `edit` have it) and [a written description of the manifest and the

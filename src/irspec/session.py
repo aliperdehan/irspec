@@ -439,7 +439,8 @@ def preview_folder(folder, titles, sort, width, height, braille, as_json):
         blocks.append(f"=== {rel}  ({where}) ===\ntitle:   {head['title']}\n"
                       f"csv:     {csv}\nplain:   {plain}\n\n{text}")
     if as_json:
-        print(json.dumps({"moves": [{"from": _rel(folder, a), "to": _rel(folder, b)}
+        print(json.dumps({"kind": KIND,
+                          "moves": [{"from": _rel(folder, a), "to": _rel(folder, b)}
                                     for a, b in moves],
                           "spectra": spectra, "images": images}, ensure_ascii=False))
         return 1 if failed else 0

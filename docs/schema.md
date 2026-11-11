@@ -8,9 +8,9 @@ Two numbers version it:
 
 - **`SPEC_VERSION`** (`figure.py`, now 1): the on-disk files, `manifest.json` and `figures.json`.
   It changes only when one of them breaks, not when an optional key is added.
-- **The `--json` objects** follow the package version. Until 0.2.0 they are provisional. After
-  that a key is added, never renamed or removed, within 0.x; a reader ignores keys it does not
-  know.
+- **The `--json` objects** follow the package version. From 0.2.0 a key is added, never renamed
+  or removed, within a minor line (0.2.x); a reader ignores keys it does not know. A rename or a
+  removal opens the next minor version and is listed in `CHANGELOG.md`.
 
 ## Conventions
 
@@ -105,7 +105,7 @@ made), `pictures` (list of strings, from `--formats`).
 
 ## `irspec session DIR --preview --json`
 
-Writes nothing. `{moves, spectra, images}`: `moves` as above; `spectra` one object per `.SPA` or
+Writes nothing. `{kind, moves, spectra, images}`: `kind` `"ir"`; `moves` as above; `spectra` one object per `.SPA` or
 `.jdx`, each the `irspec preview` object (below) plus `will_be_filed_as`, `title`, `csv`, `plain`
 (or `error`, with the exit status 1, for one that could not be read); `images` one object per
 picture (`file`, `kind`, `name`, `csv`, `plain`, `note`): pictures are digitized by a real run,

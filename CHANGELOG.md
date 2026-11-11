@@ -2,7 +2,13 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
-## Unreleased
+## 0.2.0 (2026-11-11), the command-line foundation
+
+Roadmap item 1: a folder can be edited, previewed and read by a script without opening
+`manifest.json`. From this release every landed change gets its own patch version (0.2.1,
+0.2.2, ...) and its own entry here; a new minor version only for a break (README
+"Versioning"). The `--json` objects are now frozen within 0.2.x: keys are added, never renamed
+or removed.
 
 - The manifest keys `xmin`, `xmax` and `ymax` now do what they say, in every drawing. `xmin` and
   `xmax` crop the x axis (cm⁻¹; `xmax` is the left edge), `ymax` is the top of the y axis, as
@@ -27,7 +33,8 @@ irspec follows the rules in the README's "Versioning" section. Newest first.
   everywhere, and the intensity at each is `bands`. Second part of roadmap item 1b.
 - **Changed (unreleased output):** in `irspec preview --json` and `session --preview --json` the
   key `kind` (`spa`, `jdx`, `csv`) is now called `format`, and `kind` means the plot kind, `"ir"`,
-  which every `--json` object now carries, `irspec edit`'s too. The plot kind is how later kinds
+  which every `--json` object now carries, `irspec edit`'s and the top level of
+  `session --preview --json` too. The plot kind is how later kinds
   (UV-Vis, chromatograms; roadmap item 6) will be told apart. In `manifest.json` and
   `figures.json` an optional `kind` is read (absent means `ir`; any other value is refused, not
   drawn as IR) but not yet written, and `SPEC_VERSION` stays 1.
@@ -67,15 +74,14 @@ irspec follows the rules in the README's "Versioning" section. Newest first.
   terminal's width on a terminal, 80 columns otherwise. The peaks and `ymin` come from
   `irspec session`'s own code, and from the folder's `manifest.json` when the file is listed in
   it, so the preview shows the edits of `irspec edit`. `--json` prints one object and no plot;
-  exit 2 with the reason on stderr for a file that cannot be read. First part of roadmap item 1c:
-  `--stack`, `session --preview` and `--image` are not in it. Nothing is written.
+  exit 2 with the reason on stderr for a file that cannot be read. First part of roadmap item 1c
+  (`--stack` and `--image` are not in 0.2.0). Nothing is written.
 - New `irspec edit`: `irspec edit DIR FILE set KEY=VALUE ...`, `irspec edit DIR FILE unset KEY ...`
   and `irspec edit DIR show [FILE] [--json]` change or show `manifest.json` without a text
   editor (keys: `title`, `axis`, `name`, `ymin`, `ymax`, `xmin`, `xmax`, `threshold`,
   `prominence`, `distance`). Atomic write, order and layout kept, idempotent, prints the old and
   new value (`--json`: one object), errors on stderr with exit 2 (1 for a missing manifest).
-  First slice of roadmap item 1a; re-running the session is not in it, and
-  `xmin`, `xmax` and `ymax` are stored but not yet read by the figures.
+  First slice of roadmap item 1a (the figures read `xmin`, `xmax` and `ymax`: see above).
 - `irspec edit DIR FILE peak add X ...`, `peak remove X ...`, `peak clear` and `peak auto`:
   second slice of roadmap item 1a. `add` snaps each wavenumber to the nearest local band
   (`find_peaks_manual`, through the code `session` itself uses, so the label heights are

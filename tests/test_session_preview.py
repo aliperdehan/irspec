@@ -214,7 +214,8 @@ class Json(unittest.TestCase):
             self.assertEqual((code, err), (0, ""))
             self.assertEqual(out.count("\n"), 1)
             obj = json.loads(out)
-            self.assertEqual(set(obj), {"moves", "spectra", "images"})
+            self.assertEqual(set(obj), {"kind", "moves", "spectra", "images"})
+            self.assertEqual(obj["kind"], "ir")
             self.assertEqual(obj["images"], [])
             self.assertEqual(sorted((m["from"], m["to"]) for m in obj["moves"]),
                              [("50-00-0-IR.jdx", "jdx/50-00-0-IR.jdx"),
