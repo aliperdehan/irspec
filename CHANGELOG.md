@@ -2,6 +2,10 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.13 (2026-11-11)
+
+- Resolve relative pdfmd paths before changing to the session folder.
+
 ## 0.2.12 (2026-11-11)
 
 - Reject malformed manifest structures with a useful error before merging.

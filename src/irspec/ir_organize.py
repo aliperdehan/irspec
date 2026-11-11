@@ -309,7 +309,7 @@ def find_pdfmd(explicit=None):
     """The pdfmd to build with: --pdfmd, else $PDFMD, else `pdfmd` on the PATH. None if absent."""
     for cand in (explicit, os.environ.get("PDFMD"), shutil.which("pdfmd")):
         if cand and os.path.exists(cand):
-            return cand
+            return os.path.abspath(cand)
     return None
 
 
