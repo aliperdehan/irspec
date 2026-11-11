@@ -602,10 +602,12 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
                                        export.stems_of(figures), dpi):
                 out["pictures"].append(_rel(folder, p))
                 print(f"wrote {p}")
-    except SessionError as err:
+    except (SessionError, export.ExportError, subprocess.CalledProcessError) as err:
+        if not isinstance(err, SessionError):
+            err = SessionError(str(err))
         if report is not None:
             report["build"] = {"mode": build, "ok": False, "error": str(err)}
-        raise
+        raise err
     if report is not None:
         report["build"] = {"mode": build, "ok": True}
     return figures

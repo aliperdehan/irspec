@@ -2,6 +2,10 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.11 (2026-11-11)
+
+- Session JSON reports expected pdfmd and picture export failures.
+
 ## 0.2.10 (2026-11-11)
 
 - Empty image traces stop with a digitisation failure and retain their session check log.
