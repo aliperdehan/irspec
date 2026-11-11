@@ -181,6 +181,11 @@ Never hardcode a report's compound names into this script -- that
 defeats the point of it being a shared, cross-report tool. Keep any such
 mapping as a small JSON file inside the report that needs it.
 
+The resolved name is display text. Automatically derived filenames percent-escape
+path separators, percent signs and reserved filename characters (and lone . or ..).
+Outputs must resolve inside the requested directory, including existing symlinks.
+Explicit --out and --plain-out paths remain the caller's choice.
+
 ===============================================================================
 6. QUICK REFERENCE
 ===============================================================================
@@ -196,6 +201,8 @@ import math
 import os
 import re
 import sys
+
+from .filenames import contained_path, filename_stem
 
 SIGN_SPLIT_RE = re.compile(r"(?<![eE])(?=[+-])")
 
@@ -402,7 +409,8 @@ def cmd_convert(args):
     xs, ys, meta = read_jdx(args.jdx)
     name_map = load_name_map(args.name_map)
     name = resolve_name(meta, name_map, args.name)
-    out = args.out or os.path.join(os.path.dirname(args.jdx) or ".", f"{name}.csv")
+    out = args.out or contained_path(os.path.dirname(args.jdx) or ".",
+                                    filename_stem(name) + ".csv")
     write_csv(xs, ys, meta, out, name)
     plain_msg = ""
     if args.plain_out:
@@ -422,11 +430,12 @@ def cmd_batch(args):
         path = os.path.join(jdx_dir, fn)
         xs, ys, meta = read_jdx(path)
         name = resolve_name(meta, name_map)
-        out = os.path.join(args.out_dir, f"{name}.csv")
+        filename = filename_stem(name) + ".csv"
+        out = contained_path(args.out_dir, filename)
+        plain_out = contained_path(args.plain_dir, filename) if args.plain_dir else None
         write_csv(xs, ys, meta, out, name)
         plain_msg = ""
-        if args.plain_dir:
-            plain_out = os.path.join(args.plain_dir, f"{name}.csv")
+        if plain_out:
             write_plain_csv(xs, ys, meta, plain_out)
             plain_msg = f" plain -> {plain_out}"
         print(f"{fn}: cas={meta['cas']} name={name} axis={meta['axis_label']} "
@@ -455,7 +464,10 @@ def main():
     p_batch.set_defaults(func=cmd_batch)
 
     args = ap.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except ValueError as err:
+        ap.error(str(err))
 
 
 if __name__ == "__main__":

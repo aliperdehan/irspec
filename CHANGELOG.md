@@ -2,6 +2,12 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.9 (2026-11-11)
+
+- `jdx batch` and default `jdx convert` filenames escape path and reserved characters in
+  titles, name maps and overrides. CSV display names stay intact. Derived destinations are
+  checked for symlink escapes before writing either batch CSV.
+
 ## 0.2.8 (2026-11-11)
 
 - Sessions reject reference names that are paths, including names from `cas_names.json`.
