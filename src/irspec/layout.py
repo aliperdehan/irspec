@@ -92,6 +92,13 @@ def ylimits(y, ymin=None, ymax=None, kind=kinds.IR):
     ymin=20 with ymax=105, and the crop of x does not change it (TeX scales y on all the data)."""
     top = float(np.max(y)) if ymax is None else float(ymax)
     base = float(np.min(y)) if ymin is None else float(ymin)
+    if base == top and (ymin is None or ymax is None):
+        # The existing tick rule supplies a finite step even for zero span.
+        step = y_step(base, top)
+        if ymin is None:
+            base -= step
+        if ymax is None:
+            top += step
     if not base < top:
         raise ValueError(f"ymin ({base:g}) must be below ymax ({top:g})")
     span = top - base

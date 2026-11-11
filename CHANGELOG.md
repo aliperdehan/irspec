@@ -2,6 +2,13 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.20 (2026-11-12)
+
+- Widen equal automatic y bounds by one existing layout tick step on each
+  automatic side (I5.3). The zero-span tick rule uses exponent zero and its first
+  1–2–5 multiplier, hence a step of 1; the kind's measured padding then applies.
+  Equal or reversed fully explicit limits still fail. No new margin constant.
+
 ## 0.2.19 (2026-11-12)
 
 - Round automatic UV-Vis upper limits upwards on the existing layout tick step,
