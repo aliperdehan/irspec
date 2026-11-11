@@ -2,6 +2,10 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.14 (2026-11-11)
+
+- Escape free-text captions and labels in one pass, including carets and tildes.
+
 ## 0.2.13 (2026-11-11)
 
 - Resolve relative pdfmd paths before changing to the session folder.

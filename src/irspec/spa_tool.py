@@ -520,17 +520,12 @@ IRSPECTRUM_TEMPLATE = """\\irspectrum
 
 
 def latex_escape(s):
-    """Escape the handful of LaTeX-special characters that can plausibly
-    show up in an axis label or a spectrum title (student names, "Unknown
-    N", "Transmittance %", ...). A bare '%' is the one that actually bites
-    here -- unescaped, it starts a LaTeX comment and truncates the rest of
-    the macro call. \\ is escaped first so the backslashes this function
-    itself inserts are not re-escaped."""
-    s = s.replace("\\", r"\textbackslash{}")
-    for ch, esc in (("%", r"\%"), ("&", r"\&"), ("_", r"\_"), ("#", r"\#"),
-                    ("$", r"\$"), ("{", r"\{"), ("}", r"\}")):
-        s = s.replace(ch, esc)
-    return s
+    """Escape free text for LaTeX without reprocessing inserted commands."""
+    escapes = {"\\": r"\textbackslash{}", "%": r"\%", "&": r"\&", "_": r"\_",
+               "#": r"\#", "$": r"\$", "{": r"\{", "}": r"\}",
+               "^": r"\textasciicircum{}", "~": r"\textasciitilde{}"}
+    return "".join(escapes.get(ch, ch) for ch in s)
+
 
 
 def process_entry(entry, csv_dir, plain_dir):
