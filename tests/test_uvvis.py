@@ -71,7 +71,7 @@ class Session(unittest.TestCase):
             entry = json.loads((f / "manifest.json").read_text())[0]
             self.assertEqual((entry["kind"], entry["peaks"]), ("uvvis", [[255.0, 5.1616], [510.0, 0.6757]]))
             fig = figs[0]
-            self.assertEqual((fig.kind, fig.axis, fig.ymax, fig.apex), ("uvvis", "Absorbance", 5.58, [4.8659, 0.3799]))
+            self.assertEqual((fig.kind, fig.axis, fig.ymax, fig.apex), ("uvvis", "Absorbance", 6.0, [4.8659, 0.3799]))
             # the oracle: what `irspec vspd peaks` prints for the whole scan
             code, out, err = run("vspd", "peaks", SCAN)
             self.assertEqual(fig.peaklist(), out.strip())
@@ -79,7 +79,7 @@ class Session(unittest.TestCase):
             self.assertEqual((f / "csv" / "scan.csv").read_bytes(), (DATA / "uvvis_golden.csv").read_bytes())
             self.assertEqual((f / "plain" / "scan.csv").read_bytes(), (DATA / "uvvis_golden.csv").read_bytes())
             md = next(f.glob("*.md")).read_text()
-            self.assertIn("\\labplot\n  [kind=uvvis,width=\\linewidth,height=6.8in,ymax=5.58]\n"
+            self.assertIn("\\labplot\n  [kind=uvvis,width=\\linewidth,height=6.8in,ymax=6.0]\n"
                           "  {plain/scan.csv}\n  {255/4.8659/5.1616/{},510/0.3799/0.6757/{}}\n  {scan}\n", md)
 
     def test_a_crop_keeps_the_picks_inside_it(self):
@@ -93,7 +93,7 @@ class Session(unittest.TestCase):
             fig = quiet_run(f, build="none")[0]
             code, out, err = run("vspd", "peaks", SCAN, "--xmin", 300, "--xmax", 700)
             self.assertEqual(fig.peaklist(), out.strip())
-            self.assertEqual(fig.ymax, float(re.search(r"ymax suggestion: (\S+)", err).group(1)))
+            self.assertEqual(fig.ymax, 5.0)  # session rounds upwards on the layout tick step
 
     def test_json_preview_and_a_mixed_folder(self):
         with tempfile.TemporaryDirectory() as d:

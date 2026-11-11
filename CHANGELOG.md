@@ -2,6 +2,12 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.19 (2026-11-12)
+
+- Round automatic UV-Vis upper limits upwards on the existing layout tick step,
+  derived from the trace and label range, so weak signals and labels fit (I4.2).
+  Keep the existing 8% label headroom; explicit limits are unchanged.
+
 ## 0.2.18 (2026-11-12)
 
 - Preview and session share QUANT-IR scale selection: `peak_a` takes precedence

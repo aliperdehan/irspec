@@ -10,6 +10,7 @@ own: measured, docs/roadmap.md item 6). No pick, no label: irspec does not pick 
 itself. The first run writes the picks into manifest.json as `peaks` ([x, label_y] pairs, edited
 there like IR's), and every run takes the apex heights off the trace at those x.
 """
+import math
 import os
 import shutil
 
@@ -66,7 +67,9 @@ def peaks_and_limits(entry, x, y, path=None):
     ymax = entry.get("ymax")
     if ymax is None and pairs:
         top = max([float(win.max())] + [ly for _, ly in pairs])
-        ymax = round(top + YMAX_ROOM * (top - bottom), 2)
+        step = layout.y_step(bottom, top)
+        ymax = math.ceil((top + YMAX_ROOM * (top - bottom)) / step) * step
+        ymax = max(ymax, float(np.nextafter(top, np.inf)))
     return {"peaks": [[px, ly] for px, ly in pairs], "apex": apex,
             "ymin": entry.get("ymin"), "ymax": ymax}
 
