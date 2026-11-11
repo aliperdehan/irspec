@@ -2,6 +2,10 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.28 (2026-11-12)
+
+- Clip preview line segments to the frame before rasterising tight crops (I4.3).
+
 ## 0.2.27 (2026-11-12)
 
 - Report truncated VSPD headers and VQUD configuration fields as input errors (I4.4).

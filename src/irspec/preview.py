@@ -231,6 +231,26 @@ def utf8_stdout():
 def _line(dots, x0, y0, x1, y1):
     """Set the dots of a straight line (Bresenham) in the boolean grid `dots`."""
     h, w = dots.shape
+    # Clip the continuous segment to the pixel rectangle before rasterising it.
+    # Liang-Barsky bounds the work even when both original endpoints are far away.
+    vx, vy = x1 - x0, y1 - y0
+    start, end = 0.0, 1.0
+    for p, q in ((-vx, x0), (vx, w - 1 - x0), (-vy, y0), (vy, h - 1 - y0)):
+        if p == 0:
+            if q < 0:
+                return
+            continue
+        t = q / p
+        if p < 0:
+            start = max(start, t)
+        else:
+            end = min(end, t)
+        if start > end:
+            return
+    x0, y0, x1, y1 = (max(0, min(w - 1, round(x0 + start * vx))),
+                      max(0, min(h - 1, round(y0 + start * vy))),
+                      max(0, min(w - 1, round(x0 + end * vx))),
+                      max(0, min(h - 1, round(y0 + end * vy))))
     dx, dy = abs(x1 - x0), -abs(y1 - y0)
     sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
     err = dx + dy
