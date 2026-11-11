@@ -53,6 +53,19 @@ class RenderMd(unittest.TestCase):
             figs = [Figure.from_organize_result(r, str(folder)) for r in results]
             self.assertEqual(texout.render_md(figs), old)
 
+    def test_percent_in_csv_uses_a_scoped_other_catcode(self):
+        for kind in ("ir", "uvvis"):
+            fig = Figure(csv="plain/sample%1_plain.csv", title="100%", kind=kind)
+            for render in (texout.render_md, texout.render_tex):
+                with self.subTest(kind=kind, render=render.__name__):
+                    output = render([fig])
+                    start = output.index(r"\begingroup\catcode`\%=12")
+                    name = output.index("{plain/sample%1_plain.csv}", start)
+                    end = output.index(r"\endgroup", name)
+                    self.assertLess(start, name)
+                    self.assertLess(name, end)
+                    self.assertIn(r"100\%", output[name:end])
+
     def test_entry_round_trip(self):
         f = Figure(csv="plain/x.csv", title="Methanol", axis="Absorbance",
                    peaks=[(3316.0, 76.3), (1022.1, 26.8)], ymin=20)

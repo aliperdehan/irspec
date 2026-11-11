@@ -27,25 +27,30 @@ EXCERPT_NAME = "irspec-ir.sty"
 
 def _block(f: Figure, esc=spa_tool.latex_escape) -> str:
     kind = kinds.get(f.kind)
+    # TeX tokenises each input line before expanding commands. Change the
+    # comment character's catcode on a preceding line, scoped to this figure,
+    # so the literal filename reaches the file reader unchanged.
+    prefix = "\\begingroup\\catcode`\\%=12\n" if "%" in f.csv else ""
+    suffix = "\\endgroup\n" if prefix else ""
     opts = f"width={f.width},height={f.height}"
     for key in ("ymin", "ymax", "xmin", "xmax"):   # pgfplots' own keys: the call narrows the axis
         if getattr(f, key) is not None:
             opts += f",{key}={getattr(f, key)}"
     if kind.macro == "labplot":   # nulabreport's generic plot: the kind names its axes
         ylabel = "" if f.axis == kind.y_label else f",ylabel={{{esc(f.axis)}}}"
-        return ("\\labplot\n"
+        return (prefix + "\\labplot\n"
                 f"  [kind={kind.name},{opts}{ylabel}]\n"
                 f"  {{{f.csv}}}\n"
                 f"  {{{f.peaklist()}}}\n"
                 f"  {{{esc(f.title)}}}\n"
-                "\\clearpage\n")
-    return (f"\\{kind.macro}\n"
+                "\\clearpage\n" + suffix)
+    return (prefix + f"\\{kind.macro}\n"
             f"  [{opts}]\n"
             f"  {{{f.csv}}}\n"
             f"  {{{esc(f.axis)}}}\n"
             f"  {{{f.peaklist()}}}\n"
             f"  {{{esc(f.title)}}}\n"
-            "\\clearpage\n")
+            "\\clearpage\n" + suffix)
 
 
 def render_md(figures) -> str:

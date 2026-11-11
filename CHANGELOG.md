@@ -2,6 +2,10 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.29 (2026-11-12)
+
+- Preserve percent signs in CSV filenames in generated TeX (I2.5).
+
 ## 0.2.28 (2026-11-12)
 
 - Clip preview line segments to the frame before rasterising tight crops (I4.3).
