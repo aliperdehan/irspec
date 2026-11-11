@@ -79,6 +79,16 @@ class Base(unittest.TestCase):
         return run(self.dir, STEM, "peak", *args)
 
 
+class EmptyAutomaticClear(Base):
+    def test_clear_persists_empty_selection_when_auto_finds_nothing(self):
+        self.write_entry(peaks=None, threshold=100, prominence=10000)
+        self.assertEqual(self.peak("clear")[0], 0)
+        self.assertEqual(self.entry()["peaks"], [])
+        self.write_entry(threshold=None, prominence=None)
+        self.assertEqual(irspec("session", self.dir, "--build", "none")[0], 0)
+        self.assertEqual(self.entry()["peaks"], [])
+
+
 class Add(Base):
     def test_snaps_to_the_nearest_local_band_and_keeps_the_list_sorted(self):
         x, y = spa_tool.read_spa(DATA / SAMPLE)

@@ -2,6 +2,10 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.24 (2026-11-12)
+
+- Preserve an explicit empty peak selection when clearing an empty automatic list (I4.5).
+
 ## 0.2.23 (2026-11-12)
 
 - The standalone R backend qualifies colliding stems by the differing input path

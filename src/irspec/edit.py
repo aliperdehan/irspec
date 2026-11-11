@@ -445,6 +445,8 @@ def apply_peaks(entry, folder, action, xs):
                       file=sys.stderr)
     new.sort()
     changes = _peak_changes(current, new)
+    if action == "clear" and "peaks" not in entry and not changes:
+        changes = [{"key": "peaks", "old": None, "new": []}]
     if changes:
         entry["peaks"] = new
     return changes
