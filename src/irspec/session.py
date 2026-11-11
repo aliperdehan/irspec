@@ -616,7 +616,7 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
             if not os.path.exists(pdf):
                 raise SessionError("--formats needs the PDF: use --build pdfmd or latex")
             for p in export.export_pdf(pdf, formats, os.path.join(folder, "figures"),
-                                       export.stems_of(figures), dpi):
+                                       export.stems_of(figures), dpi, sources=[f.csv for f in figures]):
                 out["pictures"].append(_rel(folder, p))
                 print(f"wrote {p}")
     except (SessionError, export.ExportError, subprocess.CalledProcessError) as err:

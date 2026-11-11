@@ -45,7 +45,10 @@ class Formats(unittest.TestCase):
         from irspec.figure import Figure
         figs = [Figure("plain/A_plain.csv", "a"), Figure("other/plain/A.csv", "b"),
                 Figure("plain/B.csv", "c"), Figure("x/A_plain.csv", "d")]
-        self.assertEqual(export.stems_of(figs), ["A", "A-2", "B", "A-3"])
+        names = export.stems_of(figs)
+        self.assertEqual(len(set(names)), 4)
+        self.assertEqual(names[2], "B")
+        self.assertEqual(export.stems_of(figs[::-1]), names[::-1])
 
 
 @unittest.skipUnless(all(HAVE[t] for t in ("lualatex", "pdftoppm", "pdftocairo")),

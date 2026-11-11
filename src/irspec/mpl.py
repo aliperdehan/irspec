@@ -21,7 +21,7 @@ import sys
 import numpy as np
 
 from . import fonts, kinds, layout
-from .export import ExportError, parse_formats, stems_of
+from .export import ExportError, filenames, parse_formats, stems_of
 from .figure import FIGURES_NAME, Figure, read_figures
 
 FORMATS = ("png", "tiff", "pdf", "svg", "svg-text")
@@ -130,17 +130,18 @@ def render(path, formats, outdir=None, size=layout.DEFAULT_SIZE, dpi=300, captio
         raise ExportError(f"{path} not found: run `irspec session DIR` first")
     figures, folder = read_figures(path)
     outdir = outdir or os.path.join(folder, "figures", "matplotlib")
+    destinations = filenames([f.csv for f in figures], stems_of(figures), formats, EXT, SUFFIX)
     os.makedirs(outdir, exist_ok=True)
     family, note = pick_font()
     print(f"matplotlib {matplotlib.__version__}, font: {note}")
     written = []
-    for fig, stem in zip(figures, stems_of(figures)):
+    for i, fig in enumerate(figures):
         for fmt in formats:
             try:
                 f = draw(fig, folder, size, caption, family)
             except ValueError as e:   # limits that cannot make a frame (layout.xlimits, ylimits)
                 raise ExportError(f"{fig.csv}: {e}")
-            dest = os.path.join(outdir, stem + SUFFIX.get(fmt, "") + EXT[fmt])
+            dest = os.path.join(outdir, destinations[i, fmt])
             kw = {}
             rc = {**RC, "svg.fonttype": "none" if fmt == "svg-text" else "path"}
             if fmt == "png":

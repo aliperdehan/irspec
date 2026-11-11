@@ -5,15 +5,16 @@ from collections import Counter
 from urllib.parse import quote
 
 
-def allocate(paths, names, outputs=None):
+def allocate(paths, names, outputs=None, identities=None):
     """Keep unique names; qualify collisions with the shortest source-path suffix.
 
     Try the original file stem, then its extension, then successive parents.
     All names are allocated together, so qualification cannot steal another name.
     """
     paths = [os.path.normpath(str(p)) for p in paths]
-    if len(set(paths)) != len(paths):
-        duplicate = next(p for p, n in Counter(paths).items() if n > 1)
+    identities = paths if identities is None else identities
+    if len(set(identities)) != len(identities):
+        duplicate = next(p for p, n in Counter(identities).items() if n > 1)
         raise ValueError(f"same input file twice: {duplicate}")
     outputs = outputs or (lambda i, name: [name])
     def conflicting(result):

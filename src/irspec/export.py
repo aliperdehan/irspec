@@ -74,13 +74,14 @@ def _run(cmd):
         raise ExportError(f"{os.path.basename(cmd[0])} failed: {(r.stderr or r.stdout).strip()[:300]}")
 
 
-def export_pdf(pdf, formats, outdir, names=None, dpi=300):
+def export_pdf(pdf, formats, outdir, names=None, dpi=300, sources=None):
     """Write one file per page and format into `outdir`; returns the paths.
     `names`: file stems in page order; when absent or the wrong length the
     pages are called page-1, page-2, ..."""
     n = page_count(pdf)
     if not names or len(names) != n:
         names = [f"page-{i}" for i in range(1, n + 1)]
+    destinations = filenames(sources or names, names, formats, EXT, SUFFIX)
     os.makedirs(outdir, exist_ok=True)
     written = []
     for fmt in formats:
@@ -93,7 +94,7 @@ def export_pdf(pdf, formats, outdir, names=None, dpi=300):
         else:
             raise ExportError(f"unknown format {fmt!r}")
         for page, stem in enumerate(names, 1):
-            dest = os.path.join(outdir, stem + SUFFIX.get(fmt, "") + EXT[fmt])
+            dest = os.path.join(outdir, destinations[page - 1, fmt])
             if fmt == "png":
                 # -singlefile: exactly `stem`.png, no page-number suffix
                 _run([exe, "-r", str(dpi), "-f", str(page), "-l", str(page),
@@ -113,16 +114,30 @@ def export_pdf(pdf, formats, outdir, names=None, dpi=300):
 
 
 def stems_of(figures):
-    """File stems for figures: the plain CSV's name without `_plain`. Two figures that
-    would share a stem (the same name in two folders) get -2, -3, ... so that no picture
-    overwrites another."""
-    out, seen = [], {}
-    for f in figures:
-        s = os.path.splitext(os.path.basename(f.csv))[0]
-        s = s[:-len("_plain")] if s.endswith("_plain") else s
-        seen[s] = seen.get(s, 0) + 1
-        out.append(s if seen[s] == 1 else f"{s}-{seen[s]}")
-    return out
+    """Stable file stems, qualified only where source paths would collide."""
+    from .naming import allocate
+    paths = [f.csv for f in figures]
+    stems = [os.path.splitext(os.path.basename(p))[0] for p in paths]
+    names = [s[:-len("_plain")] if s.endswith("_plain") else s for s in stems]
+    try:
+        return allocate(paths, names)
+    except ValueError as err:
+        raise ExportError(str(err)) from err
+
+
+def filenames(paths, stems, formats, extensions, suffixes):
+    """Allocate the complete figure/format matrix before any output is written."""
+    from .naming import allocate
+    jobs = [(i, fmt) for i in range(len(stems)) for fmt in formats]
+    names = [stems[i] + suffixes.get(fmt, "") for i, fmt in jobs]
+    try:
+        allocated = allocate(
+            [paths[i] for i, fmt in jobs], names,
+            lambda j, n: [n + extensions[jobs[j][1]]],
+            identities=[(paths[i], fmt) for i, fmt in jobs])
+    except ValueError as err:
+        raise ExportError(str(err)) from err
+    return {job: name + extensions[job[1]] for job, name in zip(jobs, allocated)}
 
 
 def main(argv=None):

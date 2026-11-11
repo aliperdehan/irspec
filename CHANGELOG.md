@@ -2,6 +2,12 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.22 (2026-11-12)
+
+- PDF export and matplotlib allocate filenames across all figures and requested
+  formats before writing (I5.1), including SVG suffix collisions. Qualifiers come
+  from input paths, never processing order; non-colliding names stay unchanged.
+
 ## 0.2.21 (2026-11-12)
 
 - Allocate session and organiser CSV names before processing any spectrum (I2.2).
