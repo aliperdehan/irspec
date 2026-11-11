@@ -78,6 +78,55 @@ gg_lw <- function(pt) pt_to_lwd(pt) / ggplot2::.pt
 gg_size <- function(pt) pt / ggplot2::.pt          # text `size` aesthetic (mm)
 
 # ---- reading ----------------------------------------------------------------
+# Stable qualification by the input path, matching naming.py. Allocate the
+# whole list before writing; a qualifier must not take another output's name.
+allocate_names <- function(paths, names, extensions = rep("", length(names)), identities = paths) {
+  if (anyDuplicated(identities))
+    stop(sprintf("same input file twice: %s", paths[duplicated(identities)][1]), call. = FALSE)
+  conflicts <- function(result) {
+    keys <- paste0(result, extensions)
+    which(duplicated(keys) | duplicated(keys, fromLast = TRUE))
+  }
+  active <- conflicts(names)
+  parts <- strsplit(paths, "/", fixed = TRUE)
+  shortened <- rep(FALSE, length(paths))
+  for (name in unique(names[active])) {
+    group <- active[names[active] == name]
+    while (length(group) > 1 && all(lengths(parts[group]) > 0) &&
+           length(unique(vapply(parts[group], tail, character(1), n = 1))) == 1) {
+      for (i in group) { parts[[i]] <- head(parts[[i]], -1); shortened[i] <- TRUE }
+    }
+  }
+  stages <- lapply(seq_along(paths), function(i) {
+    components <- parts[[i]]; leaf <- tail(components, 1)
+    stem <- if (shortened[i]) leaf else tools::file_path_sans_ext(leaf)
+    suffix <- paste0("_", names[i])
+    if (endsWith(stem, suffix)) stem <- substr(stem, 1, nchar(stem) - nchar(suffix))
+    out <- c(stem, leaf)
+    if (length(components) > 1)
+      for (depth in 2:length(components)) out <- c(out, paste(tail(components, depth), collapse = "/"))
+    out
+  })
+  levels <- rep(1L, length(paths)); result <- names
+  repeat {
+    for (i in active) {
+      choices <- stages[[i]]; level <- levels[i]
+      suffix <- if (level <= length(choices)) choices[level] else
+        paste(rep(paths[i], level - length(choices) + 1), collapse = "/")
+      encoded <- gsub("%20", " ", URLencode(suffix, reserved = TRUE), fixed = TRUE)
+      result[i] <- paste0(names[i], "_", encoded)
+    }
+    blocked <- intersect(active, conflicts(result))
+    if (!length(blocked)) break
+    levels[blocked] <- levels[blocked] + 1L
+  }
+  if (length(active)) {
+    ordered <- active[order(paths[active])]
+    message("name collision: ", paste(paste(paths[ordered], "->", result[ordered]), collapse = "; "))
+  }
+  result
+}
+
 read_figures <- function(path) {
   if (dir.exists(path)) path <- file.path(path, "figures.json")
   if (!file.exists(path)) stop(sprintf("%s not found: run `irspec session DIR` first", path), call. = FALSE)
@@ -95,6 +144,9 @@ read_figures <- function(path) {
          axis = if (is.null(e$axis)) "Transmittance %" else e$axis,
          peaks = peaks, ymin = e$ymin, ymax = e$ymax, xmin = e$xmin, xmax = e$xmax, stem = sub("_plain$", "", tools::file_path_sans_ext(basename(e$csv))))
   })
+  stems <- allocate_names(vapply(figs, function(f) f$csv, character(1)),
+                          vapply(figs, function(f) f$stem, character(1)))
+  for (i in seq_along(figs)) figs[[i]]$stem <- stems[i]
   list(figures = figs, folder = folder)
 }
 
@@ -271,14 +323,23 @@ main <- function(argv = commandArgs(trailingOnly = TRUE)) {
     }
     return(invisible())
   }
+  jobs <- rep(seq_along(r$figures), each = length(formats))
+  job_formats <- rep(formats, times = length(r$figures))
+  paths <- vapply(r$figures[jobs], function(f) f$csv, character(1))
+  stems <- vapply(r$figures[jobs], function(f) f$stem, character(1))
+  suffix <- vapply(job_formats, function(fmt) if (fmt %in% names(SUFFIX)) SUFFIX[[fmt]] else "", character(1))
+  extensions <- vapply(job_formats, function(fmt) EXT[[fmt]], character(1))
+  destinations <- paste0(allocate_names(paths, paste0(stems, suffix), extensions,
+                                        paste(paths, job_formats, sep = "::")), extensions)
   out <- if (is.null(a$out)) file.path(r$folder, "figures", "r") else a$out
   dir.create(out, recursive = TRUE, showWarnings = FALSE)
   font <- pick_font()
   cat(sprintf("R %s, ggplot2 %s, font: %s\n", getRversion(), packageVersion("ggplot2"), font$note))
-  for (f in r$figures) {
+  for (i in seq_along(r$figures)) {
+    f <- r$figures[[i]]
     p <- draw(f, font$family, a$caption)
     for (fmt in formats) {
-      dest <- file.path(out, paste0(f$stem, if (fmt %in% names(SUFFIX)) SUFFIX[[fmt]] else "", EXT[[fmt]]))
+      dest <- file.path(out, destinations[which(jobs == i & job_formats == fmt)])
       save_as(p, dest, fmt, a$size, a$dpi)
       cat(sprintf("wrote %s\n", dest))
     }

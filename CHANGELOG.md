@@ -2,6 +2,12 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.23 (2026-11-12)
+
+- The standalone R backend qualifies colliding stems by the differing input path
+  before drawing (I5.2), and preflights all requested format filenames. Its names
+  agree with Python, remain stable on reordering, and leave other names intact.
+
 ## 0.2.22 (2026-11-12)
 
 - PDF export and matplotlib allocate filenames across all figures and requested
