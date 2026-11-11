@@ -67,7 +67,7 @@ import sys
 import numpy as np
 
 from . import ir_organize as _io
-from . import export, jdx_tool, spa_tool, texout
+from . import export, jdx_tool, layout, spa_tool, texout
 from .figure import FIGURES_NAME, KIND, Figure, write_figures
 
 IMG_EXT = (".gif", ".jpg", ".jpeg", ".png", ".bmp")
@@ -112,17 +112,21 @@ def must(module, argv, what):
 # Filing: ir_organize's, minus the files that configure the session
 # -----------------------------------------------------------------------------
 KEEP_IN_PLACE = {"manifest.json", "cas_names.json", FIGURES_NAME}
+# what a build leaves in the folder: the report (.md, .pdf), and --build latex's .tex, the bundled
+# excerpt (.sty) and, after a failed lualatex, its .aux and .log
+GENERATED_EXT = _io.GENERATED_EXT + (".tex", ".sty", ".aux", ".log")
 
 
 def organize(folder, dry_run=False):
-    """ir_organize.organize, except manifest.json, cas_names.json and figures.json stay put
-    (the original would file the name map into other/ before it is read, and the figure
-    list this command wrote on its last run into other/ on the next)."""
+    """ir_organize.organize, except manifest.json, cas_names.json, figures.json and what a
+    build writes (GENERATED_EXT) stay put (the original would file the name map into other/
+    before it is read, and the figure list or the .tex this command wrote on its last run into
+    other/ on the next)."""
     moves = []
     for name in sorted(os.listdir(folder)):
         src = os.path.join(folder, name)
         if (not os.path.isfile(src) or name.startswith(".") or name in KEEP_IN_PLACE
-                or name.lower().endswith(_io.GENERATED_EXT)):
+                or name.lower().endswith(GENERATED_EXT)):
             continue
         dst = os.path.join(folder, _io.classify(name), name)
         if os.path.exists(dst):
@@ -489,6 +493,13 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
         print(f"# {r['stem']}: axis={r['axis_label']} peaks={r['n_peaks']} ymin={r['ymin']}")
     _io.save_manifest(folder, entries)
     figures = [Figure.from_organize_result(r, folder) for r in results]
+    for e, r, fig in zip(entries, results, figures):
+        try:  # a hand-edited limit that cannot make a frame stops here, not inside lualatex
+            layout.xlimits(fig.xmin, fig.xmax)
+            layout.ylimits(layout.window(*read_plain(r["plain_path"]))[1], fig.ymin, fig.ymax)
+        except (TypeError, ValueError) as err:
+            raise SessionError(f"{e['file']}: {err} (in manifest.json; `irspec edit` can "
+                               f"change or unset it)")
     write_figures(figures, os.path.join(folder, FIGURES_NAME))
     base = md_name or _io.default_md_name(folder)
     md = os.path.join(folder, base + ".md")

@@ -99,6 +99,21 @@ class Folder(unittest.TestCase):
             self.assertTrue((f / "figures.json").exists())
             self.assertFalse((f / "other" / "figures.json").exists())
 
+    def test_running_again_leaves_what_a_latex_build_wrote(self):
+        # 0.2.0 filed --build latex's ir_29-09.tex into other/ on the next run (found 2026-11-11)
+        built = ("ir_29-09.tex", "irspec-ir.sty", "ir_29-09.aux", "ir_29-09.log")
+        with tempfile.TemporaryDirectory() as d:
+            f = synthetic(d)
+            with_gas_manifest(f)
+            for n in built:
+                (f / n).write_text("% made by a build\n")
+            moves = session.organize(str(f), dry_run=True)
+            self.assertEqual([m for m in moves if os.path.basename(m[0]) in built], [])
+            session.run(str(f), build="none")
+            for n in built:
+                self.assertTrue((f / n).exists(), n)
+            self.assertFalse((f / "other").exists())
+
     def test_a_new_reference_entry_starts_with_a_readable_title(self):
         with tempfile.TemporaryDirectory() as d:
             f = synthetic(d)

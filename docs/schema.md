@@ -48,7 +48,7 @@ later run keeps it. All keys except `file` are optional.
 | `axis` | string | y-axis label, default `Transmittance %` |
 | `ymin` | number | bottom of the y axis |
 | `ymax` | number | top of the y axis (the frame goes a hair above); default the data's own maximum |
-| `xmin`, `xmax` | number | crop the x axis, in cm⁻¹ (`xmax` is the left edge); default 650 and 4000. `set` refuses a lower limit that is not below its upper |
+| `xmin`, `xmax` | number | crop the x axis, in cm⁻¹ (`xmax` is the left edge); default 650 and 4000. `set` refuses a lower limit that is not below its upper (an x limit alone: its default), and `session` stops on one |
 | `threshold` | number | peak picking: % of the dynamic range (default 5) |
 | `prominence` | number | peak picking: scipy prominence in y units (default 3) |
 | `distance` | number | peak picking: least gap between peaks in cm⁻¹ (default 8) |

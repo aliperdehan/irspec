@@ -2,6 +2,21 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.1 (2026-11-11)
+
+Fixes, found by comparing every output of one session folder byte for byte before a refactor.
+
+- A second `irspec session` run no longer files what `--build latex` wrote (`ir_<dd-mm>.tex`,
+  the bundled `irspec-ir.sty`, and a failed run's `.aux` and `.log`) into `other/`; they stay
+  beside the report, as the `.md` and `.pdf` always did.
+- `irspec edit set xmin=4000` (or `xmax=650`) with the other x limit unset is refused (exit 2,
+  nothing written): the unset one is the default, 4000 or 650, and the figure would have no width.
+  0.2.0 wrote it, and `irspec plot` then stopped with a Python traceback.
+- Limits edited by hand into `manifest.json` that make no frame (`ymin` above `ymax` or above
+  the whole spectrum, an `xmin` not below `xmax`) stop `irspec session` with the file and the
+  reason, before `figures.json` is written, instead of inside lualatex. `irspec plot`
+  (matplotlib) names the figure instead of printing a traceback; the R backend already did.
+
 ## 0.2.0 (2026-11-11), the command-line foundation
 
 Roadmap item 1: a folder can be edited, previewed and read by a script without opening

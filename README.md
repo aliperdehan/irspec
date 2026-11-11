@@ -260,7 +260,8 @@ irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
   `xmin`, `xmax`, `threshold`, `prominence`, `distance` (numbers, stored as JSON numbers; a
   value that is not a number is refused). Any other key is an error naming the allowed ones.
   `xmin`/`xmax` crop the x axis and `ymax` is the top of the y axis, in the TeX figure, in `irspec plot`
-  and in `irspec preview`; `set` refuses a lower limit that is not below its upper one (exit 2).
+  and in `irspec preview`; `set` refuses a lower limit that is not below its upper one, the default
+  4000 or 650 when only one x limit is set (exit 2).
 - **Peaks.** `peak add X ...` snaps each wavenumber to the nearest local band of that
   spectrum (within 15 cm⁻¹) and adds it with the label height `session` gives a band named by
   its wavenumber alone. `peak remove X ...` takes out the stored peak nearest X, if one is

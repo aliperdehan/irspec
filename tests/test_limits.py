@@ -230,6 +230,63 @@ class EditChecksLimits(unittest.TestCase):
             code, _, err = run("edit", f, STEM, "set", "xmin=3500")   # against the stored xmax
             self.assertEqual(code, 2)
 
+    def test_one_x_limit_alone_is_checked_against_the_default_edge(self):
+        # 0.2.0 wrote xmin=4000 with no xmax, and `irspec plot` then failed with a traceback
+        with tempfile.TemporaryDirectory() as d:
+            f = make_session(d)
+            before = (f / "manifest.json").read_bytes()
+            for arg, msg in (("xmin=4000", "xmin (4000) must be below xmax (the default, 4000)"),
+                             ("xmax=650", "xmin (the default, 650) must be below xmax (650)"),
+                             ("xmax=500", "must be below xmax (500)")):
+                code, out, err = run("edit", f, STEM, "set", arg)
+                self.assertEqual((code, out), (2, ""), arg)
+                self.assertIn(msg, err)
+                self.assertEqual((f / "manifest.json").read_bytes(), before)
+            for arg in ("xmin=3999", "xmax=651"):
+                code, _, err = run("edit", f, STEM, "set", arg)
+                self.assertEqual(code, 0, err)
+                run("edit", f, STEM, "unset", arg.split("=")[0])
+
+
+class HandEditedLimits(unittest.TestCase):
+    """A manifest edited by hand can still hold limits that make no frame: a message, never a
+    traceback, and never a figures.json that the drawing backends cannot draw."""
+
+    def bad(self, d, **limits):
+        f = make_session(d)
+        mp = f / "manifest.json"
+        entries = json.loads(mp.read_text(encoding="utf-8"))
+        entries[0].update(limits)
+        mp.write_text(json.dumps(entries), encoding="utf-8")
+        return f
+
+    def test_session_stops_before_figures_json(self):
+        for limits in ({"xmin": 4000}, {"ymin": 100, "ymax": 50}, {"ymin": 200}):
+            with tempfile.TemporaryDirectory() as d:
+                f = self.bad(d, **limits)
+                before = (f / "figures.json").read_bytes()
+                code, out, err = run("session", f, "--build", "none")
+                self.assertEqual(code, 1, limits)
+                self.assertIn(f"SPA/{SAMPLE}: ", err)
+                self.assertIn("must be below", err)
+                self.assertNotIn("Traceback", err)
+                self.assertEqual((f / "figures.json").read_bytes(), before)
+
+    def test_plot_says_which_figure(self):
+        try:
+            import matplotlib  # noqa: F401
+        except ImportError:
+            self.skipTest("matplotlib not installed")
+        with tempfile.TemporaryDirectory() as d:
+            f = make_session(d)
+            fp = f / "figures.json"
+            figs = json.loads(fp.read_text(encoding="utf-8"))
+            figs[0]["xmin"] = 4000
+            fp.write_text(json.dumps(figs), encoding="utf-8")
+            code, out, err = run("plot", f, "--formats", "svg")
+            self.assertEqual(code, 1)
+            self.assertIn(f"plain/{STEM}_plain.csv: xmin (4000) must be below xmax (4000)", err)
+
 
 @unittest.skipUnless(shutil.which("lualatex"), "lualatex not installed")
 class TexAgrees(unittest.TestCase):

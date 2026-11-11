@@ -131,7 +131,10 @@ def render(path, formats, outdir=None, size=layout.DEFAULT_SIZE, dpi=300, captio
     written = []
     for fig, stem in zip(figures, stems_of(figures)):
         for fmt in formats:
-            f = draw(fig, folder, size, caption, family)
+            try:
+                f = draw(fig, folder, size, caption, family)
+            except ValueError as e:   # limits that cannot make a frame (layout.xlimits, ylimits)
+                raise ExportError(f"{fig.csv}: {e}")
             dest = os.path.join(outdir, stem + SUFFIX.get(fmt, "") + EXT[fmt])
             kw = {}
             rc = {**RC, "svg.fonttype": "none" if fmt == "svg-text" else "path"}

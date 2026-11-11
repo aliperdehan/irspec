@@ -24,7 +24,8 @@ Keys that `set` and `unset` accept:
 xmin and xmax (cm-1, wavenumbers; xmax is the left edge) crop the x axis, ymax is the top of the y
 axis (ymin the bottom): the TeX figure, `irspec plot` and `irspec preview` all take them (a crop
 shows less of the spectrum; the y axis still scales to all of it unless ymin/ymax say otherwise).
-`set` refuses a lower limit that is not below its upper one (exit 2, nothing written).
+`set` refuses a lower limit that is not below its upper one, or, for x set alone, below the other's
+default (650 and 4000) (exit 2, nothing written).
 
 Peaks. `peak add X` snaps each X (a wavenumber) to the nearest local band of the file's own
 spectrum with `find_peaks_manual`, and puts it in the entry's "peaks" with the label height
@@ -480,11 +481,23 @@ def format_changes(file, changes):
 # -----------------------------------------------------------------------------
 def check_limits(entry):
     """A figure whose lower limit is not below its upper one cannot be drawn: refuse the edit
-    (nothing has been written yet)."""
+    (nothing has been written yet). An x limit set alone is checked against the other one's
+    default (layout.XLIM): `xmin=4000` with no `xmax` meets the default left edge, 4000."""
+    from . import layout
     for lo, hi in (("xmin", "xmax"), ("ymin", "ymax")):
         a, b = entry.get(lo), entry.get(hi)
-        if isinstance(a, (int, float)) and isinstance(b, (int, float)) and not a < b:
-            raise EditError(f"{lo} ({a:g}) must be below {hi} ({b:g})")
+        a = a if isinstance(a, (int, float)) else None
+        b = b if isinstance(b, (int, float)) else None
+        said = {lo: f"{a:g}" if a is not None else "", hi: f"{b:g}" if b is not None else ""}
+        if lo == "xmin" and (a is None) != (b is None):
+            if a is None:
+                a = min(layout.XLIM)
+                said[lo] = f"the default, {a:g}"
+            else:
+                b = max(layout.XLIM)
+                said[hi] = f"the default, {b:g}"
+        if a is not None and b is not None and not a < b:
+            raise EditError(f"{lo} ({said[lo]}) must be below {hi} ({said[hi]})")
 
 
 def edit(folder, name, verb, items):
