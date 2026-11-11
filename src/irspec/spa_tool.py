@@ -344,29 +344,12 @@ def write_csvs(x, y, out_stem, axis_label, clip=CLIP_CM):
 # 5. PEAK PICKING
 # =============================================================================
 def find_peaks_auto(x, y, threshold_pct=5.0, prominence=3.0, distance_cm=8.0,
-                     window=CLIP_CM):
-    """Trough search over the plotted window (x >= window). Two independent
-    gates must both pass: scipy prominence (native y units), and the
-    trough's own depth vs. the window's dynamic range (threshold_pct)."""
-    from scipy.signal import find_peaks
-
-    mask = x >= window
-    xw, yw = x[mask], y[mask]
-    inv = -yw
-    yrange = yw.max() - yw.min()
-    min_depth = threshold_pct / 100.0 * yrange
-
-    dx = abs(xw[1] - xw[0])
-    distance_idx = max(1, int(round(distance_cm / dx)))
-
-    idx, _props = find_peaks(inv, prominence=prominence, distance=distance_idx)
-    peaks = []
-    for i in idx:
-        if (yw.max() - yw[i]) < min_depth:
-            continue
-        peaks.append((float(xw[i]), float(yw[i])))
-    peaks.sort(key=lambda p: p[0])
-    return peaks
+                     window=CLIP_CM, axis_label="Transmittance %"):
+    """Pick local bands in the plotted window, using the detected axis."""
+    from . import spa_peaks
+    return spa_peaks.find_peaks_auto(
+        x, y, threshold_pct, prominence, distance_cm, window,
+        absorbance=axis_label.startswith("Absorbance"))
 
 
 def find_peaks_manual(x, y, wanted, axis_label, window_cm=15.0, order=3):
@@ -408,22 +391,12 @@ def find_peaks_manual(x, y, wanted, axis_label, window_cm=15.0, order=3):
     return peaks
 
 
-def assign_label_y(peaks, gap=5.0, collision_cm=45.0, step=5.0):
-    """label_y = trough_y - gap, staggered further in `step`-sized increments
-    only when two peaks sit within collision_cm of each other (module
-    docstring sec. 5). Returns (x, y, label_y) triples, sorted by x."""
-    peaks = sorted(peaks, key=lambda p: p[0])
-    out = []
-    prev_x = prev_labely = None
-    for x_, y_ in peaks:
-        base = y_ - gap
-        if prev_x is not None and abs(x_ - prev_x) < collision_cm:
-            label_y = min(base, prev_labely - step)
-        else:
-            label_y = base
-        out.append((x_, y_, label_y))
-        prev_x, prev_labely = x_, label_y
-    return out
+def assign_label_y(peaks, gap=5.0, collision_cm=45.0, step=5.0,
+                   axis_label="Transmittance %"):
+    """Place labels away from the bands, in the detected axis's direction."""
+    from . import spa_peaks
+    return spa_peaks.assign_label_y(
+        peaks, gap, collision_cm, step, absorbance=axis_label.startswith("Absorbance"))
 
 
 def format_peaklist(peaks_xyl, digits_x=1):
@@ -555,8 +528,9 @@ def process_entry(entry, csv_dir, plain_dir):
             threshold_pct=entry.get("threshold", 5.0),
             prominence=entry.get("prominence", 3.0),
             distance_cm=entry.get("distance", 8.0),
+            axis_label=axis_label,
         )
-    peaks_xyl = assign_label_y(peaks)
+    peaks_xyl = assign_label_y(peaks, axis_label=axis_label)
     bounds = suggest_bounds(x, y, peaks_xyl)
     ymin = entry.get("ymin", bounds.get("ymin", 0))
 
@@ -621,9 +595,10 @@ def cmd_convert(args):
     else:
         peaks = find_peaks_auto(x, y, threshold_pct=args.threshold,
                                  prominence=args.prominence,
-                                 distance_cm=args.distance)
+                                 distance_cm=args.distance, axis_label=axis_label)
 
-    peaks_xyl = assign_label_y(peaks, gap=args.gap, collision_cm=args.collision_cm)
+    peaks_xyl = assign_label_y(peaks, gap=args.gap, collision_cm=args.collision_cm,
+                                axis_label=axis_label)
     bounds = suggest_bounds(x, y, peaks_xyl)
 
     print(f"# {args.spa}  axis={axis_label}  n_peaks={len(peaks_xyl)}  "

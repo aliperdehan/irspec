@@ -2,6 +2,11 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.16 (2026-11-12)
+
+- SPA convert and batch use the detected axis for automatic band picking and label
+  placement (I3.2). Existing prominence and label gaps retain their native units.
+
 ## 0.2.15 (2026-11-12)
 
 - Convert absorbance SPA traces and peaks to %T in sessions and previews; retain
