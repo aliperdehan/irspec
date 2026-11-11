@@ -1,10 +1,10 @@
 % =============================================================================
 % irspec-ir.sty -- GENERATED, do not edit.
-% An excerpt of nulabreport.sty v1.31.4 (2026/11/10): the figure macros
+% An excerpt of nulabreport.sty v1.31.30 (2026/11/12): the figure macros
 % \irspectrum, \irspectrumstack, \irspectrumoverlay, \irspectrumcompare,
 % \irspectrumpage, \labplot and friends, cut out at the `irspec-excerpt'
 % markers by nulabreport's dependencies/make-irspec-excerpt.py.
-% Content sha256 prefix aad2e5a5c506.
+% Content sha256 prefix 0f3e2c9c872c.
 %
 % THE FULL PACKAGE IS THE REFERENCE. This excerpt may lag behind it and may
 % not render identically. When nulabreport.sty is installed, prefer it:
@@ -13,8 +13,8 @@
 % Supported \labsetup keys here: furniture (ignored), captions.
 % =============================================================================
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{irspec-ir}[2026/11/10 excerpt of nulabreport v1.31.4]
-\PackageInfo{irspec-ir}{Using the bundled excerpt of nulabreport v1.31.4, not the full package}
+\ProvidesPackage{irspec-ir}[2026/11/12 excerpt of nulabreport v1.31.30]
+\PackageInfo{irspec-ir}{Using the bundled excerpt of nulabreport v1.31.30, not the full package}
 \RequirePackage{keyval}
 \RequirePackage{xcolor}
 \RequirePackage{etoolbox}
@@ -720,6 +720,8 @@
 \tl_new:N \l__nulab_plot_tcol_tl
 \tl_new:N \l__nulab_plot_lcol_tl
 \clist_new:N \l__nulab_plot_ovcols_clist
+\cs_new_protected:Npn \Lab@ovdefaultpalette
+  { \clist_set:Nn \l__nulab_plot_ovcols_clist { black , nuirred } }
 \keys_define:nn { nulab/plot }
   {
     kind      .tl_set:N = \l__nulab_plot_kind_tl ,
@@ -746,7 +748,7 @@
     \tl_clear:N \l__nulab_plot_lcol_tl
     \tl_clear:N \l__nulab_plot_insets_tl
     \tl_clear:N \l__nulab_plot_integrals_tl
-    \clist_set:Nn \l__nulab_plot_ovcols_clist { black , nuirred }
+    \Lab@ovdefaultpalette
     \keys_set_known:nnN { nulab/plot } {#1} \l__nulab_plot_rest_tl
     \tl_if_blank:VT \l__nulab_plot_kind_tl
       { \msg_error:nn { nulabreport } { plot-no-kind } }
@@ -936,12 +938,24 @@
 % warning from \Lab@ovcheckpalette, if there are more traces than colours).
 \cs_new_protected:Npn \Lab@ovpick #1
   {
-    \tl_set:Nx \l__nulab_pick_l_tl
+    \tl_if_blank:VTF \l__nulab_panel_tcol_tl
       {
-        \clist_item:Nn \l__nulab_plot_ovcols_clist
-          { \int_eval:n { 1 + \int_mod:nn { #1 - 1 } { \clist_count:N \l__nulab_plot_ovcols_clist } } }
+        \clist_if_empty:NT \l__nulab_plot_ovcols_clist
+          {
+            \PackageError{nulabreport}{Empty~`overlay~colors'~palette}
+              {Give~overlay~colors~at~least~one~colour,~or~set~trace~color~on~every~panel.
+               ~Continuing~with~the~default~palette.}
+            \Lab@ovdefaultpalette
+          }
+        \Lab@ovcheckpalette{#1}
+        \tl_set:Nx \l__nulab_pick_l_tl
+          {
+            \clist_item:Nn \l__nulab_plot_ovcols_clist
+              { \int_eval:n { 1 + \int_mod:nn { #1 - 1 } { \clist_count:N \l__nulab_plot_ovcols_clist } } }
+          }
+        \exp_args:NV \Lab@pickcolors \l__nulab_pick_l_tl { \c_true_bool }
       }
-    \exp_args:NV \Lab@pickcolors \l__nulab_pick_l_tl { \c_true_bool }
+      { \Lab@pickcolors {} { \c_true_bool } }
   }
 \cs_new_protected:Npn \Lab@ovcheckpalette #1
   {
@@ -1428,7 +1442,6 @@
     \def\labpanel##1##2##3{\global\advance\Lab@ov@i\@ne
       \Lab@panelsplit{##2}{\Lab@ovscan}}%
     \let\irpanel\labpanel\let\chrompanel\labpanel#3}%
-  \Lab@ovcheckpalette{\the\Lab@ov@i}%
   \global\Lab@ov@i\z@
   \def\labpanel##1##2##3{\global\advance\Lab@ov@i\@ne
     \Lab@panelsplit{##2}{\Lab@ovpanel{#1}{##1}{##3}}}%
@@ -1695,7 +1708,7 @@
 \newcommand{\Lab@pg@foot}[2]{%
   \ifnum#1=\@ne
     \ifLab@barecaptions
-      \gdef\Lab@barefootertext{#2}%
+      % A saved page activates its bare caption only when it ships.
     \else
       \captionof{figure}{#2}%
     \fi
@@ -1742,6 +1755,10 @@
   \Lab@pg@fit{#1}{#2}%
   % 3. the page itself
   \global\advance\Lab@pg@npages\@ne
+  \expandafter\gdef\csname Lab@pg@bare@\the\Lab@pg@npages\endcsname{}%
+  \ifLab@barecaptions\ifnum\Lab@pg@islast=\@ne
+    \expandafter\gdef\csname Lab@pg@bare@\the\Lab@pg@npages\endcsname{#3}%
+  \fi\fi
   \expandafter\newbox\csname Lab@pg@box@\the\Lab@pg@npages\endcsname
   \global\setbox\csname Lab@pg@box@\the\Lab@pg@npages\endcsname
     \vbox to\textheight{%
@@ -1821,7 +1838,11 @@
   \global\setbox\Lab@pg@hold\box\@outputbox
   \global\setbox\@outputbox\box\csname Lab@pg@box@#1\endcsname
   \global\Lab@pg@busytrue
+  % A `previous' page must also preserve the text page's pending caption.
+  \global\let\Lab@pg@holdbare\Lab@barefootertext
+  \expandafter\let\expandafter\Lab@barefootertext\csname Lab@pg@bare@#1\endcsname
   \@outputpage
+  \global\let\Lab@barefootertext\Lab@pg@holdbare
   \global\Lab@pg@busyfalse
   \global\setbox\@outputbox\box\Lab@pg@hold}
 \AddToHook{build/page/before}[nulabreport/stackpage]{%
@@ -1864,7 +1885,7 @@
 % When on, each whole plot picture -- \Lab@plotbody (single), \Lab@stackbody
 % (stack and \irspectrumpage) and \Lab@overlaybody -- is looked up by a key:
 % the md5 of the macro's name, its arguments and the layout it reads (text
-% height/width, line width, font size, float fractions). A HIT includes the PDF
+% height/width, line width, font selection and size, float fractions). A HIT includes the PDF
 % pdfmd stored for that key, at the stored size, instead of typesetting; a MISS
 % typesets exactly as before and appends the call to \jobname.plotreq, which
 % pdfmd renders afterwards in a standalone job (\LabPlotRender defined: no
@@ -1925,6 +1946,10 @@
       \noexpand\columnwidth=\the\columnwidth\space
       \noexpand\def\noexpand\topfraction{\topfraction}%
       \noexpand\def\noexpand\textfraction{\textfraction}%
+      \noexpand\fontencoding{\f@encoding}%
+      \noexpand\fontfamily{\f@family}%
+      \noexpand\fontseries{\f@series}%
+      \noexpand\fontshape{\f@shape}%
       \noexpand\fontsize{\f@size}{\f@baselineskip}\noexpand\selectfont
       \Lab@pc@state\unexpanded\expandafter{\Lab@pc@extra}}%
     \edef\Lab@pc@src{\string#1\detokenize{#3}\detokenize\expandafter{\Lab@pc@ctx}}%

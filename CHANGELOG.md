@@ -2,6 +2,13 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.30 (2026-11-12)
+
+- The bundled excerpt `irspec-ir.sty` is regenerated from nulabreport v1.31.30, whose review fixes reach the figure
+  macros: an empty `overlay colors` palette is a LaTeX error that names the setting and goes on with the default palette
+  (it divided by zero), the plot cache key includes the inherited font, and a dedicated spectrum page keeps a bare
+  caption.
+
 ## 0.2.29 (2026-11-12)
 
 - Preserve percent signs in CSV filenames in generated TeX (I2.5).
