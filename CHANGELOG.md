@@ -2,6 +2,10 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.27 (2026-11-12)
+
+- Report truncated VSPD headers and VQUD configuration fields as input errors (I4.4).
+
 ## 0.2.26 (2026-11-12)
 
 - Resolve SPA batch CSV references from the Markdown location (I3.5), a deliberate

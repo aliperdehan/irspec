@@ -149,10 +149,13 @@ def config_records(ole, table, column, numeric=False):
         if pos == -1:
             break
         p = pos + len(MARKER)
-        l1 = data[p]; p += 1
-        rowid = data[p:p + l1].decode('latin1'); p += l1
-        l2 = data[p]; p += 1
-        text = data[p:p + l2].decode('latin1'); p += l2
+        def field(p):
+            if p >= len(data) or p + 1 + data[p] > len(data):
+                raise ValueError(f"{table}/Column Configuration/{column}: truncated record")
+            length = data[p]
+            return data[p + 1:p + 1 + length].decode('latin1'), p + 1 + length
+        rowid, p = field(p)
+        text, p = field(p)
         num = None
         if numeric and p + 16 <= len(data):
             num = struct.unpack_from('<d', data, p)[0]
@@ -354,7 +357,7 @@ def info(path):
 
 # ---------------------------------------------------------------- CSV output
 
-def main(argv=None):
+def _main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     if len(argv) == 2 and argv[0] == 'info':
         info(argv[1]); return
@@ -418,6 +421,13 @@ def main(argv=None):
         print(f'Sample Table: {len(smp_rows)} rows, {sum(1 for r in smp_rows if r[1] == "Avg")} groups')
     if not std_rows and not smp_rows:
         print('no readings in this file (a template, or an empty one): nothing written. Try: info')
+
+
+def main(argv=None):
+    try:
+        return _main(argv)
+    except ValueError as err:
+        raise SystemExit(str(err)) from err
 
 
 if __name__ == '__main__':

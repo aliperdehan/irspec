@@ -98,6 +98,8 @@ def spectra(ole):
             raise SystemExit(f"X Data.{n}/Y Data.{n}: sizes {len(xb)}/{len(yb or b'')} do not match -- unknown layout")
         k = len(xb) // 8
         hdr = read_stream(ole, pre + "Data Header." + n)
+        if hdr is not None and len(hdr) < struct.calcsize("<I"):
+            raise SystemExit(f"Data Header.{n}: truncated record")
         if hdr and struct.unpack_from("<I", hdr, 0)[0] != k:
             raise SystemExit(f"Data Header.{n} says {struct.unpack_from('<I', hdr, 0)[0]} points, the streams hold {k}")
         out.append((int(n), list(struct.unpack(f"<{k}d", xb)), list(struct.unpack(f"<{k}d", yb))))
