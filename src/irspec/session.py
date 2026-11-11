@@ -275,12 +275,9 @@ def read_plain(path):
 
 
 def _jdx_kind(path):
-    with open(path, encoding="utf-8", errors="replace") as f:
-        head = f.read(20000).upper()
-    m = re.search(r"##YUNITS=\s*(\S+)", head)
-    if m and m.group(1).startswith("(MICROMOL/MOL)-1M-1"):
-        return "quantir"
     _, _, meta = jdx_tool.read_jdx(path)
+    if meta["yunits"].startswith("(MICROMOL/MOL)-1M-1"):
+        return "quantir"
     return "absorbance" if meta["axis_label"] == "Absorbance" else "transmittance"
 
 

@@ -2,6 +2,12 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.7 (2026-11-11)
+
+- Sessions classify QUANT-IR absorptivity from the full parsed JCAMP header, including units
+  after long headers or with spaces before `=`. Such spectra always require `peak_a` or `cl`.
+  The absorptivity converter also checks the parsed units, rather than matching comment text.
+
 ## 0.2.6 (2026-11-11)
 
 - `a2t` rejects negative decimal precision before opening its output. CSV writes replace the

@@ -75,9 +75,8 @@ def main():
     args = ap.parse_args()
 
     xs, ys, meta = jdx_tool.read_jdx(args.jdx)
-    with open(args.jdx, encoding="utf-8", errors="replace") as f:
-        if "(MICROMOL/MOL)-1M-1" not in f.read().upper():
-            sys.exit(f"{args.jdx}: y-units are not (micromol/mol)-1m-1; nothing to convert")
+    if not meta["yunits"].startswith("(MICROMOL/MOL)-1M-1"):
+        sys.exit(f"{args.jdx}: y-units are not (micromol/mol)-1m-1; nothing to convert")
     top = max(ys)
     if top <= 0:
         sys.exit("no positive band in the spectrum")

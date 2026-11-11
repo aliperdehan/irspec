@@ -228,7 +228,7 @@ def read_jdx(fn):
     """Return (x, y, meta) for one JCAMP-DX IR file. x is wavenumber
     (cm^-1), always descending. y is whatever ##YUNITS says (Absorbance or
     fractional Transmittance), untouched. meta has 'title', 'cas',
-    'axis_label'. Validated against a real Spectragryph export -- see
+    'axis_label' and the original 'yunits' (upper case). Validated against a real Spectragryph export -- see
     module docstring sec. 1. Raises loudly on anything this script hasn't
     seen and validated (compressed data, unrecognised XUNITS/YUNITS)."""
     with open(fn, "r", encoding="utf-8", errors="replace") as f:
@@ -248,7 +248,8 @@ def read_jdx(fn):
         raise ValueError(f"{fn}: no ##XYDATA= block found")
 
     xunits = header.get("XUNITS", "").upper()
-    yunits = header.get("YUNITS", "").upper()
+    raw_yunits = header.get("YUNITS", "").upper()
+    yunits = raw_yunits
     if xunits not in ("1/CM", "CM-1", "MICROMETERS"):
         raise ValueError(
             f"{fn}: unrecognised XUNITS={xunits!r} -- add and validate "
@@ -327,7 +328,7 @@ def read_jdx(fn):
     cas = header.get("CAS REGISTRY NO", "")
     title = header.get("TITLE", "")
     axis_label = "Absorbance" if yunits == "ABSORBANCE" else "Transmittance"
-    meta = {"title": title, "cas": cas, "axis_label": axis_label}
+    meta = {"title": title, "cas": cas, "axis_label": axis_label, "yunits": raw_yunits}
     return xs, ys, meta
 
 
