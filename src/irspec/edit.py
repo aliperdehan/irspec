@@ -372,6 +372,7 @@ def load_saved_ir(folder, entry):
             pass
         elif os.path.exists(plain):
             x, y = session.read_plain(plain)
+            return x, y, session.TRANSMITTANCE, False
         elif os.path.exists(archival):
             x, y, _ = spa_peaks.read_house_csv(archival)
             keep = x >= spa_tool.CLIP_CM  # as the plain CSV is clipped
@@ -381,7 +382,9 @@ def load_saved_ir(folder, entry):
                             f"{os.path.relpath(archival, folder)} exists (run `irspec session` "
                             f"on the folder first)")
         axis = entry.get("axis") or spa_tool.axis_of(y, x >= spa_tool.CLIP_CM)
-        return x, y, axis, axis.startswith("Absorbance")
+        if axis.startswith("Absorbance"):
+            y = 100.0 * 10.0 ** -y
+        return x, y, session.TRANSMITTANCE, False
     plain = os.path.join(folder, "plain", f"{session.reference_name(folder, entry)}.csv")
     if not os.path.exists(plain):
         raise EditError(f"no spectrum for {f}: {os.path.relpath(plain, folder)} does not exist "

@@ -357,7 +357,15 @@ def process(folder, e, csv_dir, plain_dir):
 def process_ir(folder, e, csv_dir, plain_dir):
     f = e["file"]
     if f.lower().endswith(_io.SPA_EXT):
-        return _io.process_spa(os.path.join(folder, f), e, csv_dir, plain_dir)
+        path = os.path.join(folder, f)
+        stem = spa_tool.clean_stem(path)
+        x, y = spa_tool.read_spa(path)
+        axis = e.get("axis") or spa_tool.axis_of(y, x >= spa_tool.CLIP_CM)
+        archival = spa_tool.write_archival_csv(x, y, os.path.join(csv_dir, stem), axis)
+        if axis.startswith("Absorbance"):
+            y = 100.0 * np.power(10.0, -y)
+        plain = spa_tool.write_plain_csv(x, y, os.path.join(plain_dir, stem))
+        return _io._finish(e, stem, x, y, TRANSMITTANCE, False, archival, plain)
     if f.lower().endswith(_io.JDX_EXT):
         return process_jdx_reference(folder, e, csv_dir, plain_dir)
     return process_image(folder, e, csv_dir, plain_dir)

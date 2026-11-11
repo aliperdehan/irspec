@@ -2,6 +2,11 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.15 (2026-11-12)
+
+- Convert absorbance SPA traces and peaks to %T in sessions and previews; retain
+  the original absorbance in archival CSVs (I2.3).
+
 ## 0.2.14 (2026-11-11)
 
 - Escape free-text captions and labels in one pass, including carets and tildes.

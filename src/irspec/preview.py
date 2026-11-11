@@ -104,7 +104,10 @@ def load_ir(path, entry):
     if ext in (".spa", ".spg"):
         x, y = spa_tool.read_spa(path)
         axis = axis_given or spa_tool.axis_of(y, x >= spa_tool.CLIP_CM)
-        return x, y, axis, axis.startswith("Absorbance"), "spa", None
+        if axis.startswith("Absorbance"):
+            y = np.round(100.0 * np.power(10.0, -y), 4)
+            return x, y, TRANSMITTANCE, False, "spa", "Absorbance"
+        return x, y, axis, False, "spa", None
     if ext in (".jdx", ".dx", ".jcm"):
         from . import session
         xs, ys, meta = jdx_tool.read_jdx(path)

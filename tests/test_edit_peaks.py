@@ -257,9 +257,9 @@ class Auto(Base):
         self.peak("auto")
         self.assertEqual(self.mpath.read_bytes(), once)
 
-    def test_absorbance_peaks_point_up_and_labels_go_above(self):
+    def test_absorbance_spa_peaks_are_converted_to_percent_transmittance(self):
         run(self.dir, STEM, "set", "axis=Absorbance")
-        self.write_entry(peaks=None)  # session picks again, as absorbance this time
+        self.write_entry(peaks=None)  # session converts the declared absorbance before picking
         self.assertEqual(irspec("session", self.dir, "--build", "none")[0], 0)
         by_session = self.mpath.read_bytes()
         self.assertNotEqual(by_session, self.fresh)
@@ -269,7 +269,7 @@ class Auto(Base):
         code, out, _ = self.peak("add", "1720", "--json")
         ((x_, ly),) = [c["new"] for c in json.loads(out)["changes"]]
         x, y = spa_tool.read_spa(DATA / SAMPLE)
-        self.assertGreater(ly, float(y[abs(x - x_).argmin()]))
+        self.assertLess(ly, float(100 * 10. ** -y[abs(x - x_).argmin()]))
 
 
 class Arguments(Base):

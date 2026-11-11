@@ -409,19 +409,16 @@ class SameAsTheSession(unittest.TestCase):
         self.assertEqual(json.loads(run(SAMPLE, "--json")[1])["peaks_from"], "automatic")
 
     def test_the_entrys_axis_is_used(self):
-        work = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, work)
-        folder = work / "s"
-        shutil.copytree(self.session, folder)
-        path = folder / "manifest.json"
-        entries = json.loads(path.read_text(encoding="utf-8"))
-        entries[0].pop("peaks")
-        entries[0]["axis"] = "Absorbance"
-        path.write_text(json.dumps(entries), encoding="utf-8")
-        obj = json.loads(run(f"SPA/{SAMPLE}", "--json", cwd=folder)[1])
-        self.assertEqual((obj["axis"], obj["ymin"]), ("Absorbance", None))
-        self.assertEqual(obj["peaks_from"], "automatic")  # the entry has no peaks of its own
-        self.assertNotEqual(len(obj["peaks"]), 31)  # the %T data picked as absorbance
+        import numpy as np
+        # Values detected as %T can explicitly be declared absorbance. The
+        # session and preview then convert them, even when they round to zero.
+        x, y = np.array([700., 710., 720.]), np.array([20., 21., 20.])
+        with mock.patch("irspec.spa_tool.read_spa", return_value=(x, y)):
+            native = preview.load_ir("sample.SPA", {})
+            converted = preview.load_ir("sample.SPA", {"axis": "Absorbance"})
+        np.testing.assert_equal(native[1], y)
+        np.testing.assert_equal(converted[1], np.round(100 * 10. ** -y, 4))
+        self.assertEqual(converted[2:], ("Transmittance %", False, "spa", "Absorbance"))
 
     def test_a_manifest_edit_is_what_the_preview_shows(self):
         work = Path(tempfile.mkdtemp())
