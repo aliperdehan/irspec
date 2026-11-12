@@ -504,6 +504,12 @@ all you need. Each has its own `--help`.
 | `irspec vspd` | a Shimadzu UV-Vis `.vspd` → `wavelength,absorbance` CSV; `info`, `peaks` (the picks stored in the file, as a `\labplot[kind=uvvis]` peak list), `verify` against the instrument's text export | `irspec vspd convert scan.vspd --out scan.csv` |
 | `irspec vqud` | a Shimadzu quantitation file (`.vqud`) → CSVs of the standards, the unknowns and the calibration (refitted, and compared with the fit the file stores); `info` reads a `.vqud`, `.vqut` or `.vqum` without writing | `irspec vqud run.vqud out/run` |
 
+`irspec corr` compares only requested grid points measured in both spectra
+(default grid: 700–3900 cm⁻¹, step 1 cm⁻¹; set `--lo`, `--hi`, `--step`). If
+coverage restricts the comparison, a NOTE on stderr gives the actual range.
+With fewer than two shared grid points, the command exits with status 2,
+naming both measured ranges and printing no correlations.
+
 `digitize` has two more layouts than SDBS: `--palleros` for book figures and
 `--omnic` for OMNIC screenshots (this one reads the tick labels with tesseract).
 The module docstrings are the long documentation of each tool: what was checked,

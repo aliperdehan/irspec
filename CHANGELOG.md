@@ -2,6 +2,14 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.2.31 (2026-11-12)
+
+- Correlate only requested grid points within both spectra's measured ranges
+  (I1.2). Restricted comparisons report their actual range on stderr. With
+  fewer than two shared grid points, the command exits with status 2 and both
+  measured ranges, without printing correlations. Full coverage keeps the
+  existing output.
+
 ## 0.2.30 (2026-11-12)
 
 - The bundled excerpt `irspec-ir.sty` is regenerated from nulabreport v1.31.30, whose review fixes reach the figure

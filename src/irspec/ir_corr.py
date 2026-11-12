@@ -12,8 +12,10 @@ is the reference and each of the others is correlated against it.
 Method (stated once in the text of LR4-5 and to be stated the same way in any
 report that quotes an r): both traces are linearly interpolated onto one
 common wavenumber grid (default 1 cm-1 steps, 700 to 3900 cm-1, the range the
-diamond ATR spectra are clean over) and compared by Pearson's correlation
-coefficient, numpy.corrcoef. Nothing else: no baseline correction, no
+diamond ATR spectra are clean over), keeping only points within both measured
+ranges, and compared by Pearson's correlation coefficient, numpy.corrcoef.
+A restricted comparison reports its actual grid range on stderr; fewer than
+two shared grid points is an error. Nothing else: no baseline correction, no
 normalisation (r is insensitive to a constant offset or scale anyway), no
 derivative.
 
@@ -47,8 +49,24 @@ def load(path):
 
 
 def corr(a, b, lo=700.0, hi=3900.0, step=1.0):
-    """Pearson r of spectra a and b ((x, y) pairs) on a common grid."""
+    """Pearson r on shared measured grid points; note any restriction on stderr.
+
+    Raise ValueError if fewer than two grid points are shared.
+    """
     grid = np.arange(lo, hi + step / 2, step)
+    a_lo, a_hi = np.min(a[0]), np.max(a[0])
+    b_lo, b_hi = np.min(b[0]), np.max(b[0])
+    shared = grid[(grid >= max(a_lo, b_lo)) & (grid <= min(a_hi, b_hi))]
+    if shared.size < 2:
+        raise ValueError(
+            "need at least two grid points within both measured ranges: "
+            f"[{a_lo:g}, {a_hi:g}] and [{b_lo:g}, {b_hi:g}] cm-1 "
+            f"(requested grid {lo:g} to {hi:g}, step {step:g} cm-1)"
+        )
+    if shared.size != grid.size:
+        print(f"NOTE: comparing only {shared[0]:g} to {shared[-1]:g} cm-1 "
+              "within both measured ranges", file=sys.stderr)
+    grid = shared
     ya = np.interp(grid, *a)
     yb = np.interp(grid, *b)
     return float(np.corrcoef(ya, yb)[0, 1])
@@ -64,9 +82,14 @@ def main():
     if len(args.files) < 2:
         sys.exit("need at least two files")
     ref = load(args.files[0])
+    results = []
     for other in args.files[1:]:
-        r = corr(ref, load(other), args.lo, args.hi, args.step)
-        print(f"{r:.4f}  {args.files[0]}  ~  {other}")
+        try:
+            r = corr(ref, load(other), args.lo, args.hi, args.step)
+        except ValueError as exc:
+            ap.error(f"{args.files[0]} ~ {other}: {exc}")
+        results.append(f"{r:.4f}  {args.files[0]}  ~  {other}")
+    print("\n".join(results))
 
 
 if __name__ == "__main__":
