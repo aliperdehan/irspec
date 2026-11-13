@@ -49,7 +49,10 @@ It does:
   peak picks stored in it (`irspec vspd`), and the quantitation tables of a `.vqud`
   (standards, unknowns and the calibration line) as CSVs (`irspec vqud`); a `.vspd` in a
   session folder becomes a UV-Vis figure beside the IR ones ([below](#uv-vis-scans)). irspec is
-  growing from IR to the other plots of a chemistry lab report, one kind at a time.
+  growing from IR to the other plots of a chemistry lab report, one kind at a time;
+- read Thermo Xcalibur `.RAW` gas chromatograms (`irspec gc`): acquisition details,
+  archival and plain CSVs, trimming, baseline correction, excluded ranges,
+  peak areas and report tables, verification and batch Markdown.
 
 It does not interpret spectra, assign bands or identify compounds. The peak
 labels are wavenumbers; deciding what a band is stays your job. Peak picking is a
@@ -503,6 +506,7 @@ all you need. Each has its own `--help`.
 | `irspec corr` | Pearson r between spectra (the first is the reference) | `irspec corr plain/REF.csv plain/UNKNOWN.csv` |
 | `irspec vspd` | a Shimadzu UV-Vis `.vspd` → `wavelength,absorbance` CSV; `info`, `peaks` (the picks stored in the file, as a `\labplot[kind=uvvis]` peak list), `verify` against the instrument's text export | `irspec vspd convert scan.vspd --out scan.csv` |
 | `irspec vqud` | a Shimadzu quantitation file (`.vqud`) → CSVs of the standards, the unknowns and the calibration (refitted, and compared with the fit the file stores); `info` reads a `.vqud`, `.vqut` or `.vqum` without writing | `irspec vqud run.vqud out/run` |
+| `irspec gc` | Thermo Xcalibur `.RAW` (GC) → archival and plain CSVs; `info`, `crop` with baseline correction and excluded ranges, `integrate` peak areas and report tables, `verify`, `batch` Markdown | `irspec gc convert run.RAW --out csv/run` |
 
 `irspec corr` compares only requested grid points measured in both spectra
 (default grid: 700–3900 cm⁻¹, step 1 cm⁻¹; set `--lo`, `--hi`, `--step`). If
@@ -538,7 +542,7 @@ Three more checks run on the author's own coursework folders (the environment
 variable `IRSPEC_LR6_IR` points at them) and are skipped everywhere else; they
 are how the WebBook and SDBS paths were shown to give byte-identical CSVs.
 
-`irspec vspd` and `irspec vqud` were moved from the same package; their output on
+`irspec vspd`, `irspec vqud` and `irspec gc` were moved from the same package; their output on
 the test files is compared with what the original scripts wrote, and was compared
 on the author's original instrument files too, byte for byte.
 
@@ -551,10 +555,11 @@ student's data and no instructor's material is in this repository.
 
 `0.MINOR.PATCH` until 1.0, then [Semantic Versioning](https://semver.org).
 
-- **Minor** (`0.2.x` → `0.3.0`): opens a new line, and only for something that
-  could break a folder or a script someone already has: a command-line flag
-  renamed or removed, a manifest key or the folder layout changed, the CSV or
-  figure format changed, a `--json` key renamed or removed.
+- **Minor** (`0.2.x` → `0.3.0`): opens a new line: for something that could break
+  a folder or a script someone already has (a command-line flag renamed or
+  removed, a manifest key or the folder layout changed, the CSV or figure format
+  changed, a `--json` key renamed or removed), or for a new line of work the
+  author opens (0.3: gas chromatography).
 - **Patch** (`0.2.0` → `0.2.1`): everything else inside a line, new features
   included. Each change that lands gets its own patch version and its own
   `CHANGELOG.md` entry, so nothing waits unreleased. Only the newest version at
@@ -565,7 +570,8 @@ student's data and no instructor's material is in this repository.
   and it is frozen at 1.0.
 - **0.1.0** was the first release: the TeX pipeline, the exports and the matplotlib
   and R backends. **0.2.0** added the command-line foundation: `irspec edit`,
-  `irspec preview`, `--json` and [`docs/schema.md`](docs/schema.md). **1.0.0** is
+  `irspec preview`, `--json` and [`docs/schema.md`](docs/schema.md). **0.3.0** opened
+  the GC line with `irspec gc`, breaking nothing of 0.2. **1.0.0** is
   planned for when the formats have settled.
 - The version lives in one place, `irspec.__version__`. A release is a git tag
   `vX.Y.Z` plus an entry in `CHANGELOG.md`. The bundled excerpt records which

@@ -359,6 +359,30 @@ unchecked.
 
 ## 6. Other plot kinds, and a registry of kinds
 
+The GC tool is in (0.3.0, the first of the GC line), `irspec gc`; the `gc` plot kind in a session is next.
+**Decided or measured for it (2026-11-13), not built yet:**
+- *Frame, measured* on `\chromatogram` (the author's LR4 group-1 CSVs, six limit settings, the full
+  package and the bundled excerpt alike): y padding 0.0985 below and 0.0017 above the span, y on
+  the data inside the x window (`y_scope="frame"`), no x padding (the run's own ends, or
+  xmin/xmax); a set `ymax` is the top of the span. The same rule as uvvis. The x tick step
+  depends on the axis width left by the y labels (2.6-9.6 min: labels every 0.2 with 10 000-count
+  y labels, every 0.5 with 600 000-count ones), so preview's ticks only approximate it.
+- *The kind:* `gc/`, `.raw` (any case), time/signal, labels `apex`, macro `\chromatogram`. A
+  session's block must equal `irspec gc batch`'s block for the same entry, byte for byte (options
+  ymax, `restrict y to domain*` when the data rise above ymax, xmin, xmax, ylabel; peaks
+  `tR:.2f/apex:.0f/label:.0f/{Name}`; apex clamped to ymax).
+- *Manifest keys* as `gc_tool batch`'s, except the peak names: `compounds` (`"2.84=Methanol,..."`),
+  because `peaks` keeps its `[x, label_y]` shape in irspec; also `solvent`, `baseline`,
+  `min_prominence`, `window`, `ymax`, `xmin`, `xmax`, `known` (for the tables), `crop`
+  (`xmin`, `xmax`, `correct`, `exclude`, `title`).
+- *The author chose:* an entry with `crop` gives BOTH figures, the full run first and then the
+  cropped one, as in LR4; `crop.title` names the second; `"full": false` drops the full run.
+- *Tables:* `integrate/STEM.txt` (and `STEM_crop.txt`), what `irspec gc integrate` prints for that
+  figure; a re-run must not file `integrate/` into `other/`.
+- *Found in nulabreport, not fixed there:* since its N5.3 (`bc7eb56`), `gc_tool batch` refuses a
+  manifest that lists the same .RAW twice, which the LR4 manifest does (full run + crop).
+  `irspec gc` keeps that behaviour (case `batch_twice`) until it is fixed in both.
+
 **Decided (the author, 2026-11-10).** irspec takes over the other plot tools of the private
 `nulabreport` repository (`tools/`): `gc_tool.py` (Thermo Xcalibur `.RAW` chromatograms),
 `vspd_tool.py` (Shimadzu UVProbe `.vspd` UV-Vis), `spectrum_digitize.py` (a mass or NMR spectrum

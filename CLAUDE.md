@@ -50,7 +50,8 @@ src/irspec/   cli.py (the `irspec` command), session.py (the one command most pe
               kinds.py (the registry of plot kinds: each kind's axis, frame, ticks, macro,
               folders and its process/load/load_saved/pick functions; a new kind is an entry
               there), uvvis.py (the UV-Vis kind's functions), vspd_tool, vqud_tool (the
-              Shimadzu readers, `irspec vspd`/`vqud`),
+              Shimadzu readers, `irspec vspd`/`vqud`), gc_tool (the Thermo Xcalibur
+              GC reader and processing tool, `irspec gc`),
               data/irspec-ir.sty (GENERATED), data/fonts/ (STIX Two, SIL OFL 1.1)
 tests/        unittest; PYTHONPATH=src python3 -m unittest discover -s tests   (~1 min)
               test_differential.py compares 16 commands with tests/data/differential_expected.json
@@ -113,8 +114,9 @@ that is committed gets its own patch bump (`0.2.N`) and its own `## 0.2.N (date)
 heading in the same commit. A push (when the author asks) tags only the newest version, so
 PyPI gets that one; the versions in between stay changelog headings with no tag and no upload
 (the author, 2026-11-11: "push and tag the latest one instead of every one"). No
-`## Unreleased` pile. A new minor (`0.3.0`) only for a break (README
-"Versioning"). Tell the author when a new minor line seems due.
+`## Unreleased` pile. A new minor only for a break, or for a new line of work the author
+opens (README "Versioning"; 2026-11-13: "gc tool can become 0.3.x series", so the GC port is
+0.3.0 and the GC slices after it are 0.3.N). Tell the author when a new minor line seems due.
 
 CI (`test.yml`): Linux and macOS, Python 3.9 and 3.13; tests that need lualatex, R, poppler or
 MuPDF skip themselves, so a green CI does not cover the TeX/R paths: run the suite locally with the

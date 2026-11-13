@@ -13,7 +13,7 @@ Every file here is the author's own measurement, or made from one.
 | `quant_510nm.vqud` | a quantitation file at 510 nm: 6 standards and one unknown | anonymised (below) |
 | `quant_540nm_blocks.vqud` | an older quantitation file at 540 nm (`WL540.0 Modified` column, several calibration blocks) | anonymised (below) |
 | `gc_lab4.RAW` | a gas chromatogram, Thermo TRACE GC Ultra (FID), Xcalibur `.RAW`: the author's group's alcohol mixture in acetone, 7197 points over 12 min | anonymised (below) |
-| `gc_expected.json` | what nulabreport's `tools/gc_tool.py` did on it: 18 commands, their output and the sha256 of every file they wrote | recorded 2026-11-13 from nulabreport v1.31.38 |
+| `gc_expected.json` | what nulabreport's `tools/gc_tool.py` did on it: 18 commands, their output and the sha256 of every file they wrote | recorded 2026-11-13 from nulabreport v1.31.38 by `tests/record_gc.py` |
 
 ## The UV-Vis files: what was changed
 

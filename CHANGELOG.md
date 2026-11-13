@@ -2,6 +2,17 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.0 (2026-11-13)
+
+Read Thermo Xcalibur GC chromatograms with `irspec gc`. 0.3 opens the GC line: nothing of
+0.2 changes or breaks, and the GC slices that follow are 0.3.x.
+
+- Move nulabreport's GC tool here with unchanged output: acquisition details,
+  archival and plain CSVs, trimming, baseline correction, excluded ranges,
+  peak areas and report tables, verification and batch Markdown.
+- Check all 18 recorded commands against the author's anonymised run,
+  including the baseline-corrected LR4 figure with its acetone front removed.
+
 ## 0.2.31 (2026-11-12)
 
 - Correlate only requested grid points within both spectra's measured ranges

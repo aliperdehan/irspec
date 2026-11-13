@@ -14,6 +14,7 @@
     irspec corr ...         Pearson r between spectra                 (ir_corr)
     irspec vspd ...         Shimadzu UV-Vis .vspd -> CSV, stored picks (vspd_tool)
     irspec vqud ...         Shimadzu UV-Vis quantitation tables -> CSVs (vqud_tool)
+    irspec gc ...           Thermo Xcalibur .RAW (GC) -> CSVs, crop, baseline, peak areas (gc_tool)
 
 `session` is the command most people want; the others are its steps, for when
 one step is all that is needed (`irspec jdx convert X.jdx`). Each takes its
@@ -39,6 +40,7 @@ COMMANDS = {
     "corr": "ir_corr",
     "vspd": "vspd_tool",
     "vqud": "vqud_tool",
+    "gc": "gc_tool",
 }
 
 
