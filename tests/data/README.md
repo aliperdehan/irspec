@@ -12,6 +12,8 @@ Every file here is the author's own measurement, or made from one.
 | `uvvis_golden.csv` | its CSV, made by nulabreport's `vspd_tool.py convert` | |
 | `quant_510nm.vqud` | a quantitation file at 510 nm: 6 standards and one unknown | anonymised (below) |
 | `quant_540nm_blocks.vqud` | an older quantitation file at 540 nm (`WL540.0 Modified` column, several calibration blocks) | anonymised (below) |
+| `gc_lab4.RAW` | a gas chromatogram, Thermo TRACE GC Ultra (FID), Xcalibur `.RAW`: the author's group's alcohol mixture in acetone, 7197 points over 12 min | anonymised (below) |
+| `gc_expected.json` | what nulabreport's `tools/gc_tool.py` did on it: 18 commands, their output and the sha256 of every file they wrote | recorded 2026-11-13 from nulabreport v1.31.38 |
 
 ## The UV-Vis files: what was changed
 
@@ -41,3 +43,17 @@ of anything removed is left. Approved by the author, 2026-11-11.
 
 Each kept row is identical to the original file's, text and full-precision value: checked
 by reading both with the same code.
+
+## The GC file: what was changed
+
+`gc_lab4.RAW` is the author's own group's run (its original name was `Lab4_group1.RAW`, which
+it still carries inside, as the raw-file name of the sequence row). Three UTF-16 strings were
+overwritten in place with strings of the same length, nothing else: a person's name in the
+data-folder path (now `XXXXX`), the instrument's serial number and a site code (now zeros).
+Kept: the instrument method text (oven, inlet, carrier, detector), the acquisition time, the
+method file's name, Windows temp-file paths with the generic user `User`, and the chromatogram.
+Every string in the file (UTF-16 and ASCII, the embedded OLE method container included) was
+read first. Checked: nulabreport's `gc_tool.py` gives the same output for all 18 commands of
+`gc_expected.json` on the original and on this file, and its `verify` matches this file against
+the CSV the lab's Xcalibur exported from the original (that export is not here: it names the
+computer's user).

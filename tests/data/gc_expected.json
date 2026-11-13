@@ -1,0 +1,352 @@
+{
+ "info": {
+  "argv": [
+   "info",
+   "gc_lab4.RAW"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "file        gc_lab4.RAW\nversion     63\nacquired    2026-06-16 17:13:09 (UTC, from the file header)\ninstrument  TRACE GC Ultra   detector FID   Channel 1 (Counts)\nmethod      C:\\Xcalibur\\methods\\GC JUNE 4 lab.meth\npoints      7197   0..11.9933 min   every 0.100 s (10 Hz)\n\nSample Volume (µl):        0.20 ul\nPlunger strokes:           3\nViscous sample:            No\nSampling depth in vial:    Bottom\nInjection depth:           Standard\nPre-Inj dwell time (s):    3 sec\nPost-Inj dwell time (s):   15 sec\nPre-Inj solvent vial:      A\nPre-Inj solvent cycles:    3\nSample rinses:             3\nPost-Inj solvent:          A\nPost-Inj solvent cycles:   3\nAcquisition Time\n   Use Oven Run Time:                     Yes\nOven Method\n   Initial Temperature (C):               40\n   Initial Time (min):                    8.00\n   Number of Ramps:                       1\n   Rate #1 (deg/min):                     20.0\n   Final Temperature #1 (C):              80\n   Hold Time #1 (min):                    2.00\n   Post Run Temperature:                  Off\n   Enable Cryogenics:                     Off\n   Maximum Temperature (C):               350\n   Prep Run Timeout (min):                10.00\n   Equilibration Time (min):              0.50\n------------------------------------------------------------\nRight SSL Method\n   Base Temperature:                      On\n   Base Temperature (C):                  250\n   Mode:                                  Split\n   Split Flow:                            On\n   Split Flow Flow (ml/min):              40\n   Splitless Time (min):                  1.00\n   Surge Pressure:                        Off\n   Surge Pressure (kPa):                  3.00\n   Surge Duration (min):                  0.00\n   Constant Purge:                        On\n   Stop Purge At: (min):                  0.00\nRight Carrier Method\n   Mode:                                  Constant Flow\n   Initial Value:                         On\n   Initial Value (ml/min):                1.00\n   Initial Time:                          1.00\n   Gas Saver:                             On\n   Gas Saver Flow (ml/min):               10\n   Gas Saver Time:                        5.00\n   Vacuum Compensation:                   Off\n------------------------------------------------------------\nNo Left Inlet\n------------------------------------------------------------\nRight FID Method\n   Base Temperature:                      On\n   Base Temperature (C):                  250\n   Flame:                                 On\n   Flameout Retry:                        Off\n   Ignition Threshold (mA):               0.5\n   H2:                                    On\n   H2 Flow (ml/min):                      30\n   Air:                                   On\n   Air Flow (ml/min):                     350\n   Makeup Gas:                            On\n   Makeup Gas Flow (ml/min):              30\nRight Signal Method\n   Offset:                                Off\n   Offset Value:                          0\n   Autozero:                              Off\n   Range:                                 1\n   Gain:                                  1\n   Negative Polarity:                     Off\n   Analog Filter:                         Off\n------------------------------------------------------------\nNo Left Detector\n------------------------------------------------------------\nNo Aux Detector\n------------------------------------------------------------\nAux Zones\n   Aux 1 :                                Off\n   Aux 1  (C):                            30\n   Aux 2 :                                Off\n   Aux 2  (C):                            30\n------------------------------------------------------------\nRun Table\n   External Event #1 Prep-Run Default:    Off\n   External Event #2 Prep-Run Default:    Off\n   External Event #3 Prep-Run Default:    Off\n   External Event #4 Prep-Run Default:    Off\n   External Event #5 Prep-Run Default:    Off\n   External Event #6 Prep-Run Default:    Off\n   External Event #7 Prep-Run Default:    Off\n   External Event #8 Prep-Run Default:    Off\n------------------------------------------------------------\n",
+  "stderr": "",
+  "files": {}
+ },
+ "info_brief": {
+  "argv": [
+   "info",
+   "gc_lab4.RAW",
+   "--brief"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "file        gc_lab4.RAW\nversion     63\nacquired    2026-06-16 17:13:09 (UTC, from the file header)\ninstrument  TRACE GC Ultra   detector FID   Channel 1 (Counts)\nmethod      C:\\Xcalibur\\methods\\GC JUNE 4 lab.meth\npoints      7197   0..11.9933 min   every 0.100 s (10 Hz)\n",
+  "stderr": "",
+  "files": {}
+ },
+ "convert": {
+  "argv": [
+   "convert",
+   "gc_lab4.RAW"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "wrote gc_lab4.csv\nwrote gc_lab4_plain.csv\n",
+  "stderr": "",
+  "files": {
+   "gc_lab4.csv": "2d8a2fab6a21cb3151f4e9c56ad3dc563976383e82bc5c05a8ba5bc3116f3cad",
+   "gc_lab4_plain.csv": "c38b245d547cfa2f1b232efff07cbd0ecaf4875b8124263da1c876b70a0bd6c7"
+  }
+ },
+ "convert_out": {
+  "argv": [
+   "convert",
+   "gc_lab4.RAW",
+   "--out",
+   "out/run"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "wrote out/run.csv\nwrote out/run_plain.csv\n",
+  "stderr": "",
+  "files": {
+   "out/run.csv": "2d8a2fab6a21cb3151f4e9c56ad3dc563976383e82bc5c05a8ba5bc3116f3cad",
+   "out/run_plain.csv": "c38b245d547cfa2f1b232efff07cbd0ecaf4875b8124263da1c876b70a0bd6c7"
+  }
+ },
+ "verify": {
+  "argv": [
+   "verify",
+   "gc_lab4.RAW",
+   "ref.csv"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "points  raw=7197  csv=7197  OK\nmax |signal diff| = 0   max |time diff| = 3.3e-10 min\nVERIFIED\n",
+  "stderr": "",
+  "files": {}
+ },
+ "crop_lr4": {
+  "argv": [
+   "crop",
+   "gc_lab4.RAW",
+   "--out",
+   "plain/gc_lab4_crop.csv",
+   "--xmin",
+   "2.6",
+   "--xmax",
+   "9.6",
+   "--correct",
+   "--baseline",
+   "2.5,4.5,6.6,8.0,8.5,8.97,9.6",
+   "--exclude",
+   "3.24-3.46"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "wrote plain/gc_lab4_crop.csv\n",
+  "stderr": "",
+  "files": {
+   "plain/gc_lab4_crop.csv": "7903153e0bb627d92fdb0d3652869e4bc8477f917d1d375e12e3047c1a1ee57b"
+  }
+ },
+ "crop_auto": {
+  "argv": [
+   "crop",
+   "gc_lab4.RAW",
+   "--out",
+   "c.csv",
+   "--correct"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "wrote c.csv\n",
+  "stderr": "",
+  "files": {
+   "c.csv": "c1f92bef19b057f082160c2790bcc53bc8b2a29f8a94c110de6e7d24cb0fc6ba"
+  }
+ },
+ "crop_flat_trim": {
+  "argv": [
+   "crop",
+   "gc_lab4.RAW",
+   "--out",
+   "c.csv",
+   "--correct",
+   "--baseline",
+   "flat:0.5",
+   "--xmin",
+   "2",
+   "--exclude",
+   "3.2-3.5,11.6-12"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "wrote c.csv\n",
+  "stderr": "",
+  "files": {
+   "c.csv": "2a7d04bb8788f2f18f5211186c422e2ea40f602d9434a1a22b8d10e3bad04bd1"
+  }
+ },
+ "integrate_lr4_full": {
+  "argv": [
+   "integrate",
+   "gc_lab4.RAW",
+   "--peaks",
+   "2.84=Methanol,3.02=Ethanol,3.65=1-Propanol,5.31=1-Butanol,9.05=1-Pentanol",
+   "--solvent",
+   "3.30=Acetone",
+   "--baseline",
+   "2.5,4.5,6.6,8.0,8.5,8.97,9.6",
+   "--known",
+   "Methanol=6.67,Ethanol=13.33,1-Propanol=20.00,1-Butanol=26.67,1-Pentanol=33.33"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "# gc_lab4.RAW  mode=manual  baseline=2.5,4.5,6.6,8.0,8.5,8.97,9.6  noise sigma=608  n_peaks=6\n   name            tR/min   start     end   h/counts  w1/2/min    h*w1/2    tri%     trapz  trapz%\n   Methanol         2.837   2.807   2.985       8895    0.0454     404.0    2.69     515.1    2.82\n   Ethanol          3.025   2.988   3.140      17841    0.0465     830.3    5.54     937.0    5.13\n   Acetone          3.297   3.260   3.455     461365    0.0407   18782.5   solv.   22501.8   solv.\n   1-Propanol       3.641   3.600   3.857      37784    0.0658    2484.9   16.57    3168.1   17.35\n   1-Butanol        5.304   5.247   5.677      40550    0.0949    3846.9   25.65    4767.4   26.11\n   1-Pentanol       9.048   8.995   9.440      78982    0.0941    7431.3   49.55    8869.3   48.58\n\ntriangulation table:\n\n| Peak              | $t_\\mathrm{R}$, min | $h$, counts | $w_{1/2}$, min | $h w_{1/2}$, counts·min | Found, % | Known, % | Error, % |\n|:------------------|--------------------:|------------:|---------------:|------------------------:|---------:|---------:|---------:|\n| Methanol          |                2.84 |        8895 |         0.0454 |                   404.0 |     2.69 |     6.67 |    59.61 |\n| Ethanol           |                3.02 |       17841 |         0.0465 |                   830.3 |     5.54 |    13.33 |    58.47 |\n| Acetone (solvent) |                3.30 |      461365 |         0.0407 |                 18782.5 |      --- |      --- |      --- |\n| 1-Propanol        |                3.64 |       37784 |         0.0658 |                  2484.9 |    16.57 |    20.00 |    17.16 |\n| 1-Butanol         |                5.30 |       40550 |         0.0949 |                  3846.9 |    25.65 |    26.67 |     3.82 |\n| 1-Pentanol        |                9.05 |       78982 |         0.0941 |                  7431.3 |    49.55 |    33.33 |    48.67 |\n| Σ / mean          |                     |             |                |                 14997.4 |   100.00 |   100.00 |    37.55 |\n\nintegration table:\n\n| Peak              | Area, counts·min | Found, % | Known, % | Error, % |\n|:------------------|-----------------:|---------:|---------:|---------:|\n| Methanol          |            515.1 |     2.82 |     6.67 |    57.70 |\n| Ethanol           |            937.0 |     5.13 |    13.33 |    61.50 |\n| Acetone (solvent) |          22501.8 |      --- |      --- |      --- |\n| 1-Propanol        |           3168.1 |    17.35 |    20.00 |    13.24 |\n| 1-Butanol         |           4767.4 |    26.11 |    26.67 |     2.09 |\n| 1-Pentanol        |           8869.3 |    48.58 |    33.33 |    45.76 |\n| Σ / mean          |          18256.9 |   100.00 |   100.00 |    36.06 |\n\n\\chromatogram options: ymax=1140000,ylabel={FID signal / counts}\n\\chromatogram peaks:   2.84/613360/756181/{Methanol},3.02/622478/704833/{Ethanol},3.30/1061980/1072531/{Acetone},3.64/642934/653485/{1-Propanol},5.30/644626/655177/{1-Butanol},9.05/697026/707577/{1-Pentanol}\n",
+  "stderr": "",
+  "files": {}
+ },
+ "integrate_lr4_axis": {
+  "argv": [
+   "integrate",
+   "gc_lab4.RAW",
+   "--peaks",
+   "2.84=Methanol,3.02=Ethanol,3.65=1-Propanol,5.31=1-Butanol,9.05=1-Pentanol",
+   "--baseline",
+   "2.5,4.5,6.6,8.0,8.5,8.97,9.6",
+   "--xmin",
+   "2.6",
+   "--xmax",
+   "9.6",
+   "--ymax",
+   "700000"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "# gc_lab4.RAW  mode=manual  baseline=2.5,4.5,6.6,8.0,8.5,8.97,9.6  noise sigma=608  n_peaks=5\n   name            tR/min   start     end   h/counts  w1/2/min    h*w1/2    tri%     trapz  trapz%\n   Methanol         2.837   2.807   2.985       8895    0.0454     404.0    2.69     515.1    2.82\n   Ethanol          3.025   2.988   3.140      17841    0.0465     830.3    5.54     937.0    5.13\n   1-Propanol       3.641   3.600   3.857      37784    0.0658    2484.9   16.57    3168.1   17.35\n   1-Butanol        5.304   5.247   5.677      40550    0.0949    3846.9   25.65    4767.4   26.11\n   1-Pentanol       9.048   8.995   9.440      78982    0.0941    7431.3   49.55    8869.3   48.58\n\ntriangulation table:\n\n| Peak       | $t_\\mathrm{R}$, min | $h$, counts | $w_{1/2}$, min | $h w_{1/2}$, counts·min | Found, % |\n|:-----------|--------------------:|------------:|---------------:|------------------------:|---------:|\n| Methanol   |                2.84 |        8895 |         0.0454 |                   404.0 |     2.69 |\n| Ethanol    |                3.02 |       17841 |         0.0465 |                   830.3 |     5.54 |\n| 1-Propanol |                3.64 |       37784 |         0.0658 |                  2484.9 |    16.57 |\n| 1-Butanol  |                5.30 |       40550 |         0.0949 |                  3846.9 |    25.65 |\n| 1-Pentanol |                9.05 |       78982 |         0.0941 |                  7431.3 |    49.55 |\n| Σ / mean   |                     |             |                |                 14997.4 |   100.00 |\n\nintegration table:\n\n| Peak       | Area, counts·min | Found, % |\n|:-----------|-----------------:|---------:|\n| Methanol   |            515.1 |     2.82 |\n| Ethanol    |            937.0 |     5.13 |\n| 1-Propanol |           3168.1 |    17.35 |\n| 1-Butanol  |           4767.4 |    26.11 |\n| 1-Pentanol |           8869.3 |    48.58 |\n| Σ / mean   |          18256.9 |   100.00 |\n\n\\chromatogram options: ymax=700000,restrict y to domain*=-700000:700000,xmin=2.6,xmax=9.6,ylabel={FID signal / counts}\n\\chromatogram peaks:   2.84/613360/615318/{Methanol},3.02/622478/624436/{Ethanol},3.64/642934/644892/{1-Propanol},5.30/644626/646584/{1-Butanol},9.05/697026/689168/{1-Pentanol}\n",
+  "stderr": "",
+  "files": {}
+ },
+ "integrate_auto": {
+  "argv": [
+   "integrate",
+   "gc_lab4.RAW"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "# gc_lab4.RAW  mode=auto  baseline=auto  noise sigma=608  n_peaks=8\n   name            tR/min   start     end   h/counts  w1/2/min    h*w1/2    tri%     trapz  trapz%\n   -                3.025   2.992   3.128      17416    0.0457     795.9    1.29     868.6    1.22\n   -                3.297   3.260   3.455     461056    0.0407   18760.5   30.43   22450.5   31.49\n   -                3.501   3.455   3.548      32414    0.0527    1707.9    2.77    1789.4    2.51\n   -                3.641   3.600   3.838      37652    0.0656    2470.1    4.01    3132.3    4.39\n   -                5.304   5.250   5.608      40089    0.0939    3765.6    6.11    4460.9    6.26\n   -                7.207   6.990   7.400      16065    0.2274    3652.8    5.93    3433.3    4.82\n   -                9.048   8.622   9.387      83478    0.1010    8428.0   13.67   12050.1   16.90\n   -               11.789  11.677  11.908     241260    0.0915   22063.9   35.79   23108.7   32.41\n\ntriangulation table:\n\n| Peak     | $t_\\mathrm{R}$, min | $h$, counts | $w_{1/2}$, min | $h w_{1/2}$, counts·min | Found, % |\n|:---------|--------------------:|------------:|---------------:|------------------------:|---------:|\n| ---      |                3.02 |       17416 |         0.0457 |                   795.9 |     1.29 |\n| ---      |                3.30 |      461056 |         0.0407 |                 18760.5 |    30.43 |\n| ---      |                3.50 |       32414 |         0.0527 |                  1707.9 |     2.77 |\n| ---      |                3.64 |       37652 |         0.0656 |                  2470.1 |     4.01 |\n| ---      |                5.30 |       40089 |         0.0939 |                  3765.6 |     6.11 |\n| ---      |                7.21 |       16065 |         0.2274 |                  3652.8 |     5.93 |\n| ---      |                9.05 |       83478 |         0.1010 |                  8428.0 |    13.67 |\n| ---      |               11.79 |      241260 |         0.0915 |                 22063.9 |    35.79 |\n| Σ / mean |                     |             |                |                 61644.7 |   100.00 |\n\nintegration table:\n\n| Peak     | Area, counts·min | Found, % |\n|:---------|-----------------:|---------:|\n| ---      |            868.6 |     1.22 |\n| ---      |          22450.5 |    31.49 |\n| ---      |           1789.4 |     2.51 |\n| ---      |           3132.3 |     4.39 |\n| ---      |           4460.9 |     6.26 |\n| ---      |           3433.3 |     4.82 |\n| ---      |          12050.1 |    16.90 |\n| ---      |          23108.7 |    32.41 |\n| Σ / mean |          71293.7 |   100.00 |\n\n\\chromatogram options: ymax=1110000,ylabel={FID signal / counts}\n\\chromatogram peaks:   3.02/622478/705704/{},3.30/1061980/1072104/{},3.50/637568/679381/{},3.64/642934/653058/{},5.30/644626/654750/{},7.21/620678/630802/{},9.05/697026/707150/{},11.79/881634/891758/{}\n",
+  "stderr": "",
+  "files": {}
+ },
+ "integrate_flat": {
+  "argv": [
+   "integrate",
+   "gc_lab4.RAW",
+   "--baseline",
+   "flat",
+   "--min-prominence",
+   "40",
+   "--landscape"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "# gc_lab4.RAW  mode=auto  baseline=flat  noise sigma=608  n_peaks=5\n   name            tR/min   start     end   h/counts  w1/2/min    h*w1/2    tri%     trapz  trapz%\n   -                3.297   3.260   3.455     461590    0.0407   18799.6   29.50   22551.0   26.78\n   -                3.641   3.600   3.917      38170    0.0664    2533.8    3.98    3335.6    3.96\n   -                5.304   5.247   5.645      40480    0.0946    3828.7    6.01    4647.0    5.52\n   -                9.048   8.030   9.315      92670    0.1115   10334.9   16.22   19663.0   23.35\n   -               11.789  11.620  11.927     277670    0.1016   28222.2   44.29   34018.5   40.39\n\ntriangulation table:\n\n| Peak     | $t_\\mathrm{R}$, min | $h$, counts | $w_{1/2}$, min | $h w_{1/2}$, counts·min | Found, % |\n|:---------|--------------------:|------------:|---------------:|------------------------:|---------:|\n| ---      |                3.30 |      461590 |         0.0407 |                 18799.6 |    29.50 |\n| ---      |                3.64 |       38170 |         0.0664 |                  2533.8 |     3.98 |\n| ---      |                5.30 |       40480 |         0.0946 |                  3828.7 |     6.01 |\n| ---      |                9.05 |       92670 |         0.1115 |                 10334.9 |    16.22 |\n| ---      |               11.79 |      277670 |         0.1016 |                 28222.2 |    44.29 |\n| Σ / mean |                     |             |                |                 63719.2 |   100.00 |\n\nintegration table:\n\n| Peak     | Area, counts·min | Found, % |\n|:---------|-----------------:|---------:|\n| ---      |          22551.0 |    26.78 |\n| ---      |           3335.6 |     3.96 |\n| ---      |           4647.0 |     5.52 |\n| ---      |          19663.0 |    23.35 |\n| ---      |          34018.5 |    40.39 |\n| Σ / mean |          84215.0 |   100.00 |\n\n\\chromatogram options: ymax=1100000,ylabel={FID signal / counts}\n\\chromatogram peaks:   3.30/1061980/1071898/{},3.64/642934/652852/{},5.30/644626/654544/{},9.05/697026/706944/{},11.79/881634/891552/{}\n",
+  "stderr": "",
+  "files": {}
+ },
+ "integrate_stackpanel": {
+  "argv": [
+   "integrate",
+   "gc_lab4.RAW",
+   "--plot-size",
+   "12.5,4",
+   "--window",
+   "0.05",
+   "--peaks",
+   "2.84=Methanol,3.02=Ethanol,3.65=1-Propanol,5.31=1-Butanol,9.05=1-Pentanol"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "# gc_lab4.RAW  mode=manual  baseline=auto  noise sigma=608  n_peaks=5\n   name            tR/min   start     end   h/counts  w1/2/min    h*w1/2    tri%     trapz  trapz%\n   Methanol         2.837   2.810   2.918       8363    0.0409     342.4    2.17     387.6    1.85\n   Ethanol          3.025   2.992   3.128      17416    0.0457     795.9    5.04     868.6    4.16\n   1-Propanol       3.641   3.600   3.838      37652    0.0656    2470.1   15.63    3132.3   14.99\n   1-Butanol        5.304   5.250   5.608      40089    0.0939    3765.6   23.83    4460.9   21.34\n   1-Pentanol       9.048   8.622   9.387      83478    0.1010    8428.0   53.33   12050.1   57.66\n\ntriangulation table:\n\n| Peak       | $t_\\mathrm{R}$, min | $h$, counts | $w_{1/2}$, min | $h w_{1/2}$, counts·min | Found, % |\n|:-----------|--------------------:|------------:|---------------:|------------------------:|---------:|\n| Methanol   |                2.84 |        8363 |         0.0409 |                   342.4 |     2.17 |\n| Ethanol    |                3.02 |       17416 |         0.0457 |                   795.9 |     5.04 |\n| 1-Propanol |                3.64 |       37652 |         0.0656 |                  2470.1 |    15.63 |\n| 1-Butanol  |                5.30 |       40089 |         0.0939 |                  3765.6 |    23.83 |\n| 1-Pentanol |                9.05 |       83478 |         0.1010 |                  8428.0 |    53.33 |\n| Σ / mean   |                     |             |                |                 15802.0 |   100.00 |\n\nintegration table:\n\n| Peak       | Area, counts·min | Found, % |\n|:-----------|-----------------:|---------:|\n| Methanol   |            387.6 |     1.85 |\n| Ethanol    |            868.6 |     4.16 |\n| 1-Propanol |           3132.3 |    14.99 |\n| 1-Butanol  |           4460.9 |    21.34 |\n| 1-Pentanol |          12050.1 |    57.66 |\n| Σ / mean   |          20899.4 |   100.00 |\n\n\\chromatogram options: ymax=1080000,ylabel={FID signal / counts}\n\\chromatogram peaks:   2.84/613360/822161/{Methanol},3.02/622478/737348/{Ethanol},3.64/642934/652535/{1-Propanol},5.30/644626/654227/{1-Butanol},9.05/697026/706627/{1-Pentanol}\n",
+  "stderr": "",
+  "files": {}
+ },
+ "batch_full": {
+  "argv": [
+   "batch",
+   "--manifest",
+   "m.json",
+   "--out-dir",
+   "o",
+   "--md",
+   "o/gc.md"
+  ],
+  "files_before": {
+   "m.json": [
+    {
+     "raw": "gc_lab4.RAW",
+     "title": "Group 1",
+     "peaks": "2.84=Methanol,3.02=Ethanol,3.65=1-Propanol,5.31=1-Butanol,9.05=1-Pentanol",
+     "solvent": "3.30=Acetone",
+     "baseline": "2.5,4.5,6.6,8.0,8.5,8.97,9.6"
+    }
+   ]
+  },
+  "code": 0,
+  "stdout": "# gc_lab4  n=7197  peaks=6  ymax=1110000  -> o/plain/gc_lab4_plain.csv\n    name            tR/min   start     end   h/counts  w1/2/min    h*w1/2    tri%     trapz  trapz%\n    Methanol         2.837   2.807   2.985       8895    0.0454     404.0    2.69     515.1    2.82\n    Ethanol          3.025   2.988   3.140      17841    0.0465     830.3    5.54     937.0    5.13\n    Acetone          3.297   3.260   3.455     461365    0.0407   18782.4   solv.   22501.8   solv.\n    1-Propanol       3.641   3.600   3.857      37784    0.0658    2484.9   16.57    3168.1   17.35\n    1-Butanol        5.304   5.247   5.677      40550    0.0949    3846.9   25.65    4767.4   26.11\n    1-Pentanol       9.048   8.995   9.440      78982    0.0941    7431.3   49.55    8869.3   48.58\n\nwrote o/gc.md (1 chromatograms)\nbuild it with pdfmd.py -- never bare pandoc (see nulabreport's CLAUDE.md)\n",
+  "stderr": "",
+  "files": {
+   "o/csv/gc_lab4.csv": "2d8a2fab6a21cb3151f4e9c56ad3dc563976383e82bc5c05a8ba5bc3116f3cad",
+   "o/gc.md": "4551aa1aa6f17cba110b56677cf36b769d4660df0a2a4994592aab2b4e53503b",
+   "o/plain/gc_lab4_plain.csv": "c38b245d547cfa2f1b232efff07cbd0ecaf4875b8124263da1c876b70a0bd6c7"
+  }
+ },
+ "batch_crop": {
+  "argv": [
+   "batch",
+   "--manifest",
+   "m.json",
+   "--out-dir",
+   "o",
+   "--md",
+   "o/gc.md"
+  ],
+  "files_before": {
+   "m.json": [
+    {
+     "raw": "gc_lab4.RAW",
+     "title": "Group 1 (trimmed, baseline-corrected, acetone removed)",
+     "peaks": "2.84=Methanol,3.02=Ethanol,3.65=1-Propanol,5.31=1-Butanol,9.05=1-Pentanol",
+     "baseline": "2.5,4.5,6.6,8.0,8.5,8.97,9.6",
+     "crop": {
+      "xmin": 2.6,
+      "xmax": 9.6,
+      "correct": true,
+      "exclude": "3.24-3.46"
+     }
+    }
+   ]
+  },
+  "code": 0,
+  "stdout": "# gc_lab4  n=7197  peaks=5  ymax=86000  -> o/plain/gc_lab4_crop.csv\n    name            tR/min   start     end   h/counts  w1/2/min    h*w1/2    tri%     trapz  trapz%\n    Methanol         2.837   2.808   2.985       8895    0.0454     404.0    2.69     514.6    2.82\n    Ethanol          3.025   2.990   3.140      17841    0.0465     830.3    5.54     936.1    5.13\n    1-Propanol       3.641   3.600   3.857      37784    0.0658    2484.9   16.57    3168.1   17.35\n    1-Butanol        5.304   5.245   5.677      40550    0.0949    3846.9   25.65    4767.7   26.12\n    1-Pentanol       9.047   8.995   9.440      78982    0.0941    7430.4   49.55    8869.3   48.58\n\nwrote o/gc.md (1 chromatograms)\nbuild it with pdfmd.py -- never bare pandoc (see nulabreport's CLAUDE.md)\n",
+  "stderr": "",
+  "files": {
+   "o/csv/gc_lab4.csv": "2d8a2fab6a21cb3151f4e9c56ad3dc563976383e82bc5c05a8ba5bc3116f3cad",
+   "o/gc.md": "b1179676c795072b06308d28667e08043ebc2c88b7ece6faaefe6cedced54820",
+   "o/plain/gc_lab4_crop.csv": "7903153e0bb627d92fdb0d3652869e4bc8477f917d1d375e12e3047c1a1ee57b",
+   "o/plain/gc_lab4_plain.csv": "c38b245d547cfa2f1b232efff07cbd0ecaf4875b8124263da1c876b70a0bd6c7"
+  }
+ },
+ "batch_raw": {
+  "argv": [
+   "batch",
+   "--raw",
+   "gc_lab4.RAW",
+   "--titles",
+   "Run_1 & 50%",
+   "--out-dir",
+   ".",
+   "--md",
+   "b.md"
+  ],
+  "files_before": {},
+  "code": 0,
+  "stdout": "# gc_lab4  n=7197  peaks=8  ymax=1100000  -> ./plain/gc_lab4_plain.csv\n    name            tR/min   start     end   h/counts  w1/2/min    h*w1/2    tri%     trapz  trapz%\n    -                3.025   2.992   3.128      17416    0.0457     795.9    1.29     868.5    1.22\n    -                3.297   3.260   3.455     461056    0.0407   18760.4   30.43   22450.4   31.49\n    -                3.501   3.455   3.548      32414    0.0527    1707.9    2.77    1789.4    2.51\n    -                3.641   3.600   3.838      37652    0.0656    2470.1    4.01    3132.3    4.39\n    -                5.304   5.250   5.608      40089    0.0939    3765.6    6.11    4460.9    6.26\n    -                7.207   6.990   7.400      16065    0.2274    3652.8    5.93    3433.3    4.82\n    -                9.048   8.622   9.387      83478    0.1010    8428.0   13.67   12050.1   16.90\n    -               11.789  11.677  11.908     241260    0.0915   22064.0   35.79   23108.7   32.41\n\nwrote b.md (1 chromatograms)\nbuild it with pdfmd.py -- never bare pandoc (see nulabreport's CLAUDE.md)\n",
+  "stderr": "",
+  "files": {
+   "b.md": "773b45dd111d621119b166cf12a45ad765c44de9d7b0509945c443474971fc7d",
+   "csv/gc_lab4.csv": "2d8a2fab6a21cb3151f4e9c56ad3dc563976383e82bc5c05a8ba5bc3116f3cad",
+   "plain/gc_lab4_plain.csv": "c38b245d547cfa2f1b232efff07cbd0ecaf4875b8124263da1c876b70a0bd6c7"
+  }
+ },
+ "batch_twice": {
+  "argv": [
+   "batch",
+   "--manifest",
+   "m.json",
+   "--out-dir",
+   "o",
+   "--md",
+   "o/gc.md"
+  ],
+  "files_before": {
+   "m.json": [
+    {
+     "raw": "gc_lab4.RAW",
+     "title": "Group 1",
+     "peaks": "2.84=Methanol,3.02=Ethanol,3.65=1-Propanol,5.31=1-Butanol,9.05=1-Pentanol",
+     "solvent": "3.30=Acetone",
+     "baseline": "2.5,4.5,6.6,8.0,8.5,8.97,9.6"
+    },
+    {
+     "raw": "gc_lab4.RAW",
+     "title": "Group 1 (trimmed, baseline-corrected, acetone removed)",
+     "peaks": "2.84=Methanol,3.02=Ethanol,3.65=1-Propanol,5.31=1-Butanol,9.05=1-Pentanol",
+     "baseline": "2.5,4.5,6.6,8.0,8.5,8.97,9.6",
+     "crop": {
+      "xmin": 2.6,
+      "xmax": 9.6,
+      "correct": true,
+      "exclude": "3.24-3.46"
+     }
+    }
+   ]
+  },
+  "code": 1,
+  "stdout": "",
+  "stderr": "error: the same input is listed twice (stem 'gc_lab4'): gc_lab4.RAW\n",
+  "files": {}
+ },
+ "not_raw": {
+  "argv": [
+   "info",
+   "m.json"
+  ],
+  "files_before": {
+   "m.json": []
+  },
+  "code": 1,
+  "stdout": "",
+  "stderr": "error: m.json: not a Finnigan/Xcalibur .RAW (bad magic)\n",
+  "files": {}
+ }
+}
