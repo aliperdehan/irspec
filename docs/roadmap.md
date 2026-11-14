@@ -464,8 +464,8 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   data lies below IR's window in the tests.
   **Not done:** the R backend and matplotlib refuse a kind other than IR, and one with `apex`
   labels, with a message (R: drawing another kind; matplotlib: the TeX look of the apex labels,
-  to be measured first). Tables and tools are not in the registry. The report's name is
-  `ir_<dd-mm>` whatever the kinds (`default_md_name`).
+  to be measured first). Tables and tools are not in the registry. The report's name
+  follows the folder's kind since 0.3.3 (`ir_`, `uvvis_`, `gc_`, `figures_` for several).
 - Two of these are not a spectrum: `parse_vqud.py` reads **tables** (standards, unknowns, a
   calibration curve), and `scan_clean.py` is a picture utility with no x/y at all. So the registry
   must not insist that a kind is "x, y and peaks": a kind may give a table, and a **tool** (a
@@ -489,7 +489,7 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   **Not done:** `edit … peak` for UV-Vis (refused with a message; the manifest's `peaks` are
   edited by hand), matplotlib and R drawing it (refused with a message), the `vqud` tables in a
   session (a calibration figure: nulabreport has no macro for it yet), `--json` on `vspd`/`vqud`,
-  and the report's name (`ir_<dd-mm>`). GC follows in 0.3.1 (above).
+  and the report's name (done in 0.3.3: `uvvis_<dd-mm>`). GC follows in 0.3.1 (above).
 - A kind's readers are plain Python with numpy and scipy only, like the IR ones; a format that
   cannot be read without a vendor library is not added.
 - `--json` and its written schema (item 1b) come before the second kind, because the schema must

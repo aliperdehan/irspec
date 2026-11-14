@@ -312,10 +312,10 @@ def render_md(results, folder):
     return spa_tool.MD_FRONTMATTER + "\n" + "\n".join(body) + "\n"
 
 
-def default_md_name(folder):
+def default_md_name(folder, prefix="ir"):
     base = os.path.basename(os.path.abspath(folder))
     m = re.search(r"(\d{1,2})[.\-](\d{2})", base)
-    return f"ir_{int(m.group(1)):02d}-{m.group(2)}" if m else f"ir_{base}"
+    return f"{prefix}_{int(m.group(1)):02d}-{m.group(2)}" if m else f"{prefix}_{base}"
 
 
 # -----------------------------------------------------------------------------

@@ -56,6 +56,12 @@ class GcCase(unittest.TestCase):
     def figures(self):
         return read_figures(self.folder / 'figures.json')[0]
 
+    def test_report_is_named_after_the_kind(self):
+        # gc_<folder>, not ir_<folder> (a folder name without a date keeps the whole name)
+        self.entry()
+        self.assertEqual(self.run_session()['outputs']['markdown'], f'gc_{self.folder.name}.md')
+        self.assertEqual(sorted(p.name for p in self.folder.glob('*.md')), [f'gc_{self.folder.name}.md'])
+
     def batch_block(self, e, crop=False):
         oracle = self.folder / 'oracle'
         oracle.mkdir(exist_ok=True)

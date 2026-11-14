@@ -14,7 +14,7 @@ did for the instrument's own .SPA files, in the same folder layout:
       img/   *.gif|jpg|...  spectra published only as a picture (SDBS)
       csv/   archival CSVs        plain/  the CSVs the figures read (always %T)
       check/ digitiser logs and overlays          manifest.json
-      ir_<dd-mm>.md / .tex / .pdf
+      ir_<dd-mm>.md / .tex / .pdf  (uvvis_, gc_ for those folders, figures_ for several kinds)
 
 Loose .SPA/.jdx/other files in DIR are filed first (images are NOT: put them in
 img/ yourself, an OMNIC screenshot and an SDBS plot are both "an image").
@@ -140,6 +140,13 @@ def folder_kind(rels):
     there are none, "mixed" when there are several. Files no kind owns (other/) do not count."""
     names = {k.name for k in map(kinds.for_path, rels) if k is not None}
     return names.pop() if len(names) == 1 else ("mixed" if names else kinds.DEFAULT.name)
+
+
+def md_prefix(rels):
+    """The report's name starts with the folder's kind (ir_, uvvis_, gc_), figures_ when it holds
+    several kinds."""
+    kind = folder_kind(rels)
+    return "figures" if kind == "mixed" else kind
 
 
 def organize(folder, dry_run=False):
@@ -591,7 +598,7 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
             raise SessionError(f"{e['file']}: {err} (in manifest.json; `irspec edit` can "
                                f"change or unset it)")
     write_figures(figures, os.path.join(folder, FIGURES_NAME))
-    base = md_name or _io.default_md_name(folder)
+    base = md_name or _io.default_md_name(folder, md_prefix(e["file"] for e in entries))
     md = os.path.join(folder, base + ".md")
     with open(md, "w", encoding="utf-8") as f:
         f.write(texout.render_md(figures))
@@ -653,7 +660,7 @@ def main(argv=None):
     ap.add_argument("--no-pdf", action="store_true", help="same as --build none")
     ap.add_argument("--sort", choices=["time", "name"], default="time")
     ap.add_argument("--title", action="append", default=[], metavar="STEM=TITLE")
-    ap.add_argument("--md-name", default=None, help="output basename (default ir_<dd-mm>)")
+    ap.add_argument("--md-name", default=None, help="output basename (default KIND_<dd-mm>: ir_, uvvis_, gc_, figures_ for several kinds)")
     ap.add_argument("--dry-run", action="store_true", help="print the planned file moves, stop")
     ap.add_argument("--preview", action="store_true",
                     help="--dry-run, and then each spectrum drawn as text as `irspec preview` "

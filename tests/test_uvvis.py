@@ -112,7 +112,8 @@ class Session(unittest.TestCase):
             obj = json.loads(out)
             self.assertEqual(obj["kind"], "mixed")
             self.assertEqual(sorted(s["kind"] for s in obj["spectra"]), ["ir", "uvvis"])
-            md = next(f.glob("*.md")).read_text()
+            self.assertTrue((f / "uvvis_11-11.md").exists())   # the first run's: one kind
+            md = (f / "figures_11-11.md").read_text()             # IR and UV-Vis together
             self.assertIn("\\irspectrum\n", md)
             self.assertIn("\\labplot\n  [kind=uvvis", md)
 

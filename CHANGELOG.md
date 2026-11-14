@@ -2,6 +2,15 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.3 (2026-11-14)
+
+The session's report is named after what the folder holds.
+
+- `irspec session` names its markdown, `.tex` and PDF after the folder's kind: `gc_<dd-mm>` for
+  chromatograms, `uvvis_<dd-mm>` for UV-Vis scans, `figures_<dd-mm>` for a folder with several
+  kinds; an IR folder keeps `ir_<dd-mm>`. A report written under the old name by an earlier run
+  stays where it is. `--md-name` still chooses the name yourself.
+
 ## 0.3.2 (2026-11-13)
 
 Save each GC figure's triangulation and integration tables in the session.

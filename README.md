@@ -125,7 +125,9 @@ my_lab_folder/
 ```
 
 The base name `ir_...` is `ir_<dd-mm>` when the folder's name contains a date
-(`own-29.09` gives `ir_29-09`), else `ir_` and the folder's name.
+(`own-29.09` gives `ir_29-09`), else `ir_` and the folder's name. It starts with the folder's
+kind: `uvvis_` for a folder of UV-Vis scans, `gc_` for chromatograms, and `figures_` for a
+folder that holds several kinds.
 `--md-name NAME` chooses it yourself.
 
 ### Options of `irspec session`
