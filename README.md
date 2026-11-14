@@ -196,6 +196,13 @@ crop and requires `crop`. For example:
  "crop": {"xmin": 2.6, "xmax": 9.6, "correct": true, "exclude": "3.24-3.46"}}
 ```
 
+Each figure's triangulation and integration tables are in `integrate/STEM.txt` (full run)
+and `integrate/STEM_crop.txt` (crop), exactly as `irspec gc integrate` prints for that
+figure's plain CSV and analysis settings with `--landscape`. `known` fills the Known/Error
+columns with the reference percentages you supply. Cropped tables use the retained requests
+and baseline `none` after correction. A re-run keeps `integrate/` in place and regenerates
+the tables; `session --json` lists their paths.
+
 `session --preview`, `preview FILE.RAW --json` and `--ascii` show the trace and its labels;
 `edit … set ymax=900000` and `unset ymax` edit limits. Edit named requests in `compounds`
 in the manifest; `edit … peak` is for IR. `irspec plot` (matplotlib and R) refuses GC:

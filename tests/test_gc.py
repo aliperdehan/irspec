@@ -256,3 +256,59 @@ class TexAgrees(GcCase):
                     self.assertAlmostEqual(actual, expected, delta=0.005 * (want[1] - want[0]))
 
 
+
+class Tables(GcCase):
+    def integration_oracle(self, plain, settings):
+        argv = ['gc', 'integrate', plain, '--landscape',
+                '--peaks', settings.get('compounds', ''), '--solvent', settings.get('solvent', ''),
+                '--baseline', settings.get('baseline', 'auto'), '--known', settings.get('known', ''),
+                '--min-prominence', str(settings.get('min_prominence', 20.0)),
+                '--window', str(settings.get('window', 0.08))]
+        for key in ('ymax', 'xmin', 'xmax'):
+            if settings.get(key) is not None:
+                argv.extend(['--' + key, str(settings[key])])
+        r = subprocess.run([sys.executable, '-m', 'irspec', *argv], cwd=self.folder,
+                           env=self.env, capture_output=True)
+        self.assertEqual(r.returncode, 0, r.stderr.decode('utf-8'))
+        return r.stdout
+
+    def test_full_and_crop_tables_known_and_rerun(self):
+        known = 'Methanol=6.67,Ethanol=13.33,1-Propanol=20,1-Butanol=26.67,1-Pentanol=33.33'
+        e = self.entry(**dict(LR4, known=known))
+        obj = self.run_session()
+        expected_paths = ['integrate/gc_lab4.txt', 'integrate/gc_lab4_crop.txt']
+        self.assertEqual(obj['outputs']['integrate'], expected_paths)
+        for record, fig, path, cropped in zip(obj['spectra'], self.figures(), expected_paths, (False, True)):
+            settings = dict(e)
+            if cropped:
+                settings.update(baseline='none', solvent='')
+            self.assertEqual(record['integrate'], path)
+            self.assertEqual((self.folder / path).read_bytes(), self.integration_oracle(fig.csv, settings))
+        self.assertIn('Known', (self.folder / expected_paths[1]).read_text(encoding='utf-8'))
+        self.assertNotIn('Acetone', (self.folder / expected_paths[1]).read_text(encoding='utf-8'))
+        before = {path: (self.folder / path).read_bytes() for path in expected_paths}
+        self.run_session()
+        self.assertEqual(before, {path: (self.folder / path).read_bytes() for path in expected_paths})
+        other = self.folder / 'other'
+        self.assertFalse(other.exists() and any(other.iterdir()))
+        stored = json.loads((self.folder / 'manifest.json').read_text(encoding='utf-8'))[0]
+        self.assertEqual(stored['known'], known)
+
+    def test_auto_and_custom_settings_tables(self):
+        for settings in ({}, dict(compounds=COMPOUNDS, solvent='3.30=Acetone', baseline='flat:0.5',
+                                  min_prominence=12, window=0.12, ymax=900000, xmin=2.6, xmax=9.6,
+                                  known='Methanol=6.67')):
+            self.entry(**settings)
+            obj = self.run_session()
+            self.assertEqual(obj['outputs']['integrate'], ['integrate/gc_lab4.txt'])
+            self.assertEqual((self.folder / 'integrate/gc_lab4.txt').read_bytes(),
+                             self.integration_oracle('plain/gc_lab4_plain.csv', settings))
+
+    def test_crop_only_writes_only_its_table(self):
+        self.entry(**dict(LR4, full=False))
+        obj = self.run_session()
+        self.assertEqual(obj['outputs']['integrate'], ['integrate/gc_lab4_crop.txt'])
+        self.assertFalse((self.folder / 'integrate/gc_lab4.txt').exists())
+        self.assertEqual((self.folder / 'integrate/gc_lab4_crop.txt').read_bytes(),
+                         self.integration_oracle('plain/gc_lab4_crop.csv',
+                                                 dict(compounds=COMPOUNDS, baseline='none')))

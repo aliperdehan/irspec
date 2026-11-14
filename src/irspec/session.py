@@ -428,10 +428,13 @@ def _rel(folder, path):
 def spectrum_record(folder, e, r, fig):
     """One `spectra` item of the --json object of a real run: what was made of manifest entry `e`
     (result `r` of `process`, Figure `fig`). Paths are relative to the folder."""
-    return {"file": e["file"], "kind": fig.kind, "title": fig.title, "name": r["stem"],
+    record = {"file": e["file"], "kind": fig.kind, "title": fig.title, "name": r["stem"],
             "axis": fig.axis, "peaks": [[x, ly] for x, ly in fig.peaks], "n_peaks": r["n_peaks"],
             "ymin": fig.ymin, "csv": _rel(folder, r["archival_path"]),
             "plain": _rel(folder, r["plain_path"])}
+    if r.get("integrate_path"):
+        record["integrate"] = _rel(folder, r["integrate_path"])
+    return record
 
 
 def allocate_output_names(folder, entries):
@@ -598,6 +601,9 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
         build = "pdfmd" if (find_pdfmd(pdfmd) and nulabreport_installed()) else "latex"
     out = {"manifest": "manifest.json", "figures": FIGURES_NAME, "markdown": _rel(folder, md),
            "tex": None, "pdf": None, "pictures": []}
+    tables = [_rel(folder, r["integrate_path"]) for _, r in results if r.get("integrate_path")]
+    if tables:
+        out["integrate"] = tables
     if report is not None:
         report["spectra"] = [spectrum_record(folder, e, r, fig)
                              for (e, r), fig in zip(results, figures)]

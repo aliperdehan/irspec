@@ -3,6 +3,7 @@
 An entry yields a full figure followed by its optional cropped figure. Requests in a
 crop's removed ranges are omitted before analysis, including the solvent request.
 """
+import io
 import os
 import tempfile
 
@@ -90,6 +91,7 @@ def process(folder, e, csv_dir, plain_dir):
             removed_all = bool(e.get('compounds') or e.get('solvent')) and not (
                 settings.get('compounds') or settings.get('solvent'))
             res = analyse(path, settings, removed_all)
+            table = write_tables(folder, path, stem, settings, res, cropped)
             res['meta']['detector'] = raw['meta'].get('detector')
             title = e.get('title') or stem
             if cropped:
@@ -105,10 +107,40 @@ def process(folder, e, csv_dir, plain_dir):
                                 names=[p['name'] for p, _, _ in res['labels']],
                                 restrict_y=res['ydata_max'] > res['ymax'],
                                 ymin=e.get('ymin'), ymax=res['ymax'], xmin=e.get('xmin'), xmax=e.get('xmax'),
-                                n_peaks=len(res['labels']), archival_path=archival, plain_path=path))
+                                n_peaks=len(res['labels']), archival_path=archival, plain_path=path,
+                                integrate_path=table))
         return results
     except (ValueError, OSError, tool.RawFormatError) as err:
         raise SessionError(f"{e['file']}: {err}") from err
+
+
+def write_tables(folder, plain, stem, settings, res, cropped):
+    """Exactly the integrate command's text, with its source relative to the session folder.
+
+    Use the figure's analysis before adding the RAW detector metadata: `gc integrate`
+    reads the plain CSV, which carries no detector, so its options have no ylabel.
+    """
+    buf = io.StringIO()
+    source = os.path.relpath(plain, folder)
+    mode = 'manual' if (settings.get('compounds') or settings.get('solvent')) else 'auto'
+    baseline = settings.get('baseline', 'auto')
+    print(f"# {source}  mode={mode}  baseline={baseline}  "
+          f"noise sigma={res['sigma']:.0f}  n_peaks={len(res['peaks'])}", file=buf)
+    for line in tool.review_table(res['peaks']):
+        print('  ', line, file=buf)
+    tri, trap = tool.markdown_tables(res['peaks'], tool.parse_known(settings.get('known', '')))
+    print('\ntriangulation table:\n', file=buf)
+    print('\n'.join(tri), file=buf)
+    print('\nintegration table:\n', file=buf)
+    print('\n'.join(trap), file=buf)
+    print('\n\\chromatogram options:', tool.macro_opts(res, settings.get('xmin'), settings.get('xmax')), file=buf)
+    print('\\chromatogram peaks:  ', tool.format_peaklist(res['labels']), file=buf)
+    directory = os.path.join(folder, 'integrate')
+    os.makedirs(directory, exist_ok=True)
+    path = os.path.join(directory, stem + ('_crop' if cropped else '') + '.txt')
+    with open(path, 'w', encoding='utf-8') as out:
+        out.write(buf.getvalue())
+    return path
 
 
 def peaklist(fig):

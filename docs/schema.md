@@ -126,9 +126,11 @@ A `spectra` item:
 | `n_peaks` | integer | how many |
 | `ymin` | number or null | |
 | `csv`, `plain` | string | the archival and the plain CSV |
+| `integrate` | string | GC only: this figure's triangulation and integration tables, relative to the session folder |
 
 `outputs`: `manifest`, `figures`, `markdown` (strings), `tex` and `pdf` (string, or null when not
-made), `pictures` (list of strings, from `--formats`).
+made), `pictures` (list of strings, from `--formats`). GC sessions also include `integrate`
+(a list of relative table paths, one per GC figure, in figure order).
 
 ## `irspec session DIR --preview --json`
 

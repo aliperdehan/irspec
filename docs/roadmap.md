@@ -364,8 +364,9 @@ The GC tool is in (0.3.0, the first of the GC line), `irspec gc`.
 filing, archival/plain CSVs, full and cropped figures, named/clamped labels, batch-identical
 TeX blocks, preview, edit limits and backend refusals. A crop analyses only requests inside
 its time range and outside every exclusion; the full figure keeps all requests.
-**Not done:** integration tables in `integrate/` (next slice), GC peak editing and TeX-free
-rendering (refused with a message). The TeX frame tests cover both package paths.
+**Tables are built (0.3.2):** `integrate/STEM.txt` and `STEM_crop.txt` reproduce
+`gc integrate` for each figure, including `known`, and stay in place on re-runs.
+**Not done:** GC peak editing and TeX-free rendering (refused with a message). The TeX frame tests cover both package paths.
 **Decided or measured for it (2026-11-13):**
 - *Frame, measured* on `\chromatogram` (the author's LR4 group-1 CSVs, six limit settings, the full
   package and the bundled excerpt alike): y padding 0.0985 below and 0.0017 above the span, y on

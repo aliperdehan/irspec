@@ -2,6 +2,15 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.2 (2026-11-13)
+
+Save each GC figure's triangulation and integration tables in the session.
+
+- Write `integrate/STEM.txt` and, for a crop, `integrate/STEM_crop.txt`, as
+  `irspec gc integrate` prints for that figure's data and analysis settings.
+- Fill the Known/Error columns from `known`, list table paths in `--json`, and
+  keep `integrate/` in place when the session runs again.
+
 ## 0.3.1 (2026-11-13)
 
 Draw GC chromatograms alongside spectra in a session.
