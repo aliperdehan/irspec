@@ -43,6 +43,11 @@ Moved 2026-11-14 (0.3.7): `tlc_contour.py` as `irspec tlc`
 `tests/record_tlc_contour.py` records the original twice, `tests/test_tlc_contour.py` replays
 the command output and SHA-256 hashes in `tests/data/tlc_contour_expected.json`.
 
+Moved 2026-11-14 (0.3.8): `gel_tool.py` as `irspec gel`
+(`src/irspec/gel_tool.py`), output unchanged on deterministic synthetic inputs;
+`tests/record_gel_tool.py` records the original twice, `tests/test_gel_tool.py` replays
+the command output and SHA-256 hashes in `tests/data/gel_tool_expected.json`.
+
 The sample file `tests/data/PHENACETIN_CRUDE_LR1-2.SPA` is the author's own spectrum, and
 the three `.jdx` files beside it are generated from it by `tests/make_fixtures.py`. The UV-Vis
 files are the author's own measurements, anonymised (`tests/data/README.md`); nothing else from a

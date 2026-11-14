@@ -54,6 +54,7 @@ src/irspec/   cli.py (the `irspec` command), session.py (the one command most pe
               GC reader and processing tool, `irspec gc`),
               spectrum_digitize (`irspec spectrum`: digitize MS and NMR spectrum pictures into CSVs, peak tables and TeX calls),
               tlc_contour (`irspec tlc`: turn TLC plate images or PDF pages into black-line contour PNGs),
+              gel_tool (`irspec gel`: measure synthetic or photographed gels, calibrate band masses and write labelled figures),
               data/irspec-ir.sty (GENERATED), data/fonts/ (STIX Two, SIL OFL 1.1)
 tests/        unittest; PYTHONPATH=src python3 -m unittest discover -s tests   (~1 min)
               test_differential.py compares 16 commands with tests/data/differential_expected.json

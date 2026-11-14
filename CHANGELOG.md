@@ -2,6 +2,13 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.8 (2026-11-13)
+
+Measure synthetic or photographed gels, calibrate band masses and write labelled figures with `irspec gel`.
+
+- Move nulabreport's `gel_tool.py` into irspec with its existing options and output.
+- Check generated files and command output against recordings on synthetic inputs.
+
 ## 0.3.7 (2026-11-13)
 
 Turn tlc plate images or pdf pages into black-line contour pngs with `irspec tlc`.

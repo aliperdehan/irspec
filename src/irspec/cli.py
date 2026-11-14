@@ -17,6 +17,7 @@
     irspec gc ...           Thermo Xcalibur .RAW (GC) -> CSVs, crop, baseline, peak areas (gc_tool)
     irspec spectrum ...      digitize MS and NMR spectrum pictures into CSVs, peak tables and TeX calls (spectrum_digitize)
     irspec tlc ...      turn TLC plate images or PDF pages into black-line contour PNGs (tlc_contour)
+    irspec gel ...      measure synthetic or photographed gels, calibrate band masses and write labelled figures (gel_tool)
 
 `session` is the command most people want; the others are its steps, for when
 one step is all that is needed (`irspec jdx convert X.jdx`). Each takes its
@@ -43,6 +44,7 @@ COMMANDS = {
     "vspd": "vspd_tool",
     "vqud": "vqud_tool",
     "gc": "gc_tool",
+    "gel": "gel_tool",
     "tlc": "tlc_contour",
     "spectrum": "spectrum_digitize",
 }

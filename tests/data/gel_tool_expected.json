@@ -1,0 +1,180 @@
+{
+  "straighten": {
+    "argv": [
+      "straighten",
+      "gel.json"
+    ],
+    "code": 0,
+    "stdout": "<TOOL> straighten <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n  straightened: 913 x 721 px -> <TMP>/straightened.png\n  config updated: gel.json\n",
+    "stderr": "",
+    "files": {
+      "gel.json": "adc03eae188503d28219af02103bf6cfbf9cd7627894d729db5ee7d94c0e33ed",
+      "preview_grid.png": "1020212642791c5861e941d09e606f60abe7bf8dc30f42038c3d43921a4a716b",
+      "straightened.png": "813162c575f0b5977d9d67723d2b0d1196bdc96e384b3967cb7ef0c4706457bb"
+    }
+  },
+  "lanes": {
+    "argv": [
+      "lanes",
+      "gel.json"
+    ],
+    "code": 0,
+    "stdout": "<TOOL> lanes <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n  lanes: 4 loaded lane humps at x = 77, 229, 533, 685; pitch 152.1 px; lane width (median FWHM) 100.3 px; window 60.2 px\n  lattice: humps are lanes 1, 2, 4, 5; residuals -0.2, +0.2, +0.0, -0.1 px; margins 76.8 / 75.6 px\n  config updated: gel.json\n",
+    "stderr": "",
+    "files": {
+      "gel.json": "adc03eae188503d28219af02103bf6cfbf9cd7627894d729db5ee7d94c0e33ed",
+      "lanes.csv": "8121d0e4fd35c8edcb221fba2612af92b0c7db0767158e27e28b6a51161420f7"
+    }
+  },
+  "bands": {
+    "argv": [
+      "bands",
+      "gel.json"
+    ],
+    "code": 0,
+    "stdout": "<TOOL> bands <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n  front in the gaps (x: y): 17: 577.3, 153: 577.2, 305: 577.2, 457: 577.4, 609: 577.2, 761: 577.1, 897: 577.3; front FWHM 19.2 px\n  run origin->front (measured): 474.0 px; over 308 band-free columns median 474.0, IQR 473-474\n  lane 1 (Ladder): origin 103.2, front 577.2 (flanks 577.3 / 577.2), 10 peaks: #0 Rf 0.081 h 0.468, #1 Rf 0.201 h 0.457, #2 Rf 0.313 h 0.452, #3 Rf 0.430 h 0.460, #4 Rf 0.542 h 0.875, #5 Rf 0.610 h 0.468, #6 Rf 0.716 h 0.464, #7 Rf 0.839 h 0.470, #8 Rf 0.972 h 1.044, #9 Rf 1.057 h 0.367 F\n  lane 2 (Protein A): origin 103.2, front 577.2 (flanks 577.2 / 577.2), 2 peaks: #0 Rf 0.592 h 0.604, #1 Rf 1.000 h 0.505 F\n  lane 4 (Protein B): origin 103.3, front 577.3 (flanks 577.4 / 577.2), 3 peaks: #0 Rf 0.527 h 0.371, #1 Rf 0.741 h 0.661, #2 Rf 1.000 h 0.505 F\n  lane 5 (Protein C): origin 103.2, front 577.2 (flanks 577.2 / 577.1), 3 peaks: #0 Rf 0.272 h 0.279, #1 Rf 0.700 h 0.609, #2 Rf 1.000 h 0.502 F\n  config updated: gel.json\n",
+    "stderr": "",
+    "files": {
+      "bands.csv": "3b700c4cc0a758b808010e45c33f02431f43ccf93662e8680170bf43798114d3",
+      "gel.json": "adc03eae188503d28219af02103bf6cfbf9cd7627894d729db5ee7d94c0e33ed",
+      "profiles.csv": "e6146d8f9f47730c9a41c41a7de947e19de54d7f4584608dfe12b8d82268094a"
+    }
+  },
+  "calibrate": {
+    "argv": [
+      "calibrate",
+      "gel.json"
+    ],
+    "code": 0,
+    "stdout": "<TOOL> calibrate <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n  reference band in the blue channel at y 360 (blue OD 0.73) -> ladder peak #4 at y 360.1\n  reference band in the blue channel at y 563 (blue OD 0.73) -> ladder peak #8 at y 563.9\n  note: ladder peak #9 (Rf 1.057) below the 25 kDa band is not assigned; it may be 20 kDa or several bands compressed together (add it by hand if resolved)\n  ladder assignment proposed: 245 kDa = #0 (y 141.4), 180 kDa = #1 (y 198.4), 135 kDa = #2 (y 251.5), 100 kDa = #3 (y 307.0), 75 kDa = #4 (y 360.1), 63 kDa = #5 (y 392.3), 48 kDa = #6 (y 442.6), 35 kDa = #7 (y 501.0), 25 kDa = #8 (y 563.9)\n  fit (linear, used): log10(kDa) = 2.47847 + (-1.11294) Rf; n = 9, Rf 0.081-0.972\n    r^2: linear 1.00000, quadratic 1.00000, point-to-point n/a\n    ladder residuals (%):             linear        quadratic\n    #0     245 kDa  Rf 0.0806             -0.1             +0.0\n    #1     180 kDa  Rf 0.2007             -0.1             -0.0\n    #2     135 kDa  Rf 0.3127             +0.0             -0.0\n    #3     100 kDa  Rf 0.4298             +0.0             -0.1\n    #4      75 kDa  Rf 0.5419             +0.1             -0.0\n    #5      63 kDa  Rf 0.6100             +0.1             -0.0\n    #6      48 kDa  Rf 0.7160             +0.1             +0.0\n    #7      35 kDa  Rf 0.8391             +0.1             +0.2\n    #8      25 kDa  Rf 0.9719             -0.3             -0.1\n    sample bands (height >= 0.1, off the front), est. kDa:         linear       quadratic  point-to-point\n      lane 2 #0 Rf 0.592:           66.0           65.9           66.0\n      lane 4 #0 Rf 0.527:           78.1           78.0           78.0\n      lane 4 #1 Rf 0.741:           45.1           45.1           45.0\n      lane 5 #0 Rf 0.272:          150.0          149.9          150.0\n      lane 5 #1 Rf 0.700:           50.0           50.0           50.0\n  config updated: gel.json\n",
+    "stderr": "",
+    "files": {
+      "calibration.csv": "fa58e085448c83d1d2e3d40def5c98adcedcf3e04d351d3173b6529ab78c501c",
+      "estimates.csv": "88f35820293a84d58dd95766d747176a96e2679df2b142edddf4d9790d13bf80",
+      "gel.json": "5d83e20fd69115ed69c2f9ba898ab4a30e3cf93137af3cbad8617a91acd6e594"
+    }
+  },
+  "figure": {
+    "argv": [
+      "figure",
+      "gel.json"
+    ],
+    "code": 0,
+    "stdout": "<TOOL> figure <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n  reference band in the blue channel at y 360 (blue OD 0.73) -> ladder peak #4 at y 360.1\n  reference band in the blue channel at y 563 (blue OD 0.73) -> ladder peak #8 at y 563.9\n  note: ladder peak #9 (Rf 1.057) below the 25 kDa band is not assigned; it may be 20 kDa or several bands compressed together (add it by hand if resolved)\n  ladder assignment proposed: 245 kDa = #0 (y 141.4), 180 kDa = #1 (y 198.4), 135 kDa = #2 (y 251.5), 100 kDa = #3 (y 307.0), 75 kDa = #4 (y 360.1), 63 kDa = #5 (y 392.3), 48 kDa = #6 (y 442.6), 35 kDa = #7 (y 501.0), 25 kDa = #8 (y 563.9)\n  figure: crop [0, 0.015, 1, 0.8606] -> gel.png 600 px wide, 256 colours, 110 KB; 16 labels\n  config updated: gel.json\n",
+    "stderr": "",
+    "files": {
+      "check.png": "4ebac3e5adbe2bc6fd6380923fceabd79f3157d6d76271f9ac65d0e7239d5bfc",
+      "gel.json": "5d83e20fd69115ed69c2f9ba898ab4a30e3cf93137af3cbad8617a91acd6e594",
+      "gel.png": "5f85303ca268068994d301c221ea47a18b00c955fad5e20c1f5a58fd90a5d744",
+      "gel_labels.csv": "a0558d364e03957ed8b19ebc3503d25848c74a3c4de7fbd13332dc3c87e45269"
+    }
+  },
+  "all_left": {
+    "argv": [
+      "all",
+      "gel.json"
+    ],
+    "code": 0,
+    "stdout": "<TOOL> all <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n  straightened: 913 x 721 px -> <TMP>/straightened.png\n  lanes: 4 loaded lane humps at x = 77, 229, 533, 685; pitch 152.1 px; lane width (median FWHM) 100.3 px; window 60.2 px\n  lattice: humps are lanes 1, 2, 4, 5; residuals -0.2, +0.2, +0.0, -0.1 px; margins 76.8 / 75.6 px\n  front in the gaps (x: y): 17: 577.3, 153: 577.2, 305: 577.2, 457: 577.4, 609: 577.2, 761: 577.1, 897: 577.3; front FWHM 19.2 px\n  run origin->front (measured): 474.0 px; over 308 band-free columns median 474.0, IQR 473-474\n  lane 1 (Ladder): origin 103.2, front 577.2 (flanks 577.3 / 577.2), 10 peaks: #0 Rf 0.081 h 0.468, #1 Rf 0.201 h 0.457, #2 Rf 0.313 h 0.452, #3 Rf 0.430 h 0.460, #4 Rf 0.542 h 0.875, #5 Rf 0.610 h 0.468, #6 Rf 0.716 h 0.464, #7 Rf 0.839 h 0.470, #8 Rf 0.972 h 1.044, #9 Rf 1.057 h 0.367 F\n  lane 2 (Protein A): origin 103.2, front 577.2 (flanks 577.2 / 577.2), 2 peaks: #0 Rf 0.592 h 0.604, #1 Rf 1.000 h 0.505 F\n  lane 4 (Protein B): origin 103.3, front 577.3 (flanks 577.4 / 577.2), 3 peaks: #0 Rf 0.527 h 0.371, #1 Rf 0.741 h 0.661, #2 Rf 1.000 h 0.505 F\n  lane 5 (Protein C): origin 103.2, front 577.2 (flanks 577.2 / 577.1), 3 peaks: #0 Rf 0.272 h 0.279, #1 Rf 0.700 h 0.609, #2 Rf 1.000 h 0.502 F\n  reference band in the blue channel at y 360 (blue OD 0.73) -> ladder peak #4 at y 360.1\n  reference band in the blue channel at y 563 (blue OD 0.73) -> ladder peak #8 at y 563.9\n  note: ladder peak #9 (Rf 1.057) below the 25 kDa band is not assigned; it may be 20 kDa or several bands compressed together (add it by hand if resolved)\n  ladder assignment proposed: 245 kDa = #0 (y 141.4), 180 kDa = #1 (y 198.4), 135 kDa = #2 (y 251.5), 100 kDa = #3 (y 307.0), 75 kDa = #4 (y 360.1), 63 kDa = #5 (y 392.3), 48 kDa = #6 (y 442.6), 35 kDa = #7 (y 501.0), 25 kDa = #8 (y 563.9)\n  fit (linear, used): log10(kDa) = 2.47847 + (-1.11294) Rf; n = 9, Rf 0.081-0.972\n    r^2: linear 1.00000, quadratic 1.00000, point-to-point n/a\n    ladder residuals (%):             linear        quadratic\n    #0     245 kDa  Rf 0.0806             -0.1             +0.0\n    #1     180 kDa  Rf 0.2007             -0.1             -0.0\n    #2     135 kDa  Rf 0.3127             +0.0             -0.0\n    #3     100 kDa  Rf 0.4298             +0.0             -0.1\n    #4      75 kDa  Rf 0.5419             +0.1             -0.0\n    #5      63 kDa  Rf 0.6100             +0.1             -0.0\n    #6      48 kDa  Rf 0.7160             +0.1             +0.0\n    #7      35 kDa  Rf 0.8391             +0.1             +0.2\n    #8      25 kDa  Rf 0.9719             -0.3             -0.1\n    sample bands (height >= 0.1, off the front), est. kDa:         linear       quadratic  point-to-point\n      lane 2 #0 Rf 0.592:           66.0           65.9           66.0\n      lane 4 #0 Rf 0.527:           78.1           78.0           78.0\n      lane 4 #1 Rf 0.741:           45.1           45.1           45.0\n      lane 5 #0 Rf 0.272:          150.0          149.9          150.0\n      lane 5 #1 Rf 0.700:           50.0           50.0           50.0\n  figure: crop [0, 0.015, 1, 0.8606] -> gel.png 600 px wide, 256 colours, 110 KB; 16 labels\n  config updated: gel.json\n",
+    "stderr": "",
+    "files": {
+      "bands.csv": "3b700c4cc0a758b808010e45c33f02431f43ccf93662e8680170bf43798114d3",
+      "calibration.csv": "fa58e085448c83d1d2e3d40def5c98adcedcf3e04d351d3173b6529ab78c501c",
+      "check.png": "4ebac3e5adbe2bc6fd6380923fceabd79f3157d6d76271f9ac65d0e7239d5bfc",
+      "estimates.csv": "88f35820293a84d58dd95766d747176a96e2679df2b142edddf4d9790d13bf80",
+      "gel.json": "5d83e20fd69115ed69c2f9ba898ab4a30e3cf93137af3cbad8617a91acd6e594",
+      "gel.png": "5f85303ca268068994d301c221ea47a18b00c955fad5e20c1f5a58fd90a5d744",
+      "gel_labels.csv": "a0558d364e03957ed8b19ebc3503d25848c74a3c4de7fbd13332dc3c87e45269",
+      "lanes.csv": "8121d0e4fd35c8edcb221fba2612af92b0c7db0767158e27e28b6a51161420f7",
+      "preview_grid.png": "1020212642791c5861e941d09e606f60abe7bf8dc30f42038c3d43921a4a716b",
+      "profiles.csv": "e6146d8f9f47730c9a41c41a7de947e19de54d7f4584608dfe12b8d82268094a",
+      "straightened.png": "813162c575f0b5977d9d67723d2b0d1196bdc96e384b3967cb7ef0c4706457bb"
+    }
+  },
+  "all_right": {
+    "argv": [
+      "all",
+      "gel.json"
+    ],
+    "code": 0,
+    "stdout": "<TOOL> all <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n  straightened: 913 x 721 px -> <TMP>/straightened.png\n  lanes: 4 loaded lane humps at x = 229, 381, 685, 837; pitch 152.1 px; lane width (median FWHM) 100.4 px; window 60.3 px\n  lattice: humps are lanes 2, 3, 5, 6; residuals +0.0, +0.1, -0.3, +0.2 px; margins 76.7 / 75.7 px\n  front in the gaps (x: y): 17: 577.5, 153: 577.1, 305: 577.3, 457: 577.4, 609: 577.3, 761: 577.2, 897: 577.6; front FWHM 19.2 px\n  run origin->front (measured): 474.0 px; over 307 band-free columns median 474.0, IQR 473-474\n  lane 2 (Protein C): origin 103.2, front 577.2 (flanks 577.1 / 577.3), 3 peaks: #0 Rf 0.272 h 0.280, #1 Rf 0.700 h 0.612, #2 Rf 1.000 h 0.506 F\n  lane 3 (Protein B): origin 103.3, front 577.3 (flanks 577.3 / 577.4), 3 peaks: #0 Rf 0.526 h 0.367, #1 Rf 0.741 h 0.670, #2 Rf 1.000 h 0.502 F\n  lane 5 (Protein A): origin 103.2, front 577.2 (flanks 577.3 / 577.2), 2 peaks: #0 Rf 0.592 h 0.610, #1 Rf 1.000 h 0.502 F\n  lane 6 (Ladder): origin 103.4, front 577.4 (flanks 577.2 / 577.6), 10 peaks: #0 Rf 0.080 h 0.477, #1 Rf 0.200 h 0.462, #2 Rf 0.313 h 0.453, #3 Rf 0.429 h 0.456, #4 Rf 0.541 h 0.868, #5 Rf 0.610 h 0.463, #6 Rf 0.715 h 0.468, #7 Rf 0.839 h 0.473, #8 Rf 0.971 h 1.016, #9 Rf 1.057 h 0.379 F\n  reference band in the blue channel at y 360 (blue OD 0.73) -> ladder peak #4 at y 360.1\n  reference band in the blue channel at y 563 (blue OD 0.74) -> ladder peak #8 at y 563.6\n  note: ladder peak #9 (Rf 1.057) below the 25 kDa band is not assigned; it may be 20 kDa or several bands compressed together (add it by hand if resolved)\n  ladder assignment proposed: 245 kDa = #0 (y 141.4), 180 kDa = #1 (y 198.3), 135 kDa = #2 (y 251.6), 100 kDa = #3 (y 306.9), 75 kDa = #4 (y 360.1), 63 kDa = #5 (y 392.3), 48 kDa = #6 (y 442.6), 35 kDa = #7 (y 500.9), 25 kDa = #8 (y 563.6)\n  fit (linear, used): log10(kDa) = 2.47810 + (-1.11340) Rf; n = 9, Rf 0.080-0.971\n    r^2: linear 1.00000, quadratic 1.00000, point-to-point n/a\n    ladder residuals (%):             linear        quadratic\n    #0     245 kDa  Rf 0.0801             -0.1             +0.0\n    #1     180 kDa  Rf 0.2001             +0.0             +0.0\n    #2     135 kDa  Rf 0.3125             -0.0             -0.1\n    #3     100 kDa  Rf 0.4293             +0.0             -0.0\n    #4      75 kDa  Rf 0.5414             +0.1             -0.0\n    #5      63 kDa  Rf 0.6095             +0.0             -0.0\n    #6      48 kDa  Rf 0.7155             +0.1             +0.0\n    #7      35 kDa  Rf 0.8386             +0.1             +0.1\n    #8      25 kDa  Rf 0.9707             -0.2             -0.1\n    sample bands (height >= 0.1, off the front), est. kDa:         linear       quadratic  point-to-point\n      lane 2 #0 Rf 0.272:          149.8          149.8          149.8\n      lane 2 #1 Rf 0.700:           49.9           49.9           49.9\n      lane 3 #0 Rf 0.526:           78.0           77.9           77.9\n      lane 3 #1 Rf 0.741:           45.0           45.0           45.0\n      lane 5 #0 Rf 0.592:           65.9           65.9           65.9\n  figure: crop [0, 0.015, 1, 0.8607] -> gel.png 600 px wide, 256 colours, 110 KB; 15 labels\n  config updated: gel.json\n",
+    "stderr": "",
+    "files": {
+      "bands.csv": "e2a8d8b6d98eb091bc0c4c8cc4d244fc8219376676956b0f14c10f2a7d53f65a",
+      "calibration.csv": "a1488863285843f7dac459f2777fd3275895dff5a3553a4ea818d9389d2a00ce",
+      "check.png": "b5524127c3a51ade876975c11bbf804f12ff1609e821a5b12446a6030e804e07",
+      "estimates.csv": "bdffb6d811bcba85701576d9dcec968c9c56a27095639ce160de9fbeef07d8bb",
+      "gel.json": "e2a4ec35a1572089a48fa1108e681de80169ae2827fbd7b30c44dbb78f437a61",
+      "gel.png": "3712abc94f0e0b01edfa3bc5524d244e8a44400e793b201d685503297bd80e6d",
+      "gel_labels.csv": "913b5cc168f42903137f2bb01ea01ee0818c3649f8577134091ffa96fec5d40a",
+      "lanes.csv": "fa3d36880b3c2263a6c8b788a4ab9660ad687a7e616d28fd047d5c504cc327dd",
+      "preview_grid.png": "2f4e479fa92918df11ab2a79e26a51a22310f2546e7b9fff59057200caa5a1f9",
+      "profiles.csv": "3ce0606df6b5dcde65a84b824beb604a7d4a76db8d00726bfe1f15e79ce7be71",
+      "straightened.png": "78401ebe5413a53536786ffd3a58896d87900197c48648892ae4c92bc57c033c"
+    }
+  },
+  "quadratic": {
+    "argv": [
+      "all",
+      "gel.json"
+    ],
+    "code": 0,
+    "stdout": "<TOOL> all <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n  straightened: 913 x 721 px -> <TMP>/straightened.png\n  lanes: 4 loaded lane humps at x = 77, 229, 533, 685; pitch 152.1 px; lane width (median FWHM) 100.3 px; window 60.2 px\n  lattice: humps are lanes 1, 2, 4, 5; residuals -0.2, +0.2, +0.0, -0.1 px; margins 76.8 / 75.6 px\n  front in the gaps (x: y): 17: 577.3, 153: 577.2, 305: 577.2, 457: 577.4, 609: 577.2, 761: 577.1, 897: 577.3; front FWHM 19.2 px\n  run origin->front (measured): 474.0 px; over 308 band-free columns median 474.0, IQR 473-474\n  lane 1 (Ladder): origin 103.2, front 577.2 (flanks 577.3 / 577.2), 10 peaks: #0 Rf 0.081 h 0.468, #1 Rf 0.201 h 0.457, #2 Rf 0.313 h 0.452, #3 Rf 0.430 h 0.460, #4 Rf 0.542 h 0.875, #5 Rf 0.610 h 0.468, #6 Rf 0.716 h 0.464, #7 Rf 0.839 h 0.470, #8 Rf 0.972 h 1.044, #9 Rf 1.057 h 0.367 F\n  lane 2 (Protein A): origin 103.2, front 577.2 (flanks 577.2 / 577.2), 2 peaks: #0 Rf 0.592 h 0.604, #1 Rf 1.000 h 0.505 F\n  lane 4 (Protein B): origin 103.3, front 577.3 (flanks 577.4 / 577.2), 3 peaks: #0 Rf 0.527 h 0.371, #1 Rf 0.741 h 0.661, #2 Rf 1.000 h 0.505 F\n  lane 5 (Protein C): origin 103.2, front 577.2 (flanks 577.2 / 577.1), 3 peaks: #0 Rf 0.272 h 0.279, #1 Rf 0.700 h 0.609, #2 Rf 1.000 h 0.502 F\n  reference band in the blue channel at y 360 (blue OD 0.73) -> ladder peak #4 at y 360.1\n  reference band in the blue channel at y 563 (blue OD 0.73) -> ladder peak #8 at y 563.9\n  note: ladder peak #9 (Rf 1.057) below the 25 kDa band is not assigned; it may be 20 kDa or several bands compressed together (add it by hand if resolved)\n  ladder assignment proposed: 245 kDa = #0 (y 141.4), 180 kDa = #1 (y 198.4), 135 kDa = #2 (y 251.5), 100 kDa = #3 (y 307.0), 75 kDa = #4 (y 360.1), 63 kDa = #5 (y 392.3), 48 kDa = #6 (y 442.6), 35 kDa = #7 (y 501.0), 25 kDa = #8 (y 563.9)\n  fit (quadratic, used): log10(kDa) = 2.47945 + (-1.11820) Rf + (0.00503) Rf^2; n = 9, Rf 0.081-0.972\n    r^2: linear 1.00000, quadratic 1.00000, point-to-point n/a\n    ladder residuals (%):             linear        quadratic\n    #0     245 kDa  Rf 0.0806             -0.1             +0.0\n    #1     180 kDa  Rf 0.2007             -0.1             -0.0\n    #2     135 kDa  Rf 0.3127             +0.0             -0.0\n    #3     100 kDa  Rf 0.4298             +0.0             -0.1\n    #4      75 kDa  Rf 0.5419             +0.1             -0.0\n    #5      63 kDa  Rf 0.6100             +0.1             -0.0\n    #6      48 kDa  Rf 0.7160             +0.1             +0.0\n    #7      35 kDa  Rf 0.8391             +0.1             +0.2\n    #8      25 kDa  Rf 0.9719             -0.3             -0.1\n    sample bands (height >= 0.1, off the front), est. kDa:         linear       quadratic  point-to-point\n      lane 2 #0 Rf 0.592:           66.0           65.9           66.0\n      lane 4 #0 Rf 0.527:           78.1           78.0           78.0\n      lane 4 #1 Rf 0.741:           45.1           45.1           45.0\n      lane 5 #0 Rf 0.272:          150.0          149.9          150.0\n      lane 5 #1 Rf 0.700:           50.0           50.0           50.0\n  figure: crop [0, 0.015, 1, 0.8606] -> gel.png 600 px wide, 256 colours, 110 KB; 16 labels\n  config updated: gel.json\n",
+    "stderr": "",
+    "files": {
+      "bands.csv": "3b700c4cc0a758b808010e45c33f02431f43ccf93662e8680170bf43798114d3",
+      "calibration.csv": "38c957874f0e36f79e104c20e8c8ee446a5be59128b6e08ac4aa665c329c212d",
+      "check.png": "4ebac3e5adbe2bc6fd6380923fceabd79f3157d6d76271f9ac65d0e7239d5bfc",
+      "estimates.csv": "d6af35c18f6a5b583f46eebbf20a9a867a699105b1d230948bf2f587bd2d3568",
+      "gel.json": "d0ab31a1145c2215c49d6ca5ff8a591a8fc63bfb98774830785b76639669308c",
+      "gel.png": "5f85303ca268068994d301c221ea47a18b00c955fad5e20c1f5a58fd90a5d744",
+      "gel_labels.csv": "a0558d364e03957ed8b19ebc3503d25848c74a3c4de7fbd13332dc3c87e45269",
+      "lanes.csv": "8121d0e4fd35c8edcb221fba2612af92b0c7db0767158e27e28b6a51161420f7",
+      "preview_grid.png": "1020212642791c5861e941d09e606f60abe7bf8dc30f42038c3d43921a4a716b",
+      "profiles.csv": "e6146d8f9f47730c9a41c41a7de947e19de54d7f4584608dfe12b8d82268094a",
+      "straightened.png": "813162c575f0b5977d9d67723d2b0d1196bdc96e384b3967cb7ef0c4706457bb"
+    }
+  },
+  "point_to_point": {
+    "argv": [
+      "all",
+      "gel.json"
+    ],
+    "code": 0,
+    "stdout": "<TOOL> all <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n  straightened: 913 x 721 px -> <TMP>/straightened.png\n  lanes: 4 loaded lane humps at x = 77, 229, 533, 685; pitch 152.1 px; lane width (median FWHM) 100.3 px; window 60.2 px\n  lattice: humps are lanes 1, 2, 4, 5; residuals -0.2, +0.2, +0.0, -0.1 px; margins 76.8 / 75.6 px\n  front in the gaps (x: y): 17: 577.3, 153: 577.2, 305: 577.2, 457: 577.4, 609: 577.2, 761: 577.1, 897: 577.3; front FWHM 19.2 px\n  run origin->front (measured): 474.0 px; over 308 band-free columns median 474.0, IQR 473-474\n  lane 1 (Ladder): origin 103.2, front 577.2 (flanks 577.3 / 577.2), 10 peaks: #0 Rf 0.081 h 0.468, #1 Rf 0.201 h 0.457, #2 Rf 0.313 h 0.452, #3 Rf 0.430 h 0.460, #4 Rf 0.542 h 0.875, #5 Rf 0.610 h 0.468, #6 Rf 0.716 h 0.464, #7 Rf 0.839 h 0.470, #8 Rf 0.972 h 1.044, #9 Rf 1.057 h 0.367 F\n  lane 2 (Protein A): origin 103.2, front 577.2 (flanks 577.2 / 577.2), 2 peaks: #0 Rf 0.592 h 0.604, #1 Rf 1.000 h 0.505 F\n  lane 4 (Protein B): origin 103.3, front 577.3 (flanks 577.4 / 577.2), 3 peaks: #0 Rf 0.527 h 0.371, #1 Rf 0.741 h 0.661, #2 Rf 1.000 h 0.505 F\n  lane 5 (Protein C): origin 103.2, front 577.2 (flanks 577.2 / 577.1), 3 peaks: #0 Rf 0.272 h 0.279, #1 Rf 0.700 h 0.609, #2 Rf 1.000 h 0.502 F\n  reference band in the blue channel at y 360 (blue OD 0.73) -> ladder peak #4 at y 360.1\n  reference band in the blue channel at y 563 (blue OD 0.73) -> ladder peak #8 at y 563.9\n  note: ladder peak #9 (Rf 1.057) below the 25 kDa band is not assigned; it may be 20 kDa or several bands compressed together (add it by hand if resolved)\n  ladder assignment proposed: 245 kDa = #0 (y 141.4), 180 kDa = #1 (y 198.4), 135 kDa = #2 (y 251.5), 100 kDa = #3 (y 307.0), 75 kDa = #4 (y 360.1), 63 kDa = #5 (y 392.3), 48 kDa = #6 (y 442.6), 35 kDa = #7 (y 501.0), 25 kDa = #8 (y 563.9)\n  fit (point-to-point, used): log10(kDa) = point-to-point between the ladder bands; n = 9, Rf 0.081-0.972\n    r^2: linear 1.00000, quadratic 1.00000, point-to-point n/a\n    ladder residuals (%):             linear        quadratic\n    #0     245 kDa  Rf 0.0806             -0.1             +0.0\n    #1     180 kDa  Rf 0.2007             -0.1             -0.0\n    #2     135 kDa  Rf 0.3127             +0.0             -0.0\n    #3     100 kDa  Rf 0.4298             +0.0             -0.1\n    #4      75 kDa  Rf 0.5419             +0.1             -0.0\n    #5      63 kDa  Rf 0.6100             +0.1             -0.0\n    #6      48 kDa  Rf 0.7160             +0.1             +0.0\n    #7      35 kDa  Rf 0.8391             +0.1             +0.2\n    #8      25 kDa  Rf 0.9719             -0.3             -0.1\n    sample bands (height >= 0.1, off the front), est. kDa:         linear       quadratic  point-to-point\n      lane 2 #0 Rf 0.592:           66.0           65.9           66.0\n      lane 4 #0 Rf 0.527:           78.1           78.0           78.0\n      lane 4 #1 Rf 0.741:           45.1           45.1           45.0\n      lane 5 #0 Rf 0.272:          150.0          149.9          150.0\n      lane 5 #1 Rf 0.700:           50.0           50.0           50.0\n  figure: crop [0, 0.015, 1, 0.8606] -> gel.png 600 px wide, 256 colours, 110 KB; 16 labels\n  config updated: gel.json\n",
+    "stderr": "",
+    "files": {
+      "bands.csv": "3b700c4cc0a758b808010e45c33f02431f43ccf93662e8680170bf43798114d3",
+      "calibration.csv": "422d8807756271bcf5e189e68e2075dcb3352f1890de156a32ac7efe8ed521d4",
+      "check.png": "4ebac3e5adbe2bc6fd6380923fceabd79f3157d6d76271f9ac65d0e7239d5bfc",
+      "estimates.csv": "fe734fd4ecaa1d43df5208956458bdfd48d87fd41e3708af2d766d726b97e6bc",
+      "gel.json": "c41bce2ee18c1c08f5ace714adc31a46998cbbc73da5d0261d827f6d2d9362e8",
+      "gel.png": "5f85303ca268068994d301c221ea47a18b00c955fad5e20c1f5a58fd90a5d744",
+      "gel_labels.csv": "a0558d364e03957ed8b19ebc3503d25848c74a3c4de7fbd13332dc3c87e45269",
+      "lanes.csv": "8121d0e4fd35c8edcb221fba2612af92b0c7db0767158e27e28b6a51161420f7",
+      "preview_grid.png": "1020212642791c5861e941d09e606f60abe7bf8dc30f42038c3d43921a4a716b",
+      "profiles.csv": "e6146d8f9f47730c9a41c41a7de947e19de54d7f4584608dfe12b8d82268094a",
+      "straightened.png": "813162c575f0b5977d9d67723d2b0d1196bdc96e384b3967cb7ef0c4706457bb"
+    }
+  },
+  "protected_photos": {
+    "argv": [
+      "straighten",
+      "gel.json"
+    ],
+    "code": 1,
+    "stdout": "<TOOL> straighten <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n",
+    "stderr": "out_dir <TMP>/photos is inside a 'photos' folder; refusing to write there\n",
+    "files": {}
+  },
+  "protected_sources": {
+    "argv": [
+      "straighten",
+      "gel.json"
+    ],
+    "code": 1,
+    "stdout": "<TOOL> straighten <TMP>/gel.json\n  corners proposed (TL, TR, BR, BL): [[159.6, 139.6], [1059.5, 125.6], [1075.5, 845.6], [149.4, 861.5]]\n",
+    "stderr": "out_dir <TMP>/sources is inside a 'sources' folder; refusing to write there\n",
+    "files": {}
+  }
+}

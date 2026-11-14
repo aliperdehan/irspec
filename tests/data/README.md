@@ -76,3 +76,10 @@ identical results. `tests/record_tlc_contour.py` draws plates/noise with a fixed
 a two-page vector PDF without fonts or timestamps. It covers image cropping, despeckling,
 the size budget, PDF page selection/DPI and missing-output diagnostics; every PNG uses SHA-256.
 PDF replay cases skip when the existing optional `pdftoppm` command is unavailable.
+
+`gel_tool_expected.json` records eleven commands of the original gel script twice, identically.
+`tests/make_gel.py` is nulabreport's synthetic demo generator (fixed seed, planted masses;
+no real gel photo). `tests/record_gel_tool.py` generates its config and covers every stage,
+mirrored ladder placement, three calibration fits and refusal of protected output folders.
+All output images use SHA-256. The smoke regressions check the ladder assignment, loaded-lane
+numbers, nine mark labels on the correct side and planted masses within 1%, as nulabreport does.
