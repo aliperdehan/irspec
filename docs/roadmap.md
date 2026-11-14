@@ -390,6 +390,8 @@ its time range and outside every exclusion; the full figure keeps all requests.
   manifest that lists the same .RAW twice, which the LR4 manifest does (full run + crop).
   `irspec gc` now shares the CSV pair and draws both entries; two crops of one file are refused.
 
+Moved in 0.3.6: `spectrum_digitize.py` is `irspec spectrum`, with unchanged output checked on synthetic inputs; session kinds remain separate.
+
 **Decided (the author, 2026-11-10).** irspec takes over the other plot tools of the private
 `nulabreport` repository (`tools/`): `gc_tool.py` (Thermo Xcalibur `.RAW` chromatograms),
 `vspd_tool.py` (Shimadzu UVProbe `.vspd` UV-Vis), `spectrum_digitize.py` (a mass or NMR spectrum

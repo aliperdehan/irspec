@@ -60,3 +60,13 @@ computer's user). Approved by the author, 2026-11-14.
 
 The `batch_twice` case records irspec 0.3.4 behaviour (full run and crop sharing CSVs),
 not nulabreport v1.31.38, which refused the repeated input. All other cases are unchanged.
+
+## Synthetic tool recordings
+
+`spectrum_digitize_expected.json` records eleven commands of the original nulabreport script,
+run twice with identical results by `tests/record_spectrum_digitize.py`. The inputs are drawn
+from scratch with Pillow: MS sticks, NMR traces, an expansion inset and a ruler failure.
+CSV, peak-list and TeX files are compared by SHA-256; the command streams are compared in full,
+with temporary paths and the CLI program name normalised. Overlay PNG hashes are checked when
+the font fingerprint and Pillow version match the recording; on other hosts the case checks
+all non-image output and skips its font-dependent image comparison. No font asset is copied.

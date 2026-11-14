@@ -50,6 +50,7 @@ It does:
   (standards, unknowns and the calibration line) as CSVs (`irspec vqud`); a `.vspd` in a
   session folder becomes a UV-Vis figure beside the IR ones ([below](#uv-vis-scans)). irspec is
   growing from IR to the other plots of a chemistry lab report, one kind at a time;
+- digitize MS and NMR spectrum pictures into CSVs, peak tables and TeX calls (`irspec spectrum`);
 - read Thermo Xcalibur `.RAW` gas chromatograms (`irspec gc`): acquisition details,
   archival and plain CSVs, trimming, baseline correction, excluded ranges,
   peak areas and report tables, verification and batch Markdown.
@@ -558,6 +559,7 @@ all you need. Each has its own `--help`.
 | `irspec corr` | Pearson r between spectra (the first is the reference) | `irspec corr plain/REF.csv plain/UNKNOWN.csv` |
 | `irspec vspd` | a Shimadzu UV-Vis `.vspd` → `wavelength,absorbance` CSV; `info`, `peaks` (the picks stored in the file, as a `\labplot[kind=uvvis]` peak list), `verify` against the instrument's text export | `irspec vspd convert scan.vspd --out scan.csv` |
 | `irspec vqud` | a Shimadzu quantitation file (`.vqud`) → CSVs of the standards, the unknowns and the calibration (refitted, and compared with the fit the file stores); `info` reads a `.vqud`, `.vqut` or `.vqum` without writing | `irspec vqud run.vqud out/run` |
+| `irspec spectrum` | digitize MS and NMR spectrum pictures into CSVs, peak tables and TeX calls | `irspec spectrum ms PIC.png --x-ticks 10:10 --y-ticks 0:20 --out trace.csv` |
 | `irspec gc` | Thermo Xcalibur `.RAW` (GC) → archival and plain CSVs; `info`, `crop` with baseline correction and excluded ranges, `integrate` peak areas and report tables, `verify`, `batch` Markdown | `irspec gc convert run.RAW --out csv/run` |
 
 `irspec corr` compares only requested grid points measured in both spectra
@@ -594,7 +596,7 @@ Three more checks run on the author's own coursework folders (the environment
 variable `IRSPEC_LR6_IR` points at them) and are skipped everywhere else; they
 are how the WebBook and SDBS paths were shown to give byte-identical CSVs.
 
-`irspec vspd`, `irspec vqud` and `irspec gc` were moved from the same package; their output on
+`irspec spectrum`, `irspec vspd`, `irspec vqud` and `irspec gc` were moved from the same package; their output on
 the test files is compared with what the original scripts wrote, and was compared
 on the author's original instrument files too, byte for byte.
 

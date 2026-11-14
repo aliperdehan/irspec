@@ -2,6 +2,13 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.6 (2026-11-13)
+
+Digitize ms and nmr spectrum pictures into csvs, peak tables and tex calls with `irspec spectrum`.
+
+- Move nulabreport's `spectrum_digitize.py` into irspec with its existing options and output.
+- Check generated files and command output against recordings on synthetic inputs.
+
 ## 0.3.5 (2026-11-13)
 
 Edit UV-Vis picks and GC compound requests from the command line.

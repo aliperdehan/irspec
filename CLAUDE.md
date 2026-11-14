@@ -52,6 +52,7 @@ src/irspec/   cli.py (the `irspec` command), session.py (the one command most pe
               there), uvvis.py (the UV-Vis kind's functions), gc.py (the GC kind's functions), vspd_tool, vqud_tool (the
               Shimadzu readers, `irspec vspd`/`vqud`), gc_tool (the Thermo Xcalibur
               GC reader and processing tool, `irspec gc`),
+              spectrum_digitize (`irspec spectrum`: digitize MS and NMR spectrum pictures into CSVs, peak tables and TeX calls),
               data/irspec-ir.sty (GENERATED), data/fonts/ (STIX Two, SIL OFL 1.1)
 tests/        unittest; PYTHONPATH=src python3 -m unittest discover -s tests   (~1 min)
               test_differential.py compares 16 commands with tests/data/differential_expected.json
