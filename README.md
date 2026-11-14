@@ -166,7 +166,7 @@ a UV-Vis figure: absorbance against wavelength over the scan's own range (nulabr
 manifest as `peaks`, where they are edited as IR's are, and each is labelled above its band.
 The figure gets the `ymax` that leaves room for those labels unless the manifest sets one;
 `xmin`/`xmax` crop it, and then the picks outside the crop are left out. `irspec edit … peak`
-is for IR entries only so far, and `irspec plot` (matplotlib, R) does not draw UV-Vis figures
+edits these picks too (see below). `irspec plot` (matplotlib, R) does not draw UV-Vis figures
 yet: use the PDF. A folder may hold IR and UV-Vis spectra together.
 
 ### Gas chromatograms
@@ -340,6 +340,15 @@ irspec edit my_lab_folder/ show PHENACETIN_CRUDE_LR1-2 --json
   "new": [1732.7, 93.6]}` for an added peak, the other way round for a removed one). The
   spectrum is read as `session` reads it (an own `.SPA` from the file, a reference spectrum
   from `plain/NAME.csv`); with no spectrum to read, exit 2.
+- **UV-Vis peaks.** `peak add 275.5` adds that exact wavelength in nm, without snapping.
+  The label is the interpolated trace height plus 6% of the visible data's y span, rounded to
+  four decimals. `remove X` removes the nearest pick within 5 nm; `clear` stores `peaks: []`;
+  `auto` deletes `peaks`, so the next session restores the file's stored picks.
+- **GC peaks.** `peak add 2.84=Methanol` (or `peak add 2.84`) adds a request to `compounds`.
+  `remove X` removes the nearest request within `window` (default 0.08 min).
+  `clear` and `auto` remove `compounds`, restoring automatic picking. `solvent` stays as it is.
+  Added and removed requests print `peak` change records with `[time, name]` values;
+  clearing or restoring automatic picks reports the removed manifest key.
 - **Order and removal.** `move --to POSITION` puts the entry at that place in `manifest.json`
   (1 is first, `last` is allowed, a number past the end means last, below 1 is exit 2) and
   keeps the order of all the others; the figures in the report follow the manifest order. An

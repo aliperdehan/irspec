@@ -18,7 +18,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from irspec import cli, kinds, layout, session, texout, uvvis  # noqa: E402
+from irspec import cli, kinds, layout, session, texout  # noqa: E402
 from irspec.figure import read_figures  # noqa: E402
 
 DATA = ROOT / "tests" / "data"
@@ -68,7 +68,7 @@ class Session(unittest.TestCase):
             f = uv_folder(d)
             figs = quiet_run(f, build="none")
             self.assertTrue((f / "uv" / "scan.vspd").exists())
-            entry = json.loads((f / "manifest.json").read_text())[0]
+            entry = json.loads((f / "manifest.json").read_text(encoding="utf-8"))[0]
             self.assertEqual((entry["kind"], entry["peaks"]), ("uvvis", [[255.0, 5.1616], [510.0, 0.6757]]))
             fig = figs[0]
             self.assertEqual((fig.kind, fig.axis, fig.ymax, fig.apex), ("uvvis", "Absorbance", 6.0, [4.8659, 0.3799]))
@@ -78,7 +78,7 @@ class Session(unittest.TestCase):
             self.assertIn("ymax suggestion: 5.58", err)
             self.assertEqual((f / "csv" / "scan.csv").read_bytes(), (DATA / "uvvis_golden.csv").read_bytes())
             self.assertEqual((f / "plain" / "scan.csv").read_bytes(), (DATA / "uvvis_golden.csv").read_bytes())
-            md = next(f.glob("*.md")).read_text()
+            md = next(f.glob("*.md")).read_text(encoding="utf-8")
             self.assertIn("\\labplot\n  [kind=uvvis,width=\\linewidth,height=6.8in,ymax=6.0]\n"
                           "  {plain/scan.csv}\n  {255/4.8659/5.1616/{},510/0.3799/0.6757/{}}\n  {scan}\n", md)
 
@@ -87,7 +87,7 @@ class Session(unittest.TestCase):
             f = uv_folder(d, loose=False)
             self.assertEqual(len(quiet_run(f, build="none")[0].peaks), 2)
             set_entry(f, xmin=300, xmax=700)
-            entries = json.loads((f / "manifest.json").read_text())
+            entries = json.loads((f / "manifest.json").read_text(encoding="utf-8"))
             del entries[0]["peaks"]                     # take the stored picks again
             (f / "manifest.json").write_text(json.dumps(entries))
             fig = quiet_run(f, build="none")[0]
@@ -113,7 +113,7 @@ class Session(unittest.TestCase):
             self.assertEqual(obj["kind"], "mixed")
             self.assertEqual(sorted(s["kind"] for s in obj["spectra"]), ["ir", "uvvis"])
             self.assertTrue((f / "uvvis_11-11.md").exists())   # the first run's: one kind
-            md = (f / "figures_11-11.md").read_text()             # IR and UV-Vis together
+            md = (f / "figures_11-11.md").read_text(encoding="utf-8")             # IR and UV-Vis together
             self.assertIn("\\irspectrum\n", md)
             self.assertIn("\\labplot\n  [kind=uvvis", md)
 
@@ -122,8 +122,8 @@ class Session(unittest.TestCase):
             f = uv_folder(d)
             quiet_run(f, build="none")
             code, out, err = run("edit", f, "scan", "peak", "add", "300")
-            self.assertEqual((code, out), (2, ""))
-            self.assertIn("`peak` edits IR spectra only so far; for a uvvis entry", err)
+            self.assertEqual(code, 0, err)
+            self.assertIn("peak:", out)
             code, out, err = run("edit", f, "scan", "set", "xmin=300", "--json")
             self.assertEqual(code, 0, err)
             self.assertEqual(json.loads(out)["kind"], "uvvis")

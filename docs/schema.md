@@ -177,7 +177,9 @@ Instead of the review table. A `.SPA` input still writes its two CSVs, as it doe
 
 For `set`, `unset`, `peak` and `move`: an object with `kind`, `file` and `changes`, where `changes`
 is a list of objects with `key`, `old` and `new` (`old` null for a key that was not there, `new` null after `unset`; a peak has
-`key` `"peak"` and the pair as `old`/`new`; `move` has key `"position"`). `remove` gives
+`key` `"peak"` and the pair as `old`/`new` (UV-Vis: `[wavelength, label_y]`; GC requests:
+`[time, name]`, with an empty name for a bare time). UV-Vis `auto` removes `peaks`; GC
+`clear`/`auto` remove `compounds`, reported as key removal records. `move` has key `"position"`). `remove` gives
 `kind`, `file`, `removed` and `moved_to`, `removed` being the whole manifest entry that was taken out
 and `moved_to` `"removed/NAME"` or null. With `--build` the object gains `build`, with `mode` and `ok`
 (and `error`); a failed rebuild exits 3 with the object still printed.

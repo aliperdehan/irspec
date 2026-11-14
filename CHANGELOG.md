@@ -2,6 +2,14 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.5 (2026-11-13)
+
+Edit UV-Vis picks and GC compound requests from the command line.
+
+- UV-Vis `peak add` keeps the exact wavelength and computes its label height; `remove` uses a 5 nm window.
+- GC `peak add` accepts a time and optional name; `remove` uses the entry's retention-time window.
+- `clear` empties UV-Vis picks; `auto` restores stored picks. For GC, both restore automatic picking, leaving solvent requests intact.
+
 ## 0.3.4 (2026-11-13)
 
 Use the same GC run for a full chromatogram and a crop in a batch.

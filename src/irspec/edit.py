@@ -27,7 +27,7 @@ shows less of the spectrum; the y axis still scales to all of it unless ymin/yma
 `set` refuses a lower limit that is not below its upper one, or, for x set alone, below the other's
 default (650 and 4000) (exit 2, nothing written).
 
-Peaks. `peak add X` snaps each X (a wavenumber) to the nearest local band of the file's own
+Peaks (IR). `peak add X` snaps each X (a wavenumber) to the nearest local band of the file's own
 spectrum with `find_peaks_manual`, and puts it in the entry's "peaks" with the label height
 `irspec session` gives a band that is only named by its wavenumber. `peak remove X` takes out
 the stored peak nearest X, if one is within PEAK_TOLERANCE cm-1. `peak clear` leaves the entry
@@ -39,6 +39,14 @@ means no peaks). They are worked out from what `session` would draw now: an entr
 .SPA entry from the .SPA (else from the CSV copies in plain/ or csv/), a reference spectrum
 from its plain/ CSV; with none of them, exit 2. A peak already
 there, or none near an X to remove, changes nothing and is not an error.
+
+UV-Vis: add an exact wavelength (nm), labelled above the interpolated trace by 6% of the
+visible data span, rounded to four decimals; remove the nearest pick within 5 nm; clear stores
+an empty peaks list; auto deletes peaks to restore the file's stored picks on the next session.
+GC: add TIME=NAME or TIME to compounds; remove the nearest request within window (default
+0.08 min); clear and auto delete compounds for automatic picking. Solvent stays unchanged.
+Added/removed GC requests use the same peak change records with [time, name] as the value;
+restoring automatic mode reports the removed manifest key.
 
 Order and removal. `move --to POSITION` puts the entry at POSITION in manifest.json (1 is first,
 `last` is allowed, a number past the end means last, below 1 is exit 2) and keeps the order of
@@ -314,7 +322,7 @@ def apply_unset(entry, keys):
     return changes
 
 
-def parse_peak_args(items):
+def parse_peak_args(items, named=False):
     """['add', '1720', '3253'] -> ('add', [1720, 3253]), checked."""
     if not items:
         raise EditError(f"peak needs an action: {', '.join(PEAK_ACTIONS)}")
@@ -327,12 +335,15 @@ def parse_peak_args(items):
         xs = []
         for text in rest:
             s = text.strip()
+            number, eq, label = s.partition("=")
+            if named and action == "add" and eq:
+                s = number.strip()
             if not _NUMBER.match(s):
                 raise EditError(f"peak {action} needs wavenumbers (numbers), got {text!r}")
             value = float(s)
             if not math.isfinite(value):
                 raise EditError(f"peak {action} needs finite wavenumbers, got {text!r}")
-            xs.append(value)
+            xs.append((value, label.strip()) if named and action == "add" else value)
         return action, xs
     if rest:
         raise EditError(f"peak {action} takes no wavenumbers")
@@ -415,6 +426,85 @@ def _peak_changes(old, new):
     changes = [{"key": "peak", "old": p, "new": None} for p in old if not any(near(p, q) for q in new)]
     changes += [{"key": "peak", "old": None, "new": q} for q in new if not any(near(p, q) for p in old)]
     return sorted(changes, key=lambda c: (c["old"] or c["new"])[0])
+
+
+def apply_uvvis_peaks(entry, folder, action, xs):
+    """UV-Vis picks keep their exact wavelength; auto restores the file's picks."""
+    from . import layout, uvvis
+    import numpy as np
+    if action == "auto":
+        return apply_unset(entry, ["peaks"])
+    if action == "clear":
+        current = entry.get("peaks", [])
+        changes = _peak_changes(current, [])
+        if "peaks" not in entry:
+            changes = [{"key": "peaks", "old": None, "new": []}]
+        entry["peaks"] = []
+        return changes
+    if action == "remove" and "peaks" in entry:
+        current = entry["peaks"]
+    else:
+        x, y, _, _ = load_spectrum(folder, entry)
+        path = os.path.join(folder, entry_file(entry))
+        try:
+            current = uvvis.peaks_and_limits(entry, x, y, path if os.path.isfile(path) else None)["peaks"]
+            # Stored picks outside the frame remain editable too.
+            current = entry.get("peaks", current)
+            lo, hi = sorted(layout.xlimits(entry.get("xmin"), entry.get("xmax"), kinds.UVVIS, x))
+            win = y[(x >= lo) & (x <= hi)]
+            offset = uvvis.LABEL_OFFSET * float(win.max() - win.min())
+        except (OSError, ValueError) as err:
+            raise EditError(str(err)) from err
+    new = list(current)
+    for wanted in xs:
+        if action == "add":
+            if not any(p[0] == wanted for p in new):
+                new.append([wanted, round(float(np.interp(wanted, x, y)) + offset, 4)])
+        else:
+            near = min(new, key=lambda p: abs(p[0] - wanted), default=None)
+            if near is not None and abs(near[0] - wanted) <= 5.0:
+                new.remove(near)
+            else:
+                print(f"irspec edit: no stored peak within 5 nm of {wanted:g}", file=sys.stderr)
+    new.sort()
+    # Exact wavelengths matter here (IR's comparison allows snapping tolerance).
+    changes = [{"key": "peak", "old": p, "new": None} for p in current if p not in new]
+    changes += [{"key": "peak", "old": None, "new": p} for p in new if p not in current]
+    if changes:
+        entry["peaks"] = new
+    return changes
+
+
+def apply_gc_peaks(entry, action, xs):
+    """Edit requests, without snapping, reading a trace, or changing solvent."""
+    from .gc_tool import parse_peak_spec
+    if action in ("clear", "auto"):
+        return apply_unset(entry, ["compounds"])
+    try:
+        current = [[x, name] for x, name, _ in parse_peak_spec(entry.get("compounds", ""))]
+    except ValueError as err:
+        raise EditError(str(err)) from err
+    new = list(current)
+    for wanted in xs:
+        if action == "add":
+            x, name = wanted
+            if not any(p[0] == x for p in new):
+                new.append([x, name])
+        else:
+            near = min(new, key=lambda p: abs(p[0] - wanted), default=None)
+            window = entry.get("window", 0.08)
+            if near is not None and abs(near[0] - wanted) <= window:
+                new.remove(near)
+            else:
+                print(f"irspec edit: no stored peak within {window:g} min of {wanted:g}", file=sys.stderr)
+    changes = [{"key": "peak", "old": p, "new": None} for p in current if p not in new]
+    changes += [{"key": "peak", "old": None, "new": p} for p in new if p not in current]
+    if changes:
+        if new:
+            entry["compounds"] = ",".join(str(x) + (f"={name}" if name else "") for x, name in new)
+        else:
+            entry.pop("compounds", None)
+    return changes
 
 
 def apply_peaks(entry, folder, action, xs):
@@ -529,7 +619,7 @@ def edit(folder, name, verb, items):
     elif verb == "unset":
         plan = parse_unset_keys(items)
     elif verb == "peak":
-        plan = parse_peak_args(items)
+        plan = parse_peak_args(items, named=True)
     else:
         raise EditError(f"unknown action {verb!r}; use set, unset, peak, move or remove "
                         f"(or: irspec edit DIR show)")
@@ -538,14 +628,12 @@ def edit(folder, name, verb, items):
     entry = entries[i]
     if verb == "peak":
         kind = kinds.of(entry) if entry.get("kind", kinds.DEFAULT.name) in kinds.REGISTRY else None
-        if kind is not None and kind.peak_key != "peaks":
-            raise EditError(f"for a {kind.name} entry, name the peaks in `{kind.peak_key}` "
-                            f"in manifest.json")
-        if kind is not None and kind.labels != "trough":
-            raise EditError(f"`peak` edits IR spectra only so far; for a {kind.name} entry, edit its "
-                            f"\"peaks\" in manifest.json ([x, label_y] pairs), or delete that key "
-                            f"to take the file's stored picks again")
-        changes = apply_peaks(entry, folder, *plan)
+        if kind is kinds.GC:
+            changes = apply_gc_peaks(entry, *plan)
+        elif kind is kinds.UVVIS:
+            changes = apply_uvvis_peaks(entry, folder, *parse_peak_args(items))
+        else:
+            changes = apply_peaks(entry, folder, *parse_peak_args(items))
     else:
         changes = apply_set(entry, plan) if verb == "set" else apply_unset(entry, plan)
         if verb == "set":
@@ -713,7 +801,7 @@ def run_verb(args, rest):
         return {"kind": kind, "file": file, "removed": entry, "moved_to": moved_to}, text
     file, changes = edit(folder, file_arg, verb, rest[2:])
     text = format_changes(file, changes)
-    if verb == "peak" and rest[2:3] == ["auto"]:
+    if verb == "peak" and rest[2:3] == ["auto"] and kind == kinds.IR.name:
         dropped = [str(c["old"][0]) for c in changes if c["new"] is None]
         text += ("\npeak auto replaces the stored peaks, hand edits included"
                  + (f"; dropped: {', '.join(dropped)}" if dropped else ""))

@@ -167,9 +167,8 @@ class Session(GcCase):
         self.run_session()
         self.assertEqual(self.figures()[0].ymax, 900000)
         self.cli('edit', '.', 'gc_lab4', 'unset', 'ymax')
-        r = self.cli('edit', '.', 'gc_lab4', 'peak', 'add', '3', ok=False)
-        self.assertEqual(r.returncode, 2)
-        self.assertIn('compounds', r.stderr)
+        r = self.cli('edit', '.', 'gc_lab4', 'peak', 'add', '3')
+        self.assertIn('peak:', r.stdout)
         for backend in ('matplotlib', 'r'):
             r = self.cli('plot', 'figures.json', '--backend', backend, ok=False)
             self.assertNotEqual(r.returncode, 0)
