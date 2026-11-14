@@ -70,3 +70,9 @@ CSV, peak-list and TeX files are compared by SHA-256; the command streams are co
 with temporary paths and the CLI program name normalised. Overlay PNG hashes are checked when
 the font fingerprint and Pillow version match the recording; on other hosts the case checks
 all non-image output and skips its font-dependent image comparison. No font asset is copied.
+
+`tlc_contour_expected.json` records seven commands of the original TLC script twice with
+identical results. `tests/record_tlc_contour.py` draws plates/noise with a fixed seed and writes
+a two-page vector PDF without fonts or timestamps. It covers image cropping, despeckling,
+the size budget, PDF page selection/DPI and missing-output diagnostics; every PNG uses SHA-256.
+PDF replay cases skip when the existing optional `pdftoppm` command is unavailable.

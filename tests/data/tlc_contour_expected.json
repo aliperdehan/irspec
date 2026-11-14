@@ -1,0 +1,104 @@
+{
+  "image": {
+    "argv": [
+      "plate.png",
+      "--out",
+      "contour.png"
+    ],
+    "code": 0,
+    "stdout": "-> contour.png  crop=(0,900)  out_width=700  size=2.1KB\n",
+    "stderr": "despeckle: removed 1 blob(s) under 6px\n",
+    "files": {
+      "contour.png": "9680361b237528b69a646cb83b4a76426203779f1dd43f45706d88d2994c3001"
+    }
+  },
+  "crop_lines": {
+    "argv": [
+      "plate.png",
+      "--out",
+      "contour.png",
+      "--crop",
+      "lines",
+      "--margin-frac",
+      "0.03",
+      "--despeckle-min-px",
+      "0"
+    ],
+    "code": 0,
+    "stdout": "-> contour.png  crop=(92,809)  out_width=700  size=1.7KB\n",
+    "stderr": "reference lines: top group (np.int64(119), np.int64(122)), bottom group (np.int64(779), np.int64(782))\n",
+    "files": {
+      "contour.png": "b2daa3ca8d1c18610a9828058522283884eb3025c6f79182a850aeaad364d750"
+    }
+  },
+  "budget": {
+    "argv": [
+      "plate.png",
+      "--out",
+      "contour.png",
+      "--target-kb",
+      "1",
+      "--despeckle-min-px",
+      "0",
+      "--bin-thresh",
+      "0.9"
+    ],
+    "code": 0,
+    "stdout": "-> contour.png  crop=(0,900)  out_width=650  size=63.6KB\n",
+    "stderr": "warning: contour.png: no width fits the 1 KB budget; wrote the smallest tried (650px, 63.6 KB)\n",
+    "files": {
+      "contour.png": "dfc99793d8b9930659e119d7f60a8907224fcb97c166fbc1221726cca06aba6e"
+    }
+  },
+  "pdf_all": {
+    "argv": [
+      "plates.pdf",
+      "--out-dir",
+      "out",
+      "--dpi",
+      "72"
+    ],
+    "code": 0,
+    "stdout": "-> out/plate-1_contour.png  crop=(0,800)  out_width=600  size=1.5KB\n-> out/plate-2_contour.png  crop=(0,900)  out_width=300  size=1.3KB\n",
+    "stderr": "",
+    "files": {
+      "out/plate-1_contour.png": "d6671ddcaf2b265f414e86d28632873c499acf7d1bc5d640ef10f01ad0c273d6",
+      "out/plate-2_contour.png": "a54a2f9240b5f6e46abdcd2a873cf0a0bf6e31f45f666bc8f1665e1fcfe0d182"
+    }
+  },
+  "pdf_page": {
+    "argv": [
+      "plates.pdf",
+      "--out-dir",
+      "out",
+      "--pages",
+      "2",
+      "--dpi",
+      "96"
+    ],
+    "code": 0,
+    "stdout": "-> out/plate-2_contour.png  crop=(0,1200)  out_width=400  size=1.7KB\n",
+    "stderr": "",
+    "files": {
+      "out/plate-2_contour.png": "56b7de13ceb964df9c082d45f2c5aa34dd86fe44e1839d113e3bc2a0834877ef"
+    }
+  },
+  "pdf_missing_out": {
+    "argv": [
+      "plates.pdf"
+    ],
+    "code": 1,
+    "stdout": "",
+    "stderr": "PDF input needs --out-dir\n",
+    "files": {}
+  },
+  "image_missing_out": {
+    "argv": [
+      "plate.png"
+    ],
+    "code": 1,
+    "stdout": "",
+    "stderr": "image input needs --out\n",
+    "files": {}
+  }
+}

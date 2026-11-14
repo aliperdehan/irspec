@@ -2,6 +2,13 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.7 (2026-11-13)
+
+Turn tlc plate images or pdf pages into black-line contour pngs with `irspec tlc`.
+
+- Move nulabreport's `tlc_contour.py` into irspec with its existing options and output.
+- Check generated files and command output against recordings on synthetic inputs.
+
 ## 0.3.6 (2026-11-13)
 
 Digitize ms and nmr spectrum pictures into csvs, peak tables and tex calls with `irspec spectrum`.

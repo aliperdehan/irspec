@@ -51,6 +51,7 @@ It does:
   session folder becomes a UV-Vis figure beside the IR ones ([below](#uv-vis-scans)). irspec is
   growing from IR to the other plots of a chemistry lab report, one kind at a time;
 - digitize MS and NMR spectrum pictures into CSVs, peak tables and TeX calls (`irspec spectrum`);
+- turn TLC plate images or PDF pages into black-line contour PNGs (`irspec tlc`);
 - read Thermo Xcalibur `.RAW` gas chromatograms (`irspec gc`): acquisition details,
   archival and plain CSVs, trimming, baseline correction, excluded ranges,
   peak areas and report tables, verification and batch Markdown.
@@ -81,6 +82,7 @@ only the ones for the output you ask for are needed:
 | SVG with editable text | MuPDF (`mutool`) | `brew install mupdf-tools` | `apt install mupdf-tools` |
 | matplotlib figures (`irspec plot`) | the matplotlib package: `pip install ".[matplotlib]"` | | |
 | R figures (`irspec plot --backend r`) | R with `ggplot2`, `jsonlite`; `ragg`, `svglite` recommended | `brew install --cask r` | `apt install r-base` |
+| `tlc` with PDF input | `pdftoppm` (poppler) | `brew install poppler` | `apt install poppler-utils` |
 | `digitize --omnic` | `tesseract` | `brew install tesseract` | `apt install tesseract-ocr` |
 
 The figures use the font STIX Two when it is installed. When it is not, they use
@@ -560,6 +562,7 @@ all you need. Each has its own `--help`.
 | `irspec vspd` | a Shimadzu UV-Vis `.vspd` → `wavelength,absorbance` CSV; `info`, `peaks` (the picks stored in the file, as a `\labplot[kind=uvvis]` peak list), `verify` against the instrument's text export | `irspec vspd convert scan.vspd --out scan.csv` |
 | `irspec vqud` | a Shimadzu quantitation file (`.vqud`) → CSVs of the standards, the unknowns and the calibration (refitted, and compared with the fit the file stores); `info` reads a `.vqud`, `.vqut` or `.vqum` without writing | `irspec vqud run.vqud out/run` |
 | `irspec spectrum` | digitize MS and NMR spectrum pictures into CSVs, peak tables and TeX calls | `irspec spectrum ms PIC.png --x-ticks 10:10 --y-ticks 0:20 --out trace.csv` |
+| `irspec tlc` | turn TLC plate images or PDF pages into black-line contour PNGs | `irspec tlc plate.png --out contour.png` |
 | `irspec gc` | Thermo Xcalibur `.RAW` (GC) → archival and plain CSVs; `info`, `crop` with baseline correction and excluded ranges, `integrate` peak areas and report tables, `verify`, `batch` Markdown | `irspec gc convert run.RAW --out csv/run` |
 
 `irspec corr` compares only requested grid points measured in both spectra
@@ -596,9 +599,10 @@ Three more checks run on the author's own coursework folders (the environment
 variable `IRSPEC_LR6_IR` points at them) and are skipped everywhere else; they
 are how the WebBook and SDBS paths were shown to give byte-identical CSVs.
 
-`irspec spectrum`, `irspec vspd`, `irspec vqud` and `irspec gc` were moved from the same package; their output on
-the test files is compared with what the original scripts wrote, and was compared
-on the author's original instrument files too, byte for byte.
+`irspec spectrum`, `irspec tlc`, `irspec vspd`, `irspec vqud` and `irspec gc` were moved from the same package.
+Their output on the test files is compared with what the original scripts wrote. The
+instrument readers were also checked on the author's original instrument files, byte for
+byte; the picture tools are checked on deterministic synthetic drawings.
 
 The sample files in `tests/data/` are the author's own measurements: one IR
 spectrum, one UV-Vis spectrum and two UV-Vis quantitation files, the last three
