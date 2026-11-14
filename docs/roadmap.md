@@ -366,7 +366,8 @@ TeX blocks, preview, edit limits and backend refusals. A crop analyses only requ
 its time range and outside every exclusion; the full figure keeps all requests.
 **Tables are built (0.3.2):** `integrate/STEM.txt` and `STEM_crop.txt` reproduce
 `gc integrate` for each figure, including `known`, and stay in place on re-runs.
-**Not done:** GC peak editing and TeX-free rendering (refused with a message). The TeX frame tests cover both package paths.
+**Drawn without TeX (0.3.10, matplotlib):** see "TeX-free drawing of the apex kinds" below.
+**Not done:** GC peak editing, and the R backend drawing GC (refused with a message). The TeX frame tests cover both package paths.
 **Decided or measured for it (2026-11-13):**
 - *Frame, measured* on `\chromatogram` (the author's LR4 group-1 CSVs, six limit settings, the full
   package and the bundled excerpt alike): y padding 0.0985 below and 0.0017 above the span, y on
@@ -470,9 +471,26 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   labels above the bands push the plot onto a page of its own (so session will set the
   suggested `ymax`). Checked: the IR snapshot byte-identical, a data-ended apex kind and one whose
   data lies below IR's window in the tests.
-  **Not done:** the R backend and matplotlib refuse a kind other than IR, and one with `apex`
-  labels, with a message (R: drawing another kind; matplotlib: the TeX look of the apex labels,
-  to be measured first). Tables and tools are not in the registry. The report's name
+  **TeX-free drawing of the apex kinds (0.3.10, matplotlib):** `mpl.draw_apex` draws uvvis and gc
+  (any `apex` kind), measured on the TeX figure first (2026-11-14, lualatex pages of the author's
+  scan and of LR4's full and cropped run, pdfplumber; `layout.py` has the numbers): the label is
+  centred on the x value as the peak list types it (`layout.apex_labels` reads the list back, so GC
+  shows `2.84` at 2.84, not 2.8375), the bottom line's baseline 1.29-1.30 bp above `label_y` (outer
+  sep 0.2 pt + inner sep 1 pt + the number's ink depth), the name 9.465 bp (9.5 pt) above it, a
+  white box 1 pt around the text from 0.2 pt above `label_y`, the leader from 1.5 pt above the apex
+  to `label_y`; nothing but the trace is clipped; a crop's NaN rows are a gap; GC's minor x tick
+  count is 1 (uvvis 4: the kinds' `x_minor_num`) and its y tick labels have a sixth-of-an-em space
+  between thousands (`y_sep`; TeX's `\,`, 2.0 pt at 12 pt). `tests/test_plot_kinds.py` measures
+  the matplotlib PDF the same way and holds it to the TeX numbers (and checks that TeX still
+  measures so). The IR drawing is unchanged (every IR output byte-identical, both backends).
+  *Found while measuring, not changed (the author's decision):* (a) the y padding everywhere
+  (0.0985/0.0017) was fitted to the tick labels' centres, which sit 0.65 bp below their ticks;
+  from the tick marks, TeX's frame top is exactly the top of the span and the bottom 0.100 of the
+  span below it, for IR (phenacetin, ymin -5), uvvis and both GC pages. Changing it moves IR's
+  drawing by 0.65 bp at each edge. (b) The x tick step of LR4's crop: TeX 0.2 min, `layout.x_ticks`
+  0.5 (preview shares the rule).
+  **Not done:** the R backend refuses a kind other than IR with a message; matplotlib refuses
+  `fan` labels. Tables and tools are not in the registry. The report's name
   follows the folder's kind since 0.3.3 (`ir_`, `uvvis_`, `gc_`, `figures_` for several).
 - Two of these are not a spectrum: `parse_vqud.py` reads **tables** (standards, unknowns, a
   calibration curve), and `scan_clean.py` is a picture utility with no x/y at all. So the registry
@@ -495,7 +513,7 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   edit read it; a loose file's extension names its kind. A lualatex test: a session of the scan
   is one page, the frame as measured, with the full package and with the bundled excerpt.
   **Not done:** `edit … peak` for UV-Vis (refused with a message; the manifest's `peaks` are
-  edited by hand), matplotlib and R drawing it (refused with a message), the `vqud` tables in a
+  edited by hand), R drawing it (refused with a message; matplotlib draws it since 0.3.10), the `vqud` tables in a
   session (a calibration figure: nulabreport has no macro for it yet), `--json` on `vspd`/`vqud`,
   and the report's name (done in 0.3.3: `uvvis_<dd-mm>`). GC follows in 0.3.1 (above).
 - A kind's readers are plain Python with numpy and scipy only, like the IR ones; a format that

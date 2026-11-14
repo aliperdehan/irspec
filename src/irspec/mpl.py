@@ -7,7 +7,10 @@ file) and writes one picture per spectrum into DIR/figures/matplotlib/. It
 draws the same figure as the TeX pipeline (geometry in layout.py: the same axis
 box, x axis, y limits, trace, peak labels and leader ticks) from the same plain
 CSVs and peak lists, so the two agree on everything but the y tick spacing and
-antialiasing. It needs matplotlib (`pip install irspec[matplotlib]`) and no TeX.
+antialiasing. IR's labels hang below the band; UV-Vis and GC labels stand above
+it (draw_apex: name over x, a leader up from the peak), and a GC crop's
+excluded rows are a gap. It needs matplotlib (`pip install irspec[matplotlib]`)
+and no TeX.
 
 Formats: png, tiff, pdf, svg (text as outlines, draws the same anywhere),
 svg-text (labels stay <text>, editable; the font must be installed where it is
@@ -73,10 +76,12 @@ def draw(fig: Figure, folder, size=layout.DEFAULT_SIZE, caption=True, family=Non
     from matplotlib.ticker import FixedLocator, FuncFormatter, MultipleLocator
     family = family or pick_font()[0]
     kind = kinds.get(fig.kind)   # the frame, the ticks and the x title
+    if kind.labels == "apex":
+        return draw_apex(fig, folder, kind, size, caption, family)
     if kind.labels != "trough":
-        raise ExportError(f"{fig.csv}: matplotlib draws peak labels only as IR's (hanging below "
-                          f"the band); a {kind.name} figure's labels ({kind.labels}) are not in yet: "
-                          f"use the PDF (irspec session)")
+        raise ExportError(f"{fig.csv}: matplotlib draws peak labels hanging below the band (IR) "
+                          f"and standing above it (UV-Vis, GC); a {kind.name} figure's labels "
+                          f"({kind.labels}) are not in yet: use the PDF (irspec session)")
     xlim, (lo, hi), x, y = layout.frame(*read_plain(os.path.join(folder, fig.csv)), kind,
                                        fig.xmin, fig.xmax, fig.ymin, fig.ymax)
     w, h = size
@@ -112,6 +117,91 @@ def draw(fig: Figure, folder, size=layout.DEFAULT_SIZE, caption=True, family=Non
         ax.text(px, ly, f"{px:.1f}", rotation=90, ha="center", va="top",
                 fontsize=layout.LABEL_PT, zorder=4, clip_on=True,
                 bbox=dict(boxstyle="square,pad=0.125", fc=(1, 1, 1, 0.85), ec="none"))
+    if caption and fig.title:
+        out.text(0.5, 0.22 / h, fig.title, ha="center", va="bottom", style="italic",
+                 fontsize=layout.CAPTION_PT)
+    for t in out.findobj(matplotlib.text.Text):
+        t.set_fontfamily(family)
+    return out
+
+
+def text_metrics(s, family, size):
+    """(advance width, ascent, descent) of `s` in points, without a renderer: the width is TeX's box
+    width (measured: 32.709 for Methanol at 7.97, the same as the TeX figure's), ascent and descent
+    the ink's, which is what TeX's box height and depth are for an OpenType font."""
+    from matplotlib.font_manager import FontProperties
+    from matplotlib.textpath import text_to_path
+    w, h, d = text_to_path.get_text_width_height_descent(s, FontProperties(family=family, size=size),
+                                                         ismath=False)
+    return w, h - d, d
+
+
+def draw_apex(fig: Figure, folder, kind, size, caption, family):
+    """A figure whose labels stand above the band (uvvis, gc): nulabreport's \\Lab@apexpeak, the
+    measurements in layout.py. The trace keeps the CSV's empty rows as gaps (a GC crop's excluded
+    range: pgfplots' `unbounded coords=jump`) and is clipped to the frame; labels and leaders are
+    not (`clip mode=individual`)."""
+    matplotlib, plt = _pyplot()
+    from matplotlib.patches import Rectangle
+    from matplotlib.ticker import FixedLocator, FuncFormatter, MultipleLocator
+    from matplotlib.transforms import Affine2D, ScaledTranslation, offset_copy
+    x, y = read_plain(os.path.join(folder, fig.csv))
+    xlim, (lo, hi), _, _ = layout.frame(x, y, kind, fig.xmin, fig.xmax, fig.ymin, fig.ymax)
+    keep = np.isfinite(x)
+    x, y = x[keep], y[keep]          # an empty y stays: the line breaks there
+    if fig.restrict_y and fig.ymax is not None:   # gc_tool's `restrict y to domain*=-ymax:ymax`
+        y = np.clip(y, -fig.ymax, fig.ymax)
+    w, h = size
+    yticks = layout.y_ticks(lo, hi)
+    # room for the y tick labels: IR's 0.85 in fits "100"; a wider label ("1 100 000") moves the
+    # frame's left edge right by the difference, as pgfplots does (TeX frame at 120 bp, not 96)
+    widest = max([text_metrics(layout.fmt_number(t, kind.y_sep), family, layout.TEXT_PT)[0]
+                  for t in yticks] or [0.0])
+    left = 0.85 + max(0.0, widest - text_metrics("100", family, layout.TEXT_PT)[0]) / 72
+    out = plt.figure(figsize=size)
+    ax = out.add_axes([left / w, 1.0 / h, 1 - (left + 0.1) / w, 1 - 1.1 / h])
+    mono = layout.TEXT_PT
+    ax.plot(x, y, color=layout.TRACE_COLOR, lw=layout.TRACE_PT, solid_joinstyle="round",
+            solid_capstyle="butt", zorder=2)
+    ax.set_xlim(*xlim)
+    ax.set_ylim(lo, hi)
+    majors, minor = layout.x_ticks(xlim, kind)
+    ax.xaxis.set_major_locator(FixedLocator(majors))
+    ax.xaxis.set_minor_locator(MultipleLocator(minor))
+    ax.yaxis.set_major_locator(FixedLocator(yticks))
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: layout.fmt_number(v)))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: layout.fmt_number(v, kind.y_sep)))
+    ax.tick_params(which="major", direction="out", length=layout.MAJOR_TICK_PT, width=0.2,
+                   top=True, right=True, labelsize=mono, pad=3)
+    ax.tick_params(which="minor", direction="out", length=layout.MINOR_TICK_PT, width=0.2,
+                   top=True, bottom=True)
+    for s in ax.spines.values():
+        s.set_linewidth(layout.FRAME_PT)
+    ax.set_xlabel(kind.x_label, fontsize=mono, labelpad=6)
+    ax.set_ylabel(fig.axis, fontsize=mono, labelpad=8)
+    ax.set_axisbelow(False)
+
+    # points per y unit: the axes box is fixed in inches, so the leader's 1.5 pt gap is a y distance
+    pt_per_y = (1 - 1.1 / h) * h * 72 / (hi - lo)
+    size_pt = layout.LABEL_PT
+    for px, apex, ly, text, name in layout.apex_labels(fig):
+        if not (min(xlim) <= px <= max(xlim)):
+            continue
+        ax.plot([px, px], [apex + layout.APEX_GAP_PT / pt_per_y, ly], color=layout.TICK_COLOR,
+                lw=layout.TICK_PT, solid_capstyle="butt", zorder=3, clip_on=False)
+        lines = [name, text] if name else [text]          # top to bottom
+        metrics = [text_metrics(s, family, size_pt) for s in lines]
+        base = layout.APEX_SEP_PT + layout.APEX_PAD_PT + metrics[-1][2]   # the bottom line's baseline
+        top = base + layout.APEX_LINE_PT * (len(lines) - 1) + metrics[0][1] + layout.APEX_PAD_PT
+        half = max(m[0] for m in metrics) / 2 + layout.APEX_PAD_PT
+        at = Affine2D().scale(1 / 72) + out.dpi_scale_trans + ScaledTranslation(px, ly, ax.transData)
+        ax.add_patch(Rectangle((-half, layout.APEX_SEP_PT), 2 * half, top - layout.APEX_SEP_PT,
+                               transform=at, fc=(1, 1, 1, layout.APEX_FILL_ALPHA), ec="none",
+                               zorder=4, clip_on=False))
+        for i, s in enumerate(reversed(lines)):          # bottom line first
+            ax.text(px, ly, s, ha="center", va="baseline", fontsize=size_pt, zorder=5, clip_on=False,
+                    transform=offset_copy(ax.transData, fig=out, y=base + i * layout.APEX_LINE_PT,
+                                          units="points"))
     if caption and fig.title:
         out.text(0.5, 0.22 / h, fig.title, ha="center", va="bottom", style="italic",
                  fontsize=layout.CAPTION_PT)

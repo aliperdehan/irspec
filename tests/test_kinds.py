@@ -348,9 +348,8 @@ class ApexLabels(unittest.TestCase):
                          peaks=[(450.0, 1.4)], apex=[1.2])
             try:
                 import matplotlib  # noqa: F401
-                with self.assertRaises(export.ExportError) as cm:
-                    mpl.draw(fig, d)
-                self.assertIn("a ends figure's labels (apex) are not in yet", str(cm.exception.code))
+                out = mpl.draw(fig, d)       # matplotlib draws apex labels (0.3.10)
+                self.assertEqual([t.get_text() for t in out.axes[0].texts], ["450"])
             except ImportError:
                 pass
             (Path(d) / "figures.json").write_text(json.dumps([fig.to_entry()]))

@@ -2,6 +2,20 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.10 (2026-11-14)
+
+`irspec plot` draws UV-Vis and GC figures with matplotlib.
+
+- Draw labels above the band as the TeX figure does: the x value as the peak list gives it, the
+  compound's name above it, a grey leader from just above the peak, a white box behind the text,
+  nothing clipped but the trace. Positions were measured on the TeX figure and the tests hold the
+  matplotlib PDF to them.
+- Draw a GC crop's excluded range as a gap, clamp a GC run taller than its `ymax` to the frame,
+  print GC's y ticks as `600 000`, put one minor x tick between labelled ones on GC and four on
+  UV-Vis, and widen the left margin for long y tick labels.
+- IR figures are unchanged. The R backend still draws IR figures only, and matplotlib still
+  refuses `fan` labels.
+
 ## 0.3.9 (2026-11-13)
 
 Straighten and clean page photos into PNGs and size-budgeted JPEGs with `irspec scan`.

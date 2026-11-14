@@ -38,6 +38,25 @@ MAX_Y_INTERVALS = 12
 MAX_X_INTERVALS = 25             # x ticks of a kind with no tick list (x_ticks)
 DEFAULT_SIZE = (10.0, 6.6)       # inches, the picture files' own size
 
+# Labels above the band (`apex`: uvvis, gc; nulabreport's \Lab@apexpeak), measured on the TeX figure
+# (2026-11-14: lualatex pages of the author's UV-Vis scan and of LR4's full and cropped chromatogram,
+# read with pdfplumber; positions taken from the leaders' ends and the y tick marks). In bp, which is
+# a matplotlib point (TeX's pt is 72/72.27 of one). The label is 8 pt STIX Two Text like IR's (TeX:
+# \scriptsize, 7.97 bp), centred on the x value as the peak list types it (2.84, not 2.8375), the x
+# value on the bottom line and the name, if any, on the line above. The leader is IR's tick (0.4 pt,
+# TICK_COLOR) from just above apex_y up to label_y; text, box and leader are not clipped to the frame
+# (pgfplots' `clip mode=individual`: only the trace is).
+APEX_GAP_PT = 1.494     # the leader starts this far above apex_y ([yshift=1.5pt]; measured 1.494-1.495)
+APEX_SEP_PT = 0.199     # the white box starts this far above label_y (TikZ's outer sep, 0.2 pt: the box's
+#                         bottom edge measured 0.20 above the leader's end)
+APEX_PAD_PT = 0.996     # the box reaches this far beyond the text on every side (inner sep=1pt; measured:
+#                         box width = widest line + 1.99, height 17.18 for Methanol over 2.84)
+APEX_LINE_PT = 9.465    # the name's baseline above the number's (\scriptsize's 9.5 pt baselineskip;
+#                         measured 9.464 on all eleven GC labels)
+# The bottom line's baseline is label_y + APEX_SEP_PT + APEX_PAD_PT + that line's ink depth (TeX's box
+# depth): measured 1.291 above label_y for "2.84" (depth 0.096) and 1.298 for "510".
+APEX_FILL_ALPHA = 0.85  # fill=white, fill opacity=0.85, as IR's labels
+
 
 def window(x, y, kind=kinds.IR):
     """The part of the spectrum the figure shows: the kind's default frame (IR: 650 to 4000 cm-1),
@@ -121,8 +140,10 @@ def x_ticks(xlim, kind=kinds.IR):
     """(labelled ticks, minor step) of the x axis: the kind's own list, the ones inside the frame;
     for a kind without one, the multiples of the smallest 1-2-5 step that gives at most
     MAX_X_INTERVALS intervals (20 nm for 200-700 nm and 350-700 nm, which is what pgfplots drew
-    for the uvvis kind at the session's figure size: same figure, not same pixels elsewhere), the
-    minor step a fifth of it (pgfplots' `minor x tick num=4`)."""
+    for the uvvis kind at the session's figure size, and 0.5 min for LR4's 0-12 min chromatogram;
+    for its 2.6-9.6 min crop pgfplots drew 0.2: same figure, not same pixels elsewhere), and
+    kind.x_minor_num minor ticks between two labelled ones (pgfplots' `minor x tick num`: 4 for
+    uvvis, 1 for gc, measured)."""
     lo, hi = min(xlim), max(xlim)
     if kind.x_ticks is not None:
         return [t for t in kind.x_ticks if lo <= t <= hi], kind.x_minor
@@ -133,7 +154,7 @@ def x_ticks(xlim, kind=kinds.IR):
     ticks = [round(i * step, 10) for i in range(math.ceil(lo / step - 1e-9), math.floor(hi / step + 1e-9) + 1)]
     if kind.x_descending:
         ticks.reverse()
-    return ticks, kind.x_minor if kind.x_minor is not None else step / 5
+    return ticks, kind.x_minor if kind.x_minor is not None else step / (kind.x_minor_num + 1)
 
 
 def y_ticks(lo, hi):
@@ -143,7 +164,34 @@ def y_ticks(lo, hi):
     return [round(i * step, 10) for i in range(first, last + 1)]
 
 
-def fmt_number(v):
-    """Tick label: thousands comma, a real minus sign, no trailing .0."""
+def fmt_number(v, sep=","):
+    """Tick label: thousands comma (or `sep`: a kind's y_sep), a real minus sign, no trailing .0."""
     s = f"{v:,.0f}" if float(v).is_integer() else f"{v:,g}"
+    if sep != ",":
+        s = s.replace(",", sep)
     return s.replace("-", "−")
+
+
+def apex_labels(fig):
+    """[(x, apex_y, label_y, x_text, name)] of a figure whose labels stand above the band, as its TeX
+    macro gets them: read back from Figure.peaklist(), so a backend prints and places the numbers
+    the TeX figure does (GC's x to two decimals, apex_y clamped to ymax; UV-Vis's as %g). `name` is
+    the figure's own (plain text, not the TeX-escaped copy in the list); empty: the x value alone."""
+    entries, depth, start = [], 0, 0
+    text = fig.peaklist()
+    for i, ch in enumerate(text + ","):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            if text[start:i].strip():
+                entries.append(text[start:i])
+            start = i + 1
+    names = list(fig.names or [])
+    out = []
+    for i, entry in enumerate(entries):
+        x_text, apex, label_y = entry.split("/", 3)[:3]
+        name = names[i] if i < len(names) else ""
+        out.append((float(x_text), float(apex), float(label_y), x_text, name or ""))
+    return out

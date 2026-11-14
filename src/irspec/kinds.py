@@ -56,6 +56,9 @@ class Kind:
     peak_key: str = "peaks"        # the manifest key for this kind's peak requests
     tex_block: Optional[str] = None  # optional Figure -> complete TeX block
     peaklist: Optional[str] = None   # optional Figure -> macro's peak argument
+    x_minor_num: int = 4           # minor x ticks between two labelled ones, without x_minor
+    #                                (pgfplots' `minor x tick num`)
+    y_sep: str = ","               # the y tick labels' thousands separator
 
     def function(self, role):
         """The function a role names, imported now."""
@@ -106,6 +109,9 @@ GC = Kind(
     load_saved="irspec.gc:load_saved", pick="irspec.gc:pick",
     plain_suffix="_plain", peak_key="compounds", preview_plain="irspec.gc:preview_plain",
     tex_block="irspec.gc:tex_block", peaklist="irspec.gc:peaklist",
+    # nulabreport's gc kind: `minor x tick num=1`, y tick labels fixed-point with a thin space
+    # (\,, 2.0 pt at 12 pt, measured: "1 050 000") between thousands; U+2006 is 1/6 em, the same
+    x_minor_num=1, y_sep="\u2006",
 )
 
 REGISTRY = {IR.name: IR, UVVIS.name: UVVIS, GC.name: GC}
