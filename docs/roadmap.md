@@ -396,6 +396,8 @@ Moved in 0.3.7: `tlc_contour.py` is `irspec tlc`, with unchanged output checked 
 
 Moved in 0.3.8: `gel_tool.py` is `irspec gel`, with unchanged output checked on synthetic inputs; session kinds remain separate.
 
+Moved in 0.3.9: `scan_clean.py` is `irspec scan`, with unchanged output checked on synthetic inputs; session kinds remain separate.
+
 **Decided (the author, 2026-11-10).** irspec takes over the other plot tools of the private
 `nulabreport` repository (`tools/`): `gc_tool.py` (Thermo Xcalibur `.RAW` chromatograms),
 `vspd_tool.py` (Shimadzu UVProbe `.vspd` UV-Vis), `spectrum_digitize.py` (a mass or NMR spectrum

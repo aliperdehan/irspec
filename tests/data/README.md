@@ -83,3 +83,10 @@ no real gel photo). `tests/record_gel_tool.py` generates its config and covers e
 mirrored ladder placement, three calibration fits and refusal of protected output folders.
 All output images use SHA-256. The smoke regressions check the ladder assignment, loaded-lane
 numbers, nine mark labels on the correct side and planted masses within 1%, as nulabreport does.
+
+`scan_clean_expected.json` records nine original scan-cleanup commands twice, identically.
+`tests/record_scan_clean.py` generates pages, a narrow bright band, a shadow and seeded noise.
+It covers PNG/JPEG output, `--no-png`, the paper-area guard, flattening with default and
+changed parameters, an unattainable JPEG budget and refused levels; PNG/JPEG files use SHA-256.
+The replay normalises argparse usage whitespace: the requested `irspec scan` program name
+changes its wrapping/indentation; the diagnostic text and all output bytes are still compared.

@@ -1,0 +1,168 @@
+{
+  "page": {
+    "argv": [
+      "page.png",
+      "out.png",
+      "out.jpg"
+    ],
+    "code": 0,
+    "stdout": "page.png: skew=0.000deg bbox=130,88,889,731 -> out.jpg width=1300 q=80 size=116KB\n",
+    "stderr": "",
+    "files": {
+      "out.jpg": "1091005de23dea97058caae0cc5ba405ea949774b6754d325583435879a948c8",
+      "out.png": "e9625dffe22636206b4113d8b71ef1ac5cec531dd79f79345fbc0fe9d4a25f60"
+    }
+  },
+  "tiny": {
+    "argv": [
+      "page.png",
+      "out.png",
+      "out.jpg"
+    ],
+    "code": 0,
+    "stdout": "page.png: skew=0.000deg bbox=0,0,1000,800 -> out.jpg width=1300 q=80 size=27KB\n",
+    "stderr": "<TOOL>: WARNING: page.png: the paper box 10,508,989,526 covers 2.2 % of the 1000x800 frame, less than --min-paper-frac 0.3; taking the whole frame instead\n",
+    "files": {
+      "out.jpg": "3aa43c04811e8e4b63a130f3884b09bfbb601e9b579b70efbb118a61c536d54f",
+      "out.png": "db0f3b9b0848c8e4bf524913b229416a54770fcd1e9495e941507dfdc99f15cd"
+    }
+  },
+  "tiny_off": {
+    "argv": [
+      "page.png",
+      "--no-png",
+      "out.jpg",
+      "--min-paper-frac",
+      "0"
+    ],
+    "code": 0,
+    "stdout": "page.png: skew=0.000deg bbox=10,508,989,526 -> out.jpg width=1300 q=80 size=1KB\n",
+    "stderr": "",
+    "files": {
+      "out.jpg": "af22715e36e65387de23e18a224e882e09663ea340fb6f4648f9f00440ef4a89"
+    }
+  },
+  "flatten": {
+    "argv": [
+      "page.png",
+      "out.png",
+      "out.jpg",
+      "--flatten"
+    ],
+    "code": 0,
+    "stdout": "page.png: skew=0.000deg bbox=0,0,1000,800 -> out.jpg width=1300 q=80 size=88KB (flattened)\n",
+    "stderr": "<TOOL>: WARNING: page.png: the paper box 10,8,305,791 covers 28.9 % of the 1000x800 frame, less than --min-paper-frac 0.3; taking the whole frame instead\n",
+    "files": {
+      "out.jpg": "b6607d70b90b2c705562c2593fc68acd6b4ec8ac3b426a0b465da0a47bb8788f",
+      "out.png": "ae5cc75d0058dedf8e8f7dd9546cd173dfe972f1e08908657276b473dea6ec3f"
+    }
+  },
+  "flatten_defaults": {
+    "argv": [
+      "page.png",
+      "out.png",
+      "out.jpg",
+      "--flatten",
+      "--flatten-dilate",
+      "0.044",
+      "--flatten-blur",
+      "0.025",
+      "--flatten-scale",
+      "4",
+      "--flatten-floor",
+      "60",
+      "--flatten-black",
+      "0.12",
+      "--flatten-white",
+      "0.92",
+      "--flatten-gamma",
+      "1.15"
+    ],
+    "code": 0,
+    "stdout": "page.png: skew=0.000deg bbox=0,0,1000,800 -> out.jpg width=1300 q=80 size=88KB (flattened)\n",
+    "stderr": "<TOOL>: WARNING: page.png: the paper box 10,8,305,791 covers 28.9 % of the 1000x800 frame, less than --min-paper-frac 0.3; taking the whole frame instead\n",
+    "files": {
+      "out.jpg": "b6607d70b90b2c705562c2593fc68acd6b4ec8ac3b426a0b465da0a47bb8788f",
+      "out.png": "ae5cc75d0058dedf8e8f7dd9546cd173dfe972f1e08908657276b473dea6ec3f"
+    }
+  },
+  "flatten_gamma": {
+    "argv": [
+      "page.png",
+      "out.png",
+      "out.jpg",
+      "--flatten",
+      "--flatten-gamma",
+      "3"
+    ],
+    "code": 0,
+    "stdout": "page.png: skew=0.000deg bbox=0,0,1000,800 -> out.jpg width=1300 q=80 size=89KB (flattened)\n",
+    "stderr": "<TOOL>: WARNING: page.png: the paper box 10,8,305,791 covers 28.9 % of the 1000x800 frame, less than --min-paper-frac 0.3; taking the whole frame instead\n",
+    "files": {
+      "out.jpg": "1d4b06a32ddeb619b518273111610dfa96d33f87668a13f57810007e5f1e72ca",
+      "out.png": "8e28e57c8259d08f2d4325319f8b207f78cdca630e1468ee3a51a8fd764bdc7f"
+    }
+  },
+  "flatten_tuned": {
+    "argv": [
+      "page.png",
+      "out.png",
+      "out.jpg",
+      "--flatten",
+      "--flatten-dilate",
+      "0.05",
+      "--flatten-blur",
+      "0.03",
+      "--flatten-scale",
+      "2",
+      "--flatten-floor",
+      "80",
+      "--flatten-black",
+      "0.15",
+      "--flatten-white",
+      "0.95",
+      "--flatten-gamma",
+      "0.9"
+    ],
+    "code": 0,
+    "stdout": "page.png: skew=0.000deg bbox=0,0,1000,800 -> out.jpg width=1300 q=80 size=88KB (flattened)\n",
+    "stderr": "<TOOL>: WARNING: page.png: the paper box 10,8,305,791 covers 28.9 % of the 1000x800 frame, less than --min-paper-frac 0.3; taking the whole frame instead\n",
+    "files": {
+      "out.jpg": "236851a001211c0fc959d9a7bc8fbe938c8027dbab88040988be65744bb566ff",
+      "out.png": "5559ef6a62796f1c848234adc1127d775a13e09a41b4e6437af174c9d540c09d"
+    }
+  },
+  "budget": {
+    "argv": [
+      "page.png",
+      "--no-png",
+      "out.jpg",
+      "--min-paper-frac",
+      "0",
+      "--target-kb",
+      "1"
+    ],
+    "code": 0,
+    "stdout": "page.png: skew=0.000deg bbox=13,9,1286,890 -> out.jpg width=800 q=45 size=147KB\n",
+    "stderr": "warning: out.jpg: no width/quality fits the 1 KB budget; wrote the smallest tried (800px, q=45, 147 KB)\n",
+    "files": {
+      "out.jpg": "fdded7a487f73c66a00a86824a726266a8ee6dc5189488fb1e7f52a77a168743"
+    }
+  },
+  "bad_levels": {
+    "argv": [
+      "page.png",
+      "out.png",
+      "out.jpg",
+      "--flatten",
+      "--flatten-black",
+      "0.95",
+      "--flatten-white",
+      "0.9"
+    ],
+    "code": 2,
+    "stdout": "",
+    "stderr": "usage: <TOOL> [-h] [--target-kb TARGET_KB] [--no-png] [--min-paper-frac F] [--flatten] [--flatten-dilate F] [--flatten-blur F] [--flatten-scale N] [--flatten-floor V] [--flatten-black F] [--flatten-white F] [--flatten-gamma G] in_path [out_png] out_jpg\n<TOOL>: error: --flatten-black and --flatten-white must satisfy 0 <= black < white <= 1\n",
+    "files": {}
+  }
+}

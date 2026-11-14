@@ -53,6 +53,7 @@ It does:
 - digitize MS and NMR spectrum pictures into CSVs, peak tables and TeX calls (`irspec spectrum`);
 - turn TLC plate images or PDF pages into black-line contour PNGs (`irspec tlc`);
 - measure synthetic or photographed gels, calibrate band masses and write labelled figures (`irspec gel`);
+- straighten and clean page photos into PNGs and size-budgeted JPEGs (`irspec scan`);
 - read Thermo Xcalibur `.RAW` gas chromatograms (`irspec gc`): acquisition details,
   archival and plain CSVs, trimming, baseline correction, excluded ranges,
   peak areas and report tables, verification and batch Markdown.
@@ -565,6 +566,7 @@ all you need. Each has its own `--help`.
 | `irspec spectrum` | digitize MS and NMR spectrum pictures into CSVs, peak tables and TeX calls | `irspec spectrum ms PIC.png --x-ticks 10:10 --y-ticks 0:20 --out trace.csv` |
 | `irspec tlc` | turn TLC plate images or PDF pages into black-line contour PNGs | `irspec tlc plate.png --out contour.png` |
 | `irspec gel` | measure synthetic or photographed gels, calibrate band masses and write labelled figures | `irspec gel all gel.json` |
+| `irspec scan` | straighten and clean page photos into PNGs and size-budgeted JPEGs | `irspec scan page.png clean.png clean.jpg --flatten` |
 | `irspec gc` | Thermo Xcalibur `.RAW` (GC) → archival and plain CSVs; `info`, `crop` with baseline correction and excluded ranges, `integrate` peak areas and report tables, `verify`, `batch` Markdown | `irspec gc convert run.RAW --out csv/run` |
 
 `irspec corr` compares only requested grid points measured in both spectra
@@ -601,7 +603,7 @@ Three more checks run on the author's own coursework folders (the environment
 variable `IRSPEC_LR6_IR` points at them) and are skipped everywhere else; they
 are how the WebBook and SDBS paths were shown to give byte-identical CSVs.
 
-`irspec spectrum`, `irspec tlc`, `irspec gel`, `irspec vspd`, `irspec vqud` and `irspec gc` were moved from the same package.
+`irspec spectrum`, `irspec tlc`, `irspec gel`, `irspec scan`, `irspec vspd`, `irspec vqud` and `irspec gc` were moved from the same package.
 Their output on the test files is compared with what the original scripts wrote. The
 instrument readers were also checked on the author's original instrument files, byte for
 byte; the picture tools are checked on deterministic synthetic drawings.

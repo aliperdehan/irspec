@@ -21,7 +21,6 @@ What the oracle did is kept in `tests/data/differential_expected.json`, which
 author's own phenacetin CSVs byte for byte.
 
 Not copied (out of scope): `palleros_figs.py` (extracts figures from a copyrighted book).
-Not copied yet (roadmap item 6, one kind at a time): `scan_clean.py`.
 
 Moved 2026-11-11 (0.2.3): `vspd_tool.py` and `parse_vqud.py` as `irspec vspd` and
 `irspec vqud` (`src/irspec/vspd_tool.py`, `src/irspec/vqud_tool.py`), output unchanged (checked
@@ -47,6 +46,11 @@ Moved 2026-11-14 (0.3.8): `gel_tool.py` as `irspec gel`
 (`src/irspec/gel_tool.py`), output unchanged on deterministic synthetic inputs;
 `tests/record_gel_tool.py` records the original twice, `tests/test_gel_tool.py` replays
 the command output and SHA-256 hashes in `tests/data/gel_tool_expected.json`.
+
+Moved 2026-11-14 (0.3.9): `scan_clean.py` as `irspec scan`
+(`src/irspec/scan_clean.py`), output unchanged on deterministic synthetic inputs;
+`tests/record_scan_clean.py` records the original twice, `tests/test_scan_clean.py` replays
+the command output and SHA-256 hashes in `tests/data/scan_clean_expected.json`.
 
 The sample file `tests/data/PHENACETIN_CRUDE_LR1-2.SPA` is the author's own spectrum, and
 the three `.jdx` files beside it are generated from it by `tests/make_fixtures.py`. The UV-Vis

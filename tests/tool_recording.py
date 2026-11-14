@@ -43,9 +43,15 @@ def run_case(command, argv, prepare):
             text = text.replace(str(folder), "<TMP>")
             if command[0] != "-m":
                 text = text.replace(command[0], "<TOOL>")
-            return re.sub(
+            text = re.sub(
                 r"(?:irspec (?:spectrum|tlc|gel|scan)|(?:spectrum_digitize|tlc_contour|gel_tool|scan_clean)\.py)",
                 "<TOOL>",
+                text,
+            )
+            # argparse aligns/wraps usage around prog, whose name changes in this port.
+            return re.sub(
+                r"(?ms)\Ausage:.*?(?=^<TOOL>: error:)",
+                lambda match: " ".join(match.group().split()) + "\n",
                 text,
             )
 

@@ -2,6 +2,13 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.9 (2026-11-13)
+
+Straighten and clean page photos into PNGs and size-budgeted JPEGs with `irspec scan`.
+
+- Move nulabreport's `scan_clean.py` into irspec with its existing options and output.
+- Check generated files and command output against recordings on synthetic inputs.
+
 ## 0.3.8 (2026-11-13)
 
 Measure synthetic or photographed gels, calibrate band masses and write labelled figures with `irspec gel`.
