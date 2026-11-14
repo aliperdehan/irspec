@@ -130,7 +130,7 @@ class Registry(unittest.TestCase):
         for bad in ("chromatogram", "", None, ["ir"], 3):
             with self.subTest(kind=bad), self.assertRaises(ValueError) as cm:
                 kinds.of({"kind": bad})
-            self.assertIn("this irspec draws only 'ir', 'uvvis' figures", str(cm.exception))
+            self.assertIn("this irspec draws only 'ir', 'uvvis', 'gc' figures", str(cm.exception))
 
     def test_the_old_names_are_irs_numbers(self):
         # layout's constants (the R script's test reads them), ir_organize's and session's

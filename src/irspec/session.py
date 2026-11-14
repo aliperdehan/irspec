@@ -438,7 +438,8 @@ def allocate_output_names(folder, entries):
     try:
         _io.allocate_output_names(
             entries, [reference_name(folder, e) for e in entries],
-            ["_plain" if e["file"].lower().endswith(_io.SPA_EXT) else "" for e in entries])
+            ["_plain" if e["file"].lower().endswith(_io.SPA_EXT) else kinds.of(e).plain_suffix
+             for e in entries])
     except ValueError as err:
         raise SessionError(str(err)) from err
 
@@ -450,7 +451,10 @@ def planned_names(folder, e):
         return stem, f"csv/{stem}.csv", f"plain/{stem}_plain.csv"
     if kinds.of(e) is not kinds.IR:   # another kind's file keeps its stem, as session writes it
         stem = reference_name(folder, e)
-        return stem, f"csv/{stem}.csv", f"plain/{stem}.csv"
+        kind = kinds.of(e)
+        plain = (kind.function("preview_plain")(e, stem) if kind.preview_plain
+                 else f"{stem}{kind.plain_suffix}.csv")
+        return stem, f"csv/{stem}.csv", f"plain/{plain}"
     name = reference_name(folder, e)
     return name, f"csv/{name}.csv", f"plain/{name}.csv"
 
@@ -568,14 +572,16 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
     results = []
     for e in entries:
         r = process(folder, e, csv_dir, plain_dir)
-        results.append(r)
-        print(f"# {r['stem']}: axis={r['axis_label']} peaks={r['n_peaks']} ymin={r['ymin']}")
+        for result in (r if isinstance(r, list) else [r]):
+            results.append((e, result))
+            print(f"# {result['stem']}: axis={result['axis_label']} "
+                  f"peaks={result['n_peaks']} ymin={result['ymin']}")
     _io.save_manifest(folder, entries)
     if report is not None:
         report["kind"] = folder_kind(e["file"] for e in entries)
     figures = [Figure.from_organize_result(r, folder, kinds.of(e).name)
-               for e, r in zip(entries, results)]
-    for e, r, fig in zip(entries, results, figures):
+               for e, r in results]
+    for (e, r), fig in zip(results, figures):
         try:  # a hand-edited limit that cannot make a frame stops here, not inside lualatex
             check_frame(fig, r["plain_path"])
         except (TypeError, ValueError) as err:
@@ -594,7 +600,7 @@ def run(folder, build="auto", sort="time", titles=None, md_name=None, dry_run=Fa
            "tex": None, "pdf": None, "pictures": []}
     if report is not None:
         report["spectra"] = [spectrum_record(folder, e, r, fig)
-                             for e, r, fig in zip(entries, results, figures)]
+                             for (e, r), fig in zip(results, figures)]
         report["outputs"] = out
     try:
         if build in ("pdfmd", "latex"):

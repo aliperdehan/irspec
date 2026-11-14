@@ -167,6 +167,40 @@ The figure gets the `ymax` that leaves room for those labels unless the manifest
 is for IR entries only so far, and `irspec plot` (matplotlib, R) does not draw UV-Vis figures
 yet: use the PDF. A folder may hold IR and UV-Vis spectra together.
 
+### Gas chromatograms
+
+A Thermo Xcalibur `.RAW` (any letter case) in a session is filed into `gc/`. It gives
+`csv/STEM.csv` (the archival Xcalibur export), `plain/STEM_plain.csv` (`time,signal`),
+and a landscape chromatogram with named peaks above the trace. These are the same CSVs,
+analysis and TeX blocks as `irspec gc batch`. IR, UV-Vis and GC files may share a folder.
+
+Name requested peaks in `compounds` (`"2.84=Methanol,3.02=Ethanol"`) and the solvent in
+`solvent` (`"3.30=Acetone"`); without requests, peaks are picked automatically. GC refuses
+`peaks`, which keeps its `[x, label_y]` shape for other kinds. Optional keys are `title`,
+`baseline` (`"auto"`, `"flat[:min]"`, `"none"`, or anchor times such as `"2.5,4.5,6.6"`),
+`min_prominence` (20 times the noise sigma), `window` (0.08 min), `ymin`, `ymax`, `xmin`, `xmax`, `axis`
+(an override of the detector's y label), and `known` (`"Methanol=6.67,..."`, for tables).
+The first run does not store peak picks or analysis settings in the manifest.
+
+A `crop` object adds a second figure after the full run, using `plain/STEM_crop.csv`:
+`xmin`/`xmax` trim the time range, `correct: true` subtracts the entry's baseline, and
+`exclude: "3.24-3.46"` cuts out a region (multiple ranges are comma-separated). Requests
+outside the crop or in a cut-out range are dropped from the cropped figure's analysis,
+labels and tables. The full figure keeps all requests. `crop.title` names the second
+figure; its default is the entry's title plus " (cropped)". `full: false` keeps only the
+crop and requires `crop`. For example:
+
+```json
+{"file": "gc/run.RAW", "title": "Group 1",
+ "compounds": "2.84=Methanol,3.02=Ethanol", "solvent": "3.30=Acetone",
+ "crop": {"xmin": 2.6, "xmax": 9.6, "correct": true, "exclude": "3.24-3.46"}}
+```
+
+`session --preview`, `preview FILE.RAW --json` and `--ascii` show the trace and its labels;
+`edit … set ymax=900000` and `unset ymax` edit limits. Edit named requests in `compounds`
+in the manifest; `edit … peak` is for IR. `irspec plot` (matplotlib and R) refuses GC:
+use the PDF from `session`.
+
 ### QUANT-IR gas-phase files
 
 These carry an absorptivity (absorbance per µmol/mol per metre), not an
@@ -599,8 +633,8 @@ Anything that depends on irspec before 1.0 should pin the minor version
 
 The reasons and the design are in [`docs/roadmap.md`](docs/roadmap.md).
 
-Coming, one kind at a time ([`docs/roadmap.md`](docs/roadmap.md), item 6): UV-Vis figures (the
-readers are in), GC, MS and NMR spectra digitized from pictures, TLC plates. Out of scope:
+UV-Vis and GC session figures are in. Coming, one kind at a time
+([`docs/roadmap.md`](docs/roadmap.md), item 6): MS and NMR spectra digitized from pictures, TLC plates. Out of scope:
 identifying compounds, and anything that extracts figures from copyrighted books.
 
 ## Development

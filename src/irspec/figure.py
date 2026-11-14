@@ -44,11 +44,17 @@ class Figure:
     apex: List[float] = field(default_factory=list)   # labels above the band: the trace's height
     #                                                   at each peak, same order (written when set)
 
+    names: Optional[List[str]] = None  # named peaks, same order as peaks/apex (GC)
+    restrict_y: Optional[bool] = None  # clamp data above ymax (GC)
+
     def peaklist(self) -> str:
         """The TeX peak argument. Labels hanging below the band (IR, `trough`): wavenumber/label_y
         pairs, one decimal each (identical to spa_peaks.format_peaklist). Labels above it (`apex`):
         x/apex_y/label_y/{} (an empty name prints x), as nulabreport's vspd_tool.py peaks writes it."""
-        if kinds.get(self.kind).labels == "apex":
+        kind = kinds.get(self.kind)
+        if kind.peaklist:
+            return kind.function("peaklist")(self)
+        if kind.labels == "apex":
             return ",".join(f"{x:g}/{round(a, 4):g}/{round(ly, 4):g}/{{}}"
                             for (x, ly), a in zip(self.peaks, self.apex))
         return ",".join(f"{x:.1f}/{ly:.1f}" for x, ly in self.peaks)
@@ -63,7 +69,8 @@ class Figure:
         except KeyError:
             raise ValueError("manifest entry has no 'csv' (the plain CSV to plot)")
         peaks = [(float(p[0]), float(p[1])) for p in entry.get("peaks", [])]
-        kw = {k: entry[k] for k in ("axis", "ymin", "ymax", "xmin", "xmax", "width", "height")
+        kw = {k: entry[k] for k in ("axis", "ymin", "ymax", "xmin", "xmax", "width", "height",
+                                                  "names", "restrict_y")
               if k in entry}
         apex = [float(a) for a in entry.get("apex", [])]
         return cls(csv=csv, title=entry.get("title", ""), peaks=peaks, kind=kind, apex=apex, **kw)
@@ -80,6 +87,9 @@ class Figure:
             d["height"] = self.height
         if self.kind != KIND:
             d["kind"] = self.kind
+        for key in ("names", "restrict_y"):
+            if getattr(self, key) is not None:
+                d[key] = getattr(self, key)
         if self.apex:
             d["apex"] = list(self.apex)
         return d
@@ -91,13 +101,14 @@ class Figure:
         by any backend. `kind` is the manifest entry's (the result does not carry it)."""
         import os
         peaks = []
-        for item in r["peaklist"].split(","):
+        for item in r.get("peaklist", "").split(","):
             if item.strip():
                 x, ly = item.split("/")
                 peaks.append((float(x), float(ly)))
         return cls(csv=os.path.relpath(r["plain_path"], folder), title=r["title"],
-                   axis=r["axis_md"], peaks=peaks, ymin=r["ymin"], ymax=r.get("ymax"),
-                   xmin=r.get("xmin"), xmax=r.get("xmax"), kind=kind, apex=list(r.get("apex", [])))
+                   axis=r["axis_md"], peaks=r.get("peaks", peaks), ymin=r["ymin"], ymax=r.get("ymax"),
+                   xmin=r.get("xmin"), xmax=r.get("xmax"), kind=kind, apex=list(r.get("apex", [])),
+                   names=r.get("names"), restrict_y=r.get("restrict_y"))
 
 
 def write_figures(figures, path) -> str:

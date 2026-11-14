@@ -49,7 +49,7 @@ src/irspec/   cli.py (the `irspec` command), session.py (the one command most pe
               TeX-free backends), layout.py (shared geometry), fonts.py,
               kinds.py (the registry of plot kinds: each kind's axis, frame, ticks, macro,
               folders and its process/load/load_saved/pick functions; a new kind is an entry
-              there), uvvis.py (the UV-Vis kind's functions), vspd_tool, vqud_tool (the
+              there), uvvis.py (the UV-Vis kind's functions), gc.py (the GC kind's functions), vspd_tool, vqud_tool (the
               Shimadzu readers, `irspec vspd`/`vqud`), gc_tool (the Thermo Xcalibur
               GC reader and processing tool, `irspec gc`),
               data/irspec-ir.sty (GENERATED), data/fonts/ (STIX Two, SIL OFL 1.1)

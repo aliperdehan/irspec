@@ -46,10 +46,16 @@ class Kind:
     #                                 shows, whatever the crop: IR) or "frame" (inside the x frame)
     macro: str                      # the TeX command a figure is written as
     folders: Tuple[Tuple[str, Tuple[str, ...]], ...]   # session's subfolders and their extensions
-    process: str                    # one manifest entry -> its CSVs and result (irspec session)
+    process: str                    # one entry -> CSVs and a result dict, or list of figure results
     load: str                       # a file -> what the preview draws (irspec preview)
     load_saved: str                 # a session's entry -> its spectrum, from what session wrote (edit)
     pick: str                       # (entry, x, y, axis, absorbance, path) -> session's peaks, ymin, ymax
+
+    plain_suffix: str = ""         # instrument files may keep a separate plotting CSV
+    preview_plain: Optional[str] = None  # optional (entry, stem) -> preview's plain filename
+    peak_key: str = "peaks"        # the manifest key for this kind's peak requests
+    tex_block: Optional[str] = None  # optional Figure -> complete TeX block
+    peaklist: Optional[str] = None   # optional Figure -> macro's peak argument
 
     def function(self, role):
         """The function a role names, imported now."""
@@ -89,7 +95,20 @@ UVVIS = Kind(
     pick="irspec.uvvis:pick",
 )
 
-REGISTRY = {IR.name: IR, UVVIS.name: UVVIS}
+GC = Kind(
+    name="gc", x_column="time", y_column="signal", labels="apex",
+    x_label="Retention time / min", x_unit="min", y_label="Signal / counts",
+    # Measured on LR4's chromatograms, full package and excerpt (roadmap item 6).
+    xlim=None, x_descending=False, x_ticks=None, x_minor=None,
+    pad=(0.0985, 0.0017), y_scope="frame", macro="chromatogram",
+    folders=(("gc", (".raw",)),),
+    process="irspec.gc:process", load="irspec.gc:load",
+    load_saved="irspec.gc:load_saved", pick="irspec.gc:pick",
+    plain_suffix="_plain", peak_key="compounds", preview_plain="irspec.gc:preview_plain",
+    tex_block="irspec.gc:tex_block", peaklist="irspec.gc:peaklist",
+)
+
+REGISTRY = {IR.name: IR, UVVIS.name: UVVIS, GC.name: GC}
 DEFAULT = IR
 
 

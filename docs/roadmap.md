@@ -359,8 +359,14 @@ unchecked.
 
 ## 6. Other plot kinds, and a registry of kinds
 
-The GC tool is in (0.3.0, the first of the GC line), `irspec gc`; the `gc` plot kind in a session is next.
-**Decided or measured for it (2026-11-13), not built yet:**
+The GC tool is in (0.3.0, the first of the GC line), `irspec gc`.
+**The GC session kind is built (0.3.1, `src/irspec/gc.py`, `tests/test_gc.py`):** loose RAW
+filing, archival/plain CSVs, full and cropped figures, named/clamped labels, batch-identical
+TeX blocks, preview, edit limits and backend refusals. A crop analyses only requests inside
+its time range and outside every exclusion; the full figure keeps all requests.
+**Not done:** integration tables in `integrate/` (next slice), GC peak editing and TeX-free
+rendering (refused with a message). The TeX frame tests cover both package paths.
+**Decided or measured for it (2026-11-13):**
 - *Frame, measured* on `\chromatogram` (the author's LR4 group-1 CSVs, six limit settings, the full
   package and the bundled excerpt alike): y padding 0.0985 below and 0.0017 above the span, y on
   the data inside the x window (`y_scope="frame"`), no x padding (the run's own ends, or
@@ -482,7 +488,7 @@ instructor's or classmate's file is ever a test fixture (CLAUDE.md data rule, un
   **Not done:** `edit … peak` for UV-Vis (refused with a message; the manifest's `peaks` are
   edited by hand), matplotlib and R drawing it (refused with a message), the `vqud` tables in a
   session (a calibration figure: nulabreport has no macro for it yet), `--json` on `vspd`/`vqud`,
-  and the report's name (`ir_<dd-mm>`). Next kind: GC.
+  and the report's name (`ir_<dd-mm>`). GC follows in 0.3.1 (above).
 - A kind's readers are plain Python with numpy and scipy only, like the IR ones; a format that
   cannot be read without a vendor library is not added.
 - `--json` and its written schema (item 1b) come before the second kind, because the schema must

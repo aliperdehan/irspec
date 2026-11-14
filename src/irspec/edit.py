@@ -538,6 +538,9 @@ def edit(folder, name, verb, items):
     entry = entries[i]
     if verb == "peak":
         kind = kinds.of(entry) if entry.get("kind", kinds.DEFAULT.name) in kinds.REGISTRY else None
+        if kind is not None and kind.peak_key != "peaks":
+            raise EditError(f"for a {kind.name} entry, name the peaks in `{kind.peak_key}` "
+                            f"in manifest.json")
         if kind is not None and kind.labels != "trough":
             raise EditError(f"`peak` edits IR spectra only so far; for a {kind.name} entry, edit its "
                             f"\"peaks\" in manifest.json ([x, label_y] pairs), or delete that key "

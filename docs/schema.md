@@ -15,7 +15,7 @@ Two numbers version it:
 ## Conventions
 
 - **`kind` is the plot kind**: `"ir"` (a spectrum of wavenumber against %T or absorbance) or
-  `"uvvis"` (absorbance against wavelength, `uv/`). Roadmap item 6 adds others (chromatograms,
+  `"uvvis"` (absorbance against wavelength, `uv/`), or `"gc"` (signal against time, `gc/`). Roadmap item 6 adds others (chromatograms,
   ...). Every `--json` object says it
   (`kind` on the object, and on each spectrum inside it), so a reader never has to assume. In a
   file (`manifest.json` entry, `figures.json` entry) `kind` is optional and **absent means
@@ -24,7 +24,7 @@ Two numbers version it:
   refuses an entry whose stated kind does not own its folder). A reader that finds a value it does not know must refuse rather than
   draw it as IR: `Figure.from_entry`, `session`, `preview` and `edit peak` do (`edit set`, `unset`,
   `move` and `remove` work on any entry, and their `--json` `kind` is the entry's as stored).
-- **`format` is the file's own format**: `"spa"`, `"jdx"`, `"csv"`, `"vspd"` (and, for a
+- **`format` is the file's own format**: `"spa"`, `"jdx"`, `"csv"`, `"vspd"`, `"raw"` (and, for a
   picture, the extension). Not to be confused with `kind`.
 - **Paths** are relative to the session folder and use `/`. The one exception is the top-level
   `folder` of a `session` object (absolute) and the `file` of `peaks`/`preview` run on a loose
@@ -63,6 +63,22 @@ later run keeps it. All keys except `file` are optional.
 | `args` | list of string | pictures only: extra flags for `irspec digitize convert` |
 | `kind` | string | the plot kind; absent means `"ir"` |
 
+GC entries (`gc/*.RAW`, any case) use `compounds` instead of `peaks` (a `peaks` key is
+refused). No analysis results are written back to the manifest. All keys below are optional;
+`title`, `axis`, `ymin`, `ymax`, `xmin`, `xmax` and `name` retain their meanings above,
+with time in minutes and signal in counts. `axis` overrides the detector's y label.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `compounds` | string | requested peaks, `"2.84=Methanol,3.02=Ethanol"`; absent: automatic picking |
+| `solvent` | string | requested solvent peaks, `"3.30=Acetone"` |
+| `baseline` | string | `"auto"` (default), `"flat[:min]"`, `"none"`, or comma-separated anchor times |
+| `min_prominence` | number | minimum prominence in noise-sigma units, default 20 |
+| `window` | number | request matching window, default 0.08 min |
+| `known` | string | known percentages for tables, `"Methanol=6.67,..."` |
+| `crop` | object | `xmin`, `xmax` (minutes), `correct` (bool, default false), `exclude` (comma-separated time ranges), `title` (string); adds a second figure; requests outside the crop or inside exclusions are dropped |
+| `full` | boolean | default true; false keeps only the crop and requires `crop` |
+
 ## `figures.json`
 
 What `session` writes beside the manifest, after the run: the list every drawing backend reads.
@@ -79,6 +95,11 @@ A list of objects, in figure order.
 | `width`, `height` | string | TeX lengths; mean nothing outside TeX; present when not the default |
 | `kind` | string | optional; absent means `"ir"` |
 | `apex` | list of number | a kind whose labels stand above the band: the trace's height at each peak, same order as `peaks`; absent for IR |
+| `names` | list of string | GC only: peak names, same order as `peaks` and clamped `apex` |
+| `restrict_y` | boolean | GC only: data exceed `ymax`; TeX clamps with `restrict y to domain*` |
+
+GC writes `ymax` from its analysis, the detector's `axis` label (baseline-corrected for a
+corrected crop), and both figures when an entry has `crop`. These additions keep spec 1.
 
 ## `irspec session DIR --json`
 
@@ -123,7 +144,7 @@ not drawn here.
 |---|---|---|
 | `file` | string | as given |
 | `kind` | string | `"ir"` |
-| `format` | string | `spa`, `jdx` or `csv` |
+| `format` | string | `spa`, `jdx`, `csv`, `vspd` or `raw` |
 | `axis` | string | what the figure's y axis is called |
 | `converted_from` | string or null | `"Absorbance"` when it was converted to %T |
 | `points` | integer | points in the file |

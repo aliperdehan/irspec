@@ -27,6 +27,8 @@ EXCERPT_NAME = "irspec-ir.sty"
 
 def _block(f: Figure, esc=spa_tool.latex_escape) -> str:
     kind = kinds.get(f.kind)
+    if kind.tex_block:
+        return kind.function("tex_block")(f)
     # TeX tokenises each input line before expanding commands. Change the
     # comment character's catcode on a preceding line, scoped to this figure,
     # so the literal filename reaches the file reader unchanged.

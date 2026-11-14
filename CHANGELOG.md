@@ -2,6 +2,16 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.1 (2026-11-13)
+
+Draw GC chromatograms alongside spectra in a session.
+
+- File `.RAW` runs into `gc/`, write archival and plain CSVs, and label the
+  full run and optional trimmed, corrected, or gapped crop as `irspec gc batch` does.
+- Keep only requested peaks in the retained crop; keep the full run's requests intact.
+- Preview GC runs, edit figure limits, and save named peaks and detector labels in
+  `figures.json`; use the PDF for rendering GC figures.
+
 ## 0.3.0 (2026-11-13)
 
 Read Thermo Xcalibur GC chromatograms with `irspec gc`. 0.3 opens the GC line: nothing of
