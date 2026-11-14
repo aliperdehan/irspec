@@ -56,4 +56,4 @@ Every string in the file (UTF-16 and ASCII, the embedded OLE method container in
 read first. Checked: nulabreport's `gc_tool.py` gives the same output for all 18 commands of
 `gc_expected.json` on the original and on this file, and its `verify` matches this file against
 the CSV the lab's Xcalibur exported from the original (that export is not here: it names the
-computer's user).
+computer's user). Approved by the author, 2026-11-14.

@@ -23,8 +23,8 @@ which now forward to it. Read `PROVENANCE.md` for where the code came from.
   (the `.jdx` fixtures are generated from it by `tests/make_fixtures.py`), and, approved by the
   author 2026-11-11, `uvvis.vspd`, `quant_510nm.vqud` and `quant_540nm_blocks.vqud`, anonymised
   (`tests/data/README.md`: which rows are the author's, what was blanked; `tests/anonymise_ole.py`),
-  and `gc_lab4.RAW` (2026-11-13, the author's group's GC run, three strings blanked; the
-  author's approval to publish it is still to be given: do not push it before).
+  and, approved by the author 2026-11-14, `gc_lab4.RAW` (the author's group's GC run, three
+  strings blanked).
   The other groups' rows in those instrument files, the `.vqut` template (it names classmates) and
   the scrub settings (they hold the instrument serial number and the institution) stay out. Never
   add a classmate's file, an instructor's images, or a page of a textbook (that is why
