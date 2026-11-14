@@ -252,7 +252,7 @@
     "stdout": "spectrum_digitize ms: input.png\naxes: x line rows 380-381 (to col 650), y line cols 60-61\n  x (m/z): 21 ticks (11 major, 1 minor between majors), major spacing 50.0 px = 10; 0.20000 per px; fit residual rms 0.00, max 0.00 px\n  y (%): all 7 ticks are one length (12-12 px): FIRST:STEP applies to EVERY tick\n  y (%): 7 ticks (7 major, 0 minor between majors), major spacing 50.0 px = 20; 0.40000 per px; fit residual rms 0.00, max 0.00 px\n  refit on 4 tall sticks: scale 1.0000 x the ticks', residual max 0.00 m/z\n  align: tall sticks sit 0.90 m/z (4.5 px) past the ticks (spread 0.00); m/z shifted by +0.10\n  sticks: 4, m/z 20-110; tallest 120.2 %\n  integer-m/z distance (sticks over 5 %): median 0.00, max 0.00\n  sticks (m/z: %):  20:72.2  50:120.2  80:48.2  110:92.2\n",
     "stderr": "",
     "files": {
-      "check.png": "6295af3a8235fec3b23db89897fc8c1bd57f0a1511942a47d614dff99d7b1cff",
+      "check.png": "pixels:063720557902c3aad3b6c9051851a3a739008668df9a058595c34a953560564e",
       "peaks.csv": "4b8c2ed1b45856f99c16943187007b522ec9e980e3a3efe5000495d831775962",
       "peaks.list": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
       "trace.csv": "bf27e26ad2db9aa43eedfa4a053c92fc92de6020eef5bac7df35c9d08639e3f2"
@@ -281,7 +281,7 @@
     "stdout": "spectrum_digitize nmr: input.png\nrulers: main rows 330-331 cols 75-625; 0 inset(s)\n  main ruler (ppm): 21 ticks (11 major, 1 minor between majors), major spacing 50.0 px = 1; 0.02000 per px; fit residual rms 0.00, max 0.00 px\n  main: 10.51 -> -0.49 ppm, 0.0200 ppm/px; trace 541 columns, pen 2 px, baseline row 300, noise 0.0 px, peaks >= 8 px: 2; redraw recall 1.0000, precision 1.0000\n  reference: line at 0.02 (+0.02 from 0, reported, not applied); left out of the labels\n  peaks (ppm, height % of the tallest on its axis; * clipped, s solvent, r reference):\n    main: 2.4(16)  0.0(100r)\n  \\labplot peak list, main (fan: x/apex_y/knee_y/label_x/label_y/text; labels 'follow', pass ymax=110):\n    2.4/16.0/20.0/2.40/20/\n  \\labplot call (insets as separate plots) -> plot.tex\n",
     "stderr": "",
     "files": {
-      "check.png": "a9a9293528c7cd71857d1223429ae0511b14f9b95c6414b15f129fcbf698ae8c",
+      "check.png": "pixels:461ba1a8be8df27a3568e425b52aeb3cde2b97b01d2d5b29973e2f7b06037f19",
       "peaks.csv": "67fc97967ae9523d9876b3821fb29ecc45d8460f52ae7973919dd4b1bb437e18",
       "peaks.list": "1918236efac48f306ef26f7e224688fe252a131a16563d799361552d33a34851",
       "plot.tex": "4a1d01325b397a2c36b1f1c3254bc892d5cb4ab59c8eb1cf2ca300b91279c1fe",

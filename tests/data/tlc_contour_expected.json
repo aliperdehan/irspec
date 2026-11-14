@@ -6,10 +6,10 @@
       "contour.png"
     ],
     "code": 0,
-    "stdout": "-> contour.png  crop=(0,900)  out_width=700  size=2.1KB\n",
+    "stdout": "-> contour.png  crop=(0,900)  out_width=700  size=<KB>\n",
     "stderr": "despeckle: removed 1 blob(s) under 6px\n",
     "files": {
-      "contour.png": "9680361b237528b69a646cb83b4a76426203779f1dd43f45706d88d2994c3001"
+      "contour.png": "pixels:8cdb7db980eb89f43162827a5288439702a40e54fd1c517071c052fd97bb9e44"
     }
   },
   "crop_lines": {
@@ -25,10 +25,10 @@
       "0"
     ],
     "code": 0,
-    "stdout": "-> contour.png  crop=(92,809)  out_width=700  size=1.7KB\n",
+    "stdout": "-> contour.png  crop=(92,809)  out_width=700  size=<KB>\n",
     "stderr": "reference lines: top group (np.int64(119), np.int64(122)), bottom group (np.int64(779), np.int64(782))\n",
     "files": {
-      "contour.png": "b2daa3ca8d1c18610a9828058522283884eb3025c6f79182a850aeaad364d750"
+      "contour.png": "pixels:df0cf3fedc80f2767f4dc6bac1275f57ac27aa93a709353394ece5643c1ae3d4"
     }
   },
   "budget": {
@@ -44,10 +44,10 @@
       "0.9"
     ],
     "code": 0,
-    "stdout": "-> contour.png  crop=(0,900)  out_width=650  size=63.6KB\n",
+    "stdout": "-> contour.png  crop=(0,900)  out_width=650  size=<KB>\n",
     "stderr": "warning: contour.png: no width fits the 1 KB budget; wrote the smallest tried (650px, 63.6 KB)\n",
     "files": {
-      "contour.png": "dfc99793d8b9930659e119d7f60a8907224fcb97c166fbc1221726cca06aba6e"
+      "contour.png": "pixels:e176da630710986a7fd56426662e2c078793400ad978462099bc06f6c403e3d6"
     }
   },
   "pdf_all": {
@@ -59,11 +59,11 @@
       "72"
     ],
     "code": 0,
-    "stdout": "-> out/plate-1_contour.png  crop=(0,800)  out_width=600  size=1.5KB\n-> out/plate-2_contour.png  crop=(0,900)  out_width=300  size=1.3KB\n",
+    "stdout": "-> out/plate-1_contour.png  crop=(0,800)  out_width=600  size=<KB>\n-> out/plate-2_contour.png  crop=(0,900)  out_width=300  size=<KB>\n",
     "stderr": "",
     "files": {
-      "out/plate-1_contour.png": "d6671ddcaf2b265f414e86d28632873c499acf7d1bc5d640ef10f01ad0c273d6",
-      "out/plate-2_contour.png": "a54a2f9240b5f6e46abdcd2a873cf0a0bf6e31f45f666bc8f1665e1fcfe0d182"
+      "out/plate-1_contour.png": "pixels:1c5929174f40b47330b1d43cc451473419c5f859495cd2cd81fc6a0a7bc1423d",
+      "out/plate-2_contour.png": "pixels:b21422d0f842875717e7b8e74df07bdfcaa98adb86259c95e01afa68e8988077"
     }
   },
   "pdf_page": {
@@ -77,10 +77,10 @@
       "96"
     ],
     "code": 0,
-    "stdout": "-> out/plate-2_contour.png  crop=(0,1200)  out_width=400  size=1.7KB\n",
+    "stdout": "-> out/plate-2_contour.png  crop=(0,1200)  out_width=400  size=<KB>\n",
     "stderr": "",
     "files": {
-      "out/plate-2_contour.png": "56b7de13ceb964df9c082d45f2c5aa34dd86fe44e1839d113e3bc2a0834877ef"
+      "out/plate-2_contour.png": "pixels:1625949fae40e99af504d7140ac5173ac75280010306a67117d58c2810464e10"
     }
   },
   "pdf_missing_out": {

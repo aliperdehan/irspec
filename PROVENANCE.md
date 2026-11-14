@@ -37,7 +37,8 @@ Moved 2026-11-14 (0.3.6): `spectrum_digitize.py` as `irspec spectrum`
 `tests/record_spectrum_digitize.py` records the original twice, `tests/test_spectrum_digitize.py` replays
 the command output and SHA-256 hashes in `tests/data/spectrum_digitize_expected.json`.
 
-Moved 2026-11-14 (0.3.7): `tlc_contour.py` as `irspec tlc`
+Moved 2026-11-14 (0.3.7; since 0.3.12 without Pillow's deprecated `fromarray(mode=)`,
+pixel-identical): `tlc_contour.py` as `irspec tlc`
 (`src/irspec/tlc_contour.py`), output unchanged on deterministic synthetic inputs;
 `tests/record_tlc_contour.py` records the original twice, `tests/test_tlc_contour.py` replays
 the command output and SHA-256 hashes in `tests/data/tlc_contour_expected.json`.

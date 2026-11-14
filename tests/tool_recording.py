@@ -12,9 +12,24 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 
 
+IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg")
+
+
+def digest(path):
+    """sha256 of a file; for a PNG or JPEG, of its decoded pixels (with mode and size). The
+    encoded bytes depend on the Pillow and zlib build (CI's Python 3.9 gets Pillow 11, 3.13 gets
+    13; checked 2026-11-15: the PNG bytes differ, the pixels of every image here do not)."""
+    if path.suffix.lower() in IMAGE_SUFFIXES:
+        from PIL import Image
+        with Image.open(path) as im:
+            head = f"{im.mode} {im.size[0]}x{im.size[1]} ".encode()
+            return "pixels:" + hashlib.sha256(head + im.tobytes()).hexdigest()
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def snapshot(folder):
     return {
-        str(p.relative_to(folder)): hashlib.sha256(p.read_bytes()).hexdigest()
+        str(p.relative_to(folder)): digest(p)
         for p in sorted(folder.rglob("*"))
         if p.is_file()
     }
@@ -41,6 +56,10 @@ def run_case(command, argv, prepare):
 
         def normalise(text):
             text = text.replace(str(folder), "<TMP>")
+            # An encoded image's size follows the encoder build (see digest), and numpy prints a
+            # rounded negative zero as -0.000 on some versions.
+            text = re.sub(r"size=[\d.]+ ?KB", "size=<KB>", text)
+            text = re.sub(r"-(0\.0+)(?![\d])", r"\1", text)
             if command[0] != "-m":
                 text = text.replace(command[0], "<TOOL>")
             text = re.sub(

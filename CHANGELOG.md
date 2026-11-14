@@ -2,6 +2,17 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.12 (2026-11-15)
+
+The tests of the four tools moved in 0.3.6-0.3.9 pass with every Pillow version CI installs.
+
+- Their recorded images are compared by their decoded pixels, not by the file's bytes: the bytes of
+  a PNG depend on the Pillow and zlib build (Python 3.9 gets Pillow 11.3, 3.13 gets 13.0), the
+  pixels did not change across 11.3, 12.3 and 13.0. A file size printed by a tool is not compared,
+  for the same reason. Every other output is still compared byte for byte.
+- `irspec tlc` no longer passes Pillow's deprecated `mode=` to `Image.fromarray` (a warning on
+  Pillow 11.3 and later); its images are pixel for pixel what they were.
+
 ## 0.3.11 (2026-11-15)
 
 `irspec plot --backend r` draws UV-Vis and GC figures too.
@@ -25,35 +36,35 @@ irspec follows the rules in the README's "Versioning" section. Newest first.
 - IR figures are unchanged. The R backend still draws IR figures only, and matplotlib still
   refuses `fan` labels.
 
-## 0.3.9 (2026-11-13)
+## 0.3.9 (2026-11-14)
 
 Straighten and clean page photos into PNGs and size-budgeted JPEGs with `irspec scan`.
 
 - Move nulabreport's `scan_clean.py` into irspec with its existing options and output.
 - Check generated files and command output against recordings on synthetic inputs.
 
-## 0.3.8 (2026-11-13)
+## 0.3.8 (2026-11-14)
 
 Measure synthetic or photographed gels, calibrate band masses and write labelled figures with `irspec gel`.
 
 - Move nulabreport's `gel_tool.py` into irspec with its existing options and output.
 - Check generated files and command output against recordings on synthetic inputs.
 
-## 0.3.7 (2026-11-13)
+## 0.3.7 (2026-11-14)
 
 Turn tlc plate images or pdf pages into black-line contour pngs with `irspec tlc`.
 
 - Move nulabreport's `tlc_contour.py` into irspec with its existing options and output.
 - Check generated files and command output against recordings on synthetic inputs.
 
-## 0.3.6 (2026-11-13)
+## 0.3.6 (2026-11-14)
 
 Digitize ms and nmr spectrum pictures into csvs, peak tables and tex calls with `irspec spectrum`.
 
 - Move nulabreport's `spectrum_digitize.py` into irspec with its existing options and output.
 - Check generated files and command output against recordings on synthetic inputs.
 
-## 0.3.5 (2026-11-13)
+## 0.3.5 (2026-11-14)
 
 Edit UV-Vis picks and GC compound requests from the command line.
 
@@ -61,7 +72,7 @@ Edit UV-Vis picks and GC compound requests from the command line.
 - GC `peak add` accepts a time and optional name; `remove` uses the entry's retention-time window.
 - `clear` empties UV-Vis picks; `auto` restores stored picks. For GC, both restore automatic picking, leaving solvent requests intact.
 
-## 0.3.4 (2026-11-13)
+## 0.3.4 (2026-11-14)
 
 Use the same GC run for a full chromatogram and a crop in a batch.
 

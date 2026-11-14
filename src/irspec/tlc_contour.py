@@ -343,7 +343,8 @@ def save_pages_under_budget(binaries, out_paths, target_kb=TARGET_KB, widths=WID
     the same factor. The largest scale at which every page meets the budget
     wins; if none does, the smallest scale is written and each page over
     budget is named in a warning. -> list of (width, size_kb)."""
-    ims = [Image.fromarray(a, mode="L") for a in binaries]
+    # uint8 2-D -> mode "L", as `mode="L"` gave (that parameter is deprecated since Pillow 11.3)
+    ims = [Image.fromarray(np.asarray(a, np.uint8)) for a in binaries]
     ref = max(im.size[0] for im in ims)
     cands = candidate_widths(ref, widths)
     if not cands:
