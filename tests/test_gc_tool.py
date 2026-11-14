@@ -93,3 +93,34 @@ for case_name in CASES:
 
 if __name__ == "__main__":
     unittest.main()
+
+class SharedBatch(unittest.TestCase):
+    def test_realpath_stems(self):
+        from irspec import gc_tool
+        with tempfile.TemporaryDirectory() as t:
+            d = Path(t)
+            (d / 'run.RAW').touch()
+            (d / 'alias.RAW').symlink_to(d / 'run.RAW')
+            self.assertEqual(gc_tool.batch_stems([str(d/'run.RAW'), str(d/'alias.RAW')]), ['run', 'run'])
+            self.assertEqual(gc_tool.batch_stems(['A/run.RAW', 'B/run.RAW', 'A/run.RAW']),
+                             ['A-run', 'B-run', 'A-run'])
+
+    def test_double_crop_refused_before_writing(self):
+        from irspec import gc_tool
+        with tempfile.TemporaryDirectory() as t:
+            d = Path(t)
+            entries = [{'raw': 'run.RAW', 'crop': {'xmin': 1}}] * 2
+            with self.assertRaisesRegex(SystemExit, 'run.RAW.*crop'):
+                gc_tool.batch(entries, str(d/'out'), str(d/'gc.md'))
+            self.assertEqual(list(d.iterdir()), [])
+
+    def test_csv_pair_written_once(self):
+        from irspec import gc_tool
+        with tempfile.TemporaryDirectory() as t:
+            src = str(DATA / RAW)
+            with mock.patch.object(gc_tool, 'write_plain_csv', wraps=gc_tool.write_plain_csv) as plain, \
+                 mock.patch.object(gc_tool, 'write_xcalibur_csv', wraps=gc_tool.write_xcalibur_csv) as archival, \
+                 contextlib.redirect_stdout(io.StringIO()):
+                gc_tool.batch([{'raw': src}, {'raw': src}], t, str(Path(t)/'gc.md'))
+            self.assertEqual((plain.call_count, archival.call_count), (1, 1))
+            self.assertEqual((Path(t)/'gc.md').read_text(encoding='utf-8').count('\\chromatogram'), 2)

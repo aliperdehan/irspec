@@ -386,9 +386,9 @@ its time range and outside every exclusion; the full figure keeps all requests.
   cropped one, as in LR4; `crop.title` names the second; `"full": false` drops the full run.
 - *Tables:* `integrate/STEM.txt` (and `STEM_crop.txt`), what `irspec gc integrate` prints for that
   figure; a re-run must not file `integrate/` into `other/`.
-- *Found in nulabreport, not fixed there:* since its N5.3 (`bc7eb56`), `gc_tool batch` refuses a
+- *Found in nulabreport, fixed in irspec 0.3.4:* since its N5.3 (`bc7eb56`), `gc_tool batch` refuses a
   manifest that lists the same .RAW twice, which the LR4 manifest does (full run + crop).
-  `irspec gc` keeps that behaviour (case `batch_twice`) until it is fixed in both.
+  `irspec gc` now shares the CSV pair and draws both entries; two crops of one file are refused.
 
 **Decided (the author, 2026-11-10).** irspec takes over the other plot tools of the private
 `nulabreport` repository (`tools/`): `gc_tool.py` (Thermo Xcalibur `.RAW` chromatograms),

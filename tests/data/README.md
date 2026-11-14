@@ -57,3 +57,6 @@ read first. Checked: nulabreport's `gc_tool.py` gives the same output for all 18
 `gc_expected.json` on the original and on this file, and its `verify` matches this file against
 the CSV the lab's Xcalibur exported from the original (that export is not here: it names the
 computer's user). Approved by the author, 2026-11-14.
+
+The `batch_twice` case records irspec 0.3.4 behaviour (full run and crop sharing CSVs),
+not nulabreport v1.31.38, which refused the repeated input. All other cases are unchanged.

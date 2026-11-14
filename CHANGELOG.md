@@ -2,6 +2,13 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.4 (2026-11-13)
+
+Use the same GC run for a full chromatogram and a crop in a batch.
+
+- Repeated inputs share one stem and CSV pair, with a chromatogram for each entry.
+- Refuse two crops of the same file before writing; different files with matching names keep distinct stems.
+
 ## 0.3.3 (2026-11-14)
 
 The session's report is named after what the folder holds.

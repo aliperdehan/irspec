@@ -331,10 +331,15 @@
     }
    ]
   },
-  "code": 1,
-  "stdout": "",
-  "stderr": "error: the same input is listed twice (stem 'gc_lab4'): gc_lab4.RAW\n",
-  "files": {}
+  "code": 0,
+  "stdout": "# gc_lab4  n=7197  peaks=6  ymax=1110000  -> o/plain/gc_lab4_plain.csv\n    name            tR/min   start     end   h/counts  w1/2/min    h*w1/2    tri%     trapz  trapz%\n    Methanol         2.837   2.807   2.985       8895    0.0454     404.0    2.69     515.1    2.82\n    Ethanol          3.025   2.988   3.140      17841    0.0465     830.3    5.54     937.0    5.13\n    Acetone          3.297   3.260   3.455     461365    0.0407   18782.4   solv.   22501.8   solv.\n    1-Propanol       3.641   3.600   3.857      37784    0.0658    2484.9   16.57    3168.1   17.35\n    1-Butanol        5.304   5.247   5.677      40550    0.0949    3846.9   25.65    4767.4   26.11\n    1-Pentanol       9.048   8.995   9.440      78982    0.0941    7431.3   49.55    8869.3   48.58\n# gc_lab4  n=7197  peaks=5  ymax=86000  -> o/plain/gc_lab4_crop.csv\n    name            tR/min   start     end   h/counts  w1/2/min    h*w1/2    tri%     trapz  trapz%\n    Methanol         2.837   2.808   2.985       8895    0.0454     404.0    2.69     514.6    2.82\n    Ethanol          3.025   2.990   3.140      17841    0.0465     830.3    5.54     936.1    5.13\n    1-Propanol       3.641   3.600   3.857      37784    0.0658    2484.9   16.57    3168.1   17.35\n    1-Butanol        5.304   5.245   5.677      40550    0.0949    3846.9   25.65    4767.7   26.12\n    1-Pentanol       9.047   8.995   9.440      78982    0.0941    7430.4   49.55    8869.3   48.58\n\nwrote o/gc.md (2 chromatograms)\nbuild it with pdfmd.py -- never bare pandoc (see nulabreport's CLAUDE.md)\n",
+  "stderr": "",
+  "files": {
+   "o/csv/gc_lab4.csv": "2d8a2fab6a21cb3151f4e9c56ad3dc563976383e82bc5c05a8ba5bc3116f3cad",
+   "o/gc.md": "302a3a9fa1e2d6e2e747c2b879c509b4633042723690f83be294feb5cff493b0",
+   "o/plain/gc_lab4_crop.csv": "7903153e0bb627d92fdb0d3652869e4bc8477f917d1d375e12e3047c1a1ee57b",
+   "o/plain/gc_lab4_plain.csv": "c38b245d547cfa2f1b232efff07cbd0ecaf4875b8124263da1c876b70a0bd6c7"
+  }
  },
  "not_raw": {
   "argv": [

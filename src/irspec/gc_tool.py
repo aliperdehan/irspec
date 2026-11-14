@@ -386,8 +386,13 @@ def batch_stems(sources):
     different inputs gets the part of each input's path that tells them
     apart (A/run.RAW and B/run.RAW -> A-run, B-run); stems that do not
     collide stay as clean_stem() gives them. Never depends on the order.
-    Exits with a message when two inputs are the same file, or when even
-    the full paths give the same name."""
+    Repeated realpaths share a stem. Exits when even the full paths give
+    different files the same name."""
+    unique = list(dict.fromkeys(os.path.realpath(s) for s in sources))
+    if len(unique) < len(sources):
+        representatives = [next(s for s in sources if os.path.realpath(s) == p) for p in unique]
+        names = dict(zip(unique, batch_stems(representatives)))
+        return [names[os.path.realpath(s)] for s in sources]
     stems = [clean_stem(s) for s in sources]
     paths = [os.path.realpath(s) for s in sources]
     out = list(stems)
@@ -397,9 +402,6 @@ def batch_stems(sources):
     for st, idx in groups.items():
         if len(idx) < 2:
             continue
-        if len({paths[i] for i in idx}) < len(idx):
-            sys.exit(f"error: the same input is listed twice (stem '{st}'): "
-                     + ", ".join(sorted({sources[i] for i in idx})))
         parents = {i: os.path.dirname(paths[i]).split(os.sep) for i in idx}
         # drop the folders every colliding input shares at the end of its path
         while all(parents[i] for i in idx) and \
@@ -938,6 +940,14 @@ def batch(manifest, out_dir, md_path):
     baseline, min_prominence, window, crop: {xmin, xmax, correct, exclude}}.
     With `crop`, the chromatogram plotted (and labelled) is the cropped CSV
     plain/<stem>_crop.csv instead of the full plain CSV."""
+    cropped = set()
+    for e in manifest:
+        path = os.path.realpath(e["raw"])
+        if e.get("crop") is not None:
+            if path in cropped:
+                sys.exit(f"error: {e['raw']} has two crop entries (both would write STEM_crop.csv)")
+            cropped.add(path)
+    written = {}
     csv_dir = os.path.join(out_dir, "csv")
     plain_dir = os.path.join(out_dir, "plain")
     md_dir = os.path.dirname(os.path.abspath(md_path))
@@ -945,11 +955,15 @@ def batch(manifest, out_dir, md_path):
     stems = batch_stems([e["raw"] for e in manifest])
     for e, stem in zip(manifest, stems):
         src = e["raw"]
-        r = read_raw(src)
-        write_xcalibur_csv(r["time"], r["signal"], os.path.join(csv_dir, stem + ".csv"),
-                           os.path.basename(src))
-        plot_csv = write_plain_csv(r["time"], r["signal"],
-                                   os.path.join(plain_dir, stem + "_plain.csv"))
+        path = os.path.realpath(src)
+        if path not in written:
+            r = read_raw(src)
+            write_xcalibur_csv(r["time"], r["signal"], os.path.join(csv_dir, stem + ".csv"),
+                               os.path.basename(src))
+            plain = write_plain_csv(r["time"], r["signal"],
+                                    os.path.join(plain_dir, stem + "_plain.csv"))
+            written[path] = (r, plain)
+        r, plot_csv = written[path]
         c = e.get("crop")
         if c:
             plot_csv = crop(src, os.path.join(plain_dir, stem + "_crop.csv"),
