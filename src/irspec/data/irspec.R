@@ -7,9 +7,11 @@
 # Reads figures.json (what `irspec session` writes beside manifest.json; csv
 # paths are relative to that file's folder, text is plain, not LaTeX-escaped)
 # and writes one picture per spectrum into DIR/figures/r/ (`--out` to change).
-# It draws the same figure as the TeX pipeline and the matplotlib backend; the
-# geometry below repeats irspec/layout.py, which says where each number was
-# measured, and tests/test_backends.py checks the two agree.
+# IR figures, and UV-Vis and GC ones (labels above the band, name over x; a GC
+# crop's excluded rows a gap). It draws the same figure as the TeX pipeline and
+# the matplotlib backend; the geometry below repeats irspec/layout.py, which
+# says where each number was measured, and tests/test_backends.py and
+# tests/test_plot_kinds.py check the two agree.
 #
 # Needs: ggplot2 (>= 3.5) and jsonlite. Optional: ragg (PNG/TIFF; else the
 # cairo device), svglite (svg-text). Formats, as in the matplotlib backend:
@@ -65,9 +67,9 @@ y_ticks <- function(lo, hi) {
   round(seq(first, last) * step, 10)
 }
 
-fmt_number <- function(v) {
-  s <- ifelse(v == round(v), formatC(v, format = "f", digits = 0, big.mark = ","),
-              formatC(v, format = "g", big.mark = ","))
+fmt_number <- function(v, sep = ",") {    # sep: a kind's y_sep (gc: a sixth of an em)
+  s <- ifelse(v == round(v), formatC(v, format = "f", digits = 0, big.mark = sep),
+              formatC(v, format = "g", big.mark = sep))
   gsub("-", "−", trimws(s), fixed = TRUE)
 }
 
@@ -135,14 +137,17 @@ read_figures <- function(path) {
   figs <- lapply(entries, function(e) {
     if (!is.null(e$spec) && e$spec != 1)
       stop(sprintf("%s: figure spec %s is not the one this script reads (1)", path, e$spec), call. = FALSE)
-    if (!is.null(e$kind) && e$kind != "ir")   # absent means ir; this script draws IR figures only
-      stop(sprintf("%s: %s is a %s figure; this script draws IR figures only (use the PDF: irspec session)",
-                   path, e$csv, e$kind), call. = FALSE)
+    kind <- if (is.null(e$kind)) "ir" else e$kind      # absent means ir
+    if (!kind %in% names(KINDS))
+      stop(sprintf("%s: %s is a %s figure; this script draws %s figures (use the PDF: irspec session)",
+                   path, e$csv, kind, paste(names(KINDS), collapse = ", ")), call. = FALSE)
     peaks <- if (length(e$peaks)) do.call(rbind, lapply(e$peaks, function(p) c(p[[1]], p[[2]]))) else
       matrix(numeric(0), ncol = 2)
     list(csv = file.path(folder, e$csv), title = if (is.null(e$title)) "" else e$title,
-         axis = if (is.null(e$axis)) "Transmittance %" else e$axis,
-         peaks = peaks, ymin = e$ymin, ymax = e$ymax, xmin = e$xmin, xmax = e$xmax, stem = sub("_plain$", "", tools::file_path_sans_ext(basename(e$csv))))
+         axis = if (is.null(e$axis)) KINDS[[kind]]$y_label else e$axis,
+         peaks = peaks, ymin = e$ymin, ymax = e$ymax, xmin = e$xmin, xmax = e$xmax, stem = sub("_plain$", "", tools::file_path_sans_ext(basename(e$csv))),
+         kind = kind, apex = as.numeric(unlist(e$apex)), names = as.character(unlist(e$names)),
+         restrict_y = isTRUE(e$restrict_y))
   })
   stems <- allocate_names(vapply(figs, function(f) f$csv, character(1)),
                           vapply(figs, function(f) f$stem, character(1)))
@@ -181,6 +186,7 @@ pick_font <- function() {
 }
 
 draw <- function(fig, family, caption = TRUE) {
+  if (fig$kind != "ir") return(draw_apex(fig, family, caption))
   library(ggplot2)
   d <- read.csv(fig$csv)
   names(d)[1:2] <- c("x", "y")
@@ -227,6 +233,174 @@ draw <- function(fig, family, caption = TRUE) {
       plot.background = element_rect(fill = "white", colour = NA)
     )
   p
+}
+
+# ---- the other kinds: labels above the band (uvvis, gc) ----------------------
+# What irspec/kinds.py says of each kind this script draws (tests/test_plot_kinds.py checks x_label,
+# x_minor_num and y_sep against it).
+KINDS <- list(
+  ir = list(x_label = "Wavenumber / cm⁻¹", labels = "trough", y_label = "Transmittance %"),
+  uvvis = list(x_label = "Wavelength / nm", labels = "apex", y_label = "Absorbance",
+               x_minor_num = 4, y_sep = ","),
+  gc = list(x_label = "Retention time / min", labels = "apex", y_label = "Signal / counts",
+            x_minor_num = 1, y_sep = "\u2006")
+)
+MAX_X_INTERVALS <- 25
+# The labels' geometry, in bp (irspec/layout.py says how each was measured on the TeX figure)
+APEX_GAP_PT <- 1.494; APEX_SEP_PT <- 0.199; APEX_PAD_PT <- 0.996; APEX_LINE_PT <- 9.465
+APEX_FILL_ALPHA <- 0.85
+
+# (left, right) of an ascending kind's x axis: the figure's xmin/xmax, else the data's own ends
+kind_x_limits <- function(x, xmin = NULL, xmax = NULL) {
+  lim <- c(if (is.null(xmin)) min(x) else xmin, if (is.null(xmax)) max(x) else xmax)
+  if (!(lim[1] < lim[2])) stop(sprintf("xmin (%g) must be below xmax (%g)", lim[1], lim[2]), call. = FALSE)
+  lim
+}
+
+# layout.x_ticks for a kind without a tick list: the smallest 1-2-5 step giving at most
+# MAX_X_INTERVALS intervals, and x_minor_num minor ticks between two labelled ones
+kind_x_ticks <- function(xl, k) {
+  lo <- min(xl); hi <- max(xl); span <- hi - lo
+  e <- if (span > 0) floor(log10(span / MAX_X_INTERVALS)) else 0
+  step <- 10^(e + 1)
+  for (m in c(1, 2, 5, 10)) if (span / (m * 10^e) <= MAX_X_INTERVALS + 1e-9) { step <- m * 10^e; break }
+  list(major = round(seq(ceiling(lo / step - 1e-9), floor(hi / step + 1e-9)) * step, 10),
+       minor = step / (k$x_minor_num + 1))
+}
+
+# The frame of a uvvis or gc figure (layout.frame): the x axis on the data's ends, y on the data
+# inside the x frame
+kind_frame <- function(d, fig) {
+  w <- d[is.finite(d$x) & is.finite(d$y), ]
+  xl <- kind_x_limits(w$x, fig$xmin, fig$xmax)
+  ys <- w$y[w$x >= xl[1] & w$x <= xl[2]]
+  if (!length(ys)) stop(sprintf("no data between %g and %g", xl[1], xl[2]), call. = FALSE)
+  list(x = xl, y = y_limits(ys, fig$ymin, fig$ymax))
+}
+
+# The labels as the TeX peak list types them (layout.apex_labels): GC's x to two decimals and its
+# heights in whole counts, another kind's x as %g and its heights to four decimals
+apex_labels <- function(fig) {
+  n <- min(nrow(fig$peaks), length(fig$apex), if (fig$kind == "gc") length(fig$names) else Inf)
+  if (n == 0) return(data.frame(x = numeric(0), apex = numeric(0), ly = numeric(0), text = character(0),
+                                name = character(0)))
+  i <- seq_len(n)
+  if (fig$kind == "gc") {
+    xt <- sprintf("%.2f", fig$peaks[i, 1])
+    ap <- as.numeric(sprintf("%.0f", fig$apex[i])); ly <- as.numeric(sprintf("%.0f", fig$peaks[i, 2]))
+  } else {
+    xt <- sprintf("%g", fig$peaks[i, 1])
+    ap <- as.numeric(sprintf("%g", round(fig$apex[i], 4))); ly <- as.numeric(sprintf("%g", round(fig$peaks[i, 2], 4)))
+  }
+  nm <- if (length(fig$names) >= n) fig$names[i] else rep("", n)
+  data.frame(x = as.numeric(xt), apex = ap, ly = ly, text = xt, name = nm, stringsAsFactors = FALSE)
+}
+
+# The trace cut to the frame (Liang-Barsky, segment by segment), NA between the pieces: the labels
+# are drawn unclipped (coord_cartesian(clip = "off"), TeX's clip mode=individual), so the trace is
+# clipped here. An empty row of the CSV (a GC crop's excluded range) stays a gap.
+clip_trace <- function(x, y, xr, yr) {
+  n <- length(x); ox <- oy <- rep(NA_real_, 3 * n); k <- 0; lx <- NA_real_; ly <- NA_real_
+  for (i in seq_len(max(0, n - 1))) {
+    x0 <- x[i]; y0 <- y[i]; x1 <- x[i + 1]; y1 <- y[i + 1]
+    if (!all(is.finite(c(x0, y0, x1, y1)))) next
+    dx <- x1 - x0; dy <- y1 - y0; t0 <- 0; t1 <- 1; ok <- TRUE
+    for (pq in list(c(-dx, x0 - xr[1]), c(dx, xr[2] - x0), c(-dy, y0 - yr[1]), c(dy, yr[2] - y0))) {
+      p <- pq[1]; q <- pq[2]
+      if (p == 0) {
+        if (q < 0) { ok <- FALSE; break }
+      } else {
+        r <- q / p
+        if (p < 0) { if (r > t1) { ok <- FALSE; break }; if (r > t0) t0 <- r }
+        else { if (r < t0) { ok <- FALSE; break }; if (r < t1) t1 <- r }
+      }
+    }
+    if (!ok) next
+    # an end the frame does not cut is the data point itself (x0 + 1 * dx need not be x1 exactly)
+    sx <- if (t0 == 0) x0 else x0 + t0 * dx; sy <- if (t0 == 0) y0 else y0 + t0 * dy
+    if (!(identical(sx, lx) && identical(sy, ly))) {    # a new piece: leave an NA row before it
+      if (k > 0) k <- k + 1
+      k <- k + 1; ox[k] <- sx; oy[k] <- sy
+    }
+    lx <- if (t1 == 1) x1 else x0 + t1 * dx; ly <- if (t1 == 1) y1 else y0 + t1 * dy
+    k <- k + 1; ox[k] <- lx; oy[k] <- ly
+  }
+  data.frame(x = ox[seq_len(k)], y = oy[seq_len(k)])
+}
+
+# One label: the white box and its lines, in a zero-size viewport at (x, label_y). Units in bp; the
+# string units are measured in the label's own font (the box's gp), so the box is TeX's: the widest
+# line + 2 x pad, from SEP above label_y to the top line's ink + pad.
+label_grob <- function(text, name, family) {
+  font <- gpar(fontfamily = family, fontsize = LABEL_PT)
+  lines <- if (nzchar(name)) c(name, text) else text        # top to bottom
+  n <- length(lines)
+  base <- unit(APEX_SEP_PT + APEX_PAD_PT, "bigpts") + unit(1, "strdescent", text)
+  top <- base + unit(APEX_LINE_PT * (n - 1) + APEX_PAD_PT, "bigpts") + unit(1, "strascent", lines[1])
+  width <- max(unit(rep(1, n), "strwidth", data = as.list(lines))) + unit(2 * APEX_PAD_PT, "bigpts")
+  box <- rectGrob(x = unit(0.5, "npc"), y = unit(0.5, "npc") + unit(APEX_SEP_PT, "bigpts"), width = width,
+                  height = top - unit(APEX_SEP_PT, "bigpts"), just = c("centre", "bottom"),
+                  gp = gpar(fontfamily = family, fontsize = LABEL_PT, col = NA,
+                            fill = grDevices::adjustcolor("white", APEX_FILL_ALPHA)))
+  texts <- lapply(seq_len(n), function(i)                     # bottom line first, on its baseline
+    textGrob(rev(lines)[i], x = unit(0.5, "npc"),
+             y = unit(0.5, "npc") + base + unit((i - 1) * APEX_LINE_PT, "bigpts"),
+             hjust = 0.5, vjust = 0, gp = font))
+  gTree(children = do.call(gList, c(list(box), texts)))
+}
+
+draw_apex <- function(fig, family, caption = TRUE) {
+  library(ggplot2)
+  library(grid)
+  k <- KINDS[[fig$kind]]
+  d <- read.csv(fig$csv)
+  names(d)[1:2] <- c("x", "y")
+  d <- d[is.finite(d$x), ]                       # an empty y stays: the trace breaks there
+  if (isTRUE(fig$restrict_y) && !is.null(fig$ymax))   # gc_tool's restrict y to domain*=-ymax:ymax
+    d$y <- pmax(pmin(d$y, fig$ymax), -fig$ymax)
+  fr <- kind_frame(d, fig)
+  xt <- kind_x_ticks(fr$x, k)
+  tr <- clip_trace(d$x, d$y, fr$x, fr$y)
+  p <- ggplot(tr, aes(x, y)) +
+    geom_path(colour = TRACE_COLOR, linewidth = gg_lw(TRACE_PT), lineend = "butt", linejoin = "round",
+              na.rm = TRUE)
+  lab <- apex_labels(fig)
+  lab <- lab[lab$x >= fr$x[1] & lab$x <= fr$x[2], ]
+  for (i in seq_len(nrow(lab))) {
+    leader <- segmentsGrob(x0 = unit(0.5, "npc"), x1 = unit(0.5, "npc"),
+                           y0 = unit(0, "npc") + unit(APEX_GAP_PT, "bigpts"), y1 = unit(1, "npc"),
+                           gp = gpar(col = TICK_COLOR, lwd = pt_to_lwd(TICK_PT), lineend = "butt"))
+    p <- p +
+      annotation_custom(leader, xmin = lab$x[i], xmax = lab$x[i], ymin = lab$apex[i], ymax = lab$ly[i]) +
+      annotation_custom(label_grob(lab$text[i], lab$name[i], family),
+                        xmin = lab$x[i], xmax = lab$x[i], ymin = lab$ly[i], ymax = lab$ly[i])
+  }
+  minor <- seq(ceiling(fr$x[1] / xt$minor - 1e-9), floor(fr$x[2] / xt$minor + 1e-9)) * xt$minor
+  p +
+    scale_x_continuous(limits = fr$x, oob = scales::oob_keep, breaks = xt$major, minor_breaks = minor,
+                       labels = function(v) fmt_number(v), expand = c(0, 0),
+                       guide = guide_axis(minor.ticks = TRUE)) +
+    scale_y_continuous(limits = fr$y, oob = scales::oob_keep, breaks = y_ticks(fr$y[1], fr$y[2]),
+                       labels = function(v) fmt_number(v, k$y_sep), expand = c(0, 0)) +
+    coord_cartesian(clip = "off") +
+    guides(x.sec = guide_axis(minor.ticks = TRUE), y.sec = guide_axis()) +
+    labs(x = k$x_label, y = fig$axis, caption = if (caption && nzchar(fig$title)) fig$title) +
+    theme_void(base_family = family, base_size = TEXT_PT) +
+    theme(
+      panel.border = element_rect(colour = "black", fill = NA, linewidth = gg_lw(FRAME_PT)),
+      axis.ticks = element_line(colour = "black", linewidth = gg_lw(0.2)),
+      axis.ticks.length = unit(MAJOR_TICK_PT, "pt"),
+      axis.minor.ticks.length = unit(MINOR_TICK_PT, "pt"),
+      axis.text = element_text(colour = "black", size = TEXT_PT),
+      axis.text.x.top = element_blank(), axis.text.y.right = element_blank(),
+      axis.text.x = element_text(margin = margin(t = 3)), axis.text.y = element_text(margin = margin(r = 3)),
+      axis.title.x = element_text(size = TEXT_PT, margin = margin(t = 6)),
+      axis.title.y = element_text(size = TEXT_PT, angle = 90, margin = margin(r = 8)),
+      plot.caption = element_text(hjust = 0.5, face = "italic", size = CAPTION_PT, margin = margin(t = 10)),
+      plot.caption.position = "plot",
+      plot.margin = margin(7, 7, 5, 5),
+      plot.background = element_rect(fill = "white", colour = NA)
+    )
 }
 
 # ---- output -----------------------------------------------------------------
@@ -297,7 +471,7 @@ parse_args <- function(argv) {
     }
     else if (k == "--dpi") a$dpi <- as.numeric(take())
     else if (k == "--no-caption") a$caption <- FALSE
-    else if (k == "--layout") a$layout <- TRUE      # print each figure's y limits and ticks, draw nothing
+    else if (k == "--layout") a$layout <- TRUE      # print each figure's limits and ticks, draw nothing
     else if (k %in% c("-h", "--help")) { cat(USAGE, "\n"); quit(status = 0) }
     else if (startsWith(k, "--")) stop(sprintf("unknown option %s", k), call. = FALSE)
     else a$path <- k
@@ -316,10 +490,21 @@ main <- function(argv = commandArgs(trailingOnly = TRUE)) {
   if (length(bad)) stop(sprintf("unknown format '%s'; choose from: %s", bad[1], paste(FORMATS, collapse = ", ")), call. = FALSE)
   r <- read_figures(a$path)
   if (a$layout) {
+    # one line a figure: y bottom, y top, y ticks, x left, x right, labelled x ticks, minor x step
     for (f in r$figures) {
-      d <- read.csv(f$csv); d <- d[d[[1]] >= min(XLIM) & d[[1]] <= max(XLIM) & is.finite(d[[2]]), ]
-      lim <- y_limits(d[[2]], f$ymin, f$ymax)
-      cat(sprintf("%.10f %.10f %s\n", lim[1], lim[2], paste(y_ticks(lim[1], lim[2]), collapse = ",")))
+      d <- read.csv(f$csv)
+      if (f$kind == "ir") {
+        d <- d[d[[1]] >= min(XLIM) & d[[1]] <= max(XLIM) & is.finite(d[[2]]), ]
+        lim <- y_limits(d[[2]], f$ymin, f$ymax)
+        xl <- x_limits(f$xmin, f$xmax)
+        xt <- list(major = seq(4000, 1000, by = -X_MAJOR), minor = X_MINOR)
+        xt$major <- xt$major[xt$major <= xl[1] & xt$major >= xl[2]]
+      } else {
+        names(d)[1:2] <- c("x", "y")
+        fr <- kind_frame(d, f); lim <- fr$y; xl <- fr$x; xt <- kind_x_ticks(xl, KINDS[[f$kind]])
+      }
+      cat(sprintf("%.10f %.10f %s %.10f %.10f %s %.10f\n", lim[1], lim[2], paste(y_ticks(lim[1], lim[2]), collapse = ","),
+                  xl[1], xl[2], paste(xt$major, collapse = ","), xt$minor))
     }
     return(invisible())
   }

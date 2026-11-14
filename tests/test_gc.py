@@ -169,10 +169,6 @@ class Session(GcCase):
         self.cli('edit', '.', 'gc_lab4', 'unset', 'ymax')
         r = self.cli('edit', '.', 'gc_lab4', 'peak', 'add', '3')
         self.assertIn('peak:', r.stdout)
-        for backend in ('r',):  # matplotlib draws GC (0.3.10, test_plot_kinds)
-            r = self.cli('plot', 'figures.json', '--backend', backend, ok=False)
-            self.assertNotEqual(r.returncode, 0)
-            self.assertIn('gc', r.stderr)
         shutil.copyfile(DATA / 'PHENACETIN_CRUDE_LR1-2.SPA', self.folder / 'sample.SPA')
         self.assertEqual(self.run_session()['kind'], 'mixed')
 

@@ -157,13 +157,16 @@ class R(unittest.TestCase):
             r = subprocess.run(["Rscript", str(R_SCRIPT), str(f), "--layout"], capture_output=True,
                                text=True)
             self.assertEqual(r.returncode, 0, r.stderr)
-            lo, hi, ticks = r.stdout.split()
+            lo, hi, ticks, xl, xr, xticks, minor = r.stdout.split()
             figs, folder = read_figures(f / "figures.json")
             x, y = layout.window(*mpl.read_plain(str(Path(folder) / figs[0].csv)))
             plo, phi = layout.ylimits(y, figs[0].ymin, figs[0].ymax)
             self.assertAlmostEqual(float(lo), plo, places=6)
             self.assertAlmostEqual(float(hi), phi, places=6)
             self.assertEqual([float(v) for v in ticks.split(",")], layout.y_ticks(plo, phi))
+            xlim = layout.xlimits(figs[0].xmin, figs[0].xmax)
+            self.assertEqual((float(xl), float(xr)), xlim)
+            self.assertEqual(([float(v) for v in xticks.split(",")], float(minor)), layout.x_ticks(xlim))
 
 
 class Preview(unittest.TestCase):

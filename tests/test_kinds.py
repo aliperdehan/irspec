@@ -355,14 +355,14 @@ class ApexLabels(unittest.TestCase):
             (Path(d) / "figures.json").write_text(json.dumps([fig.to_entry()]))
             with self.assertRaises(export.ExportError) as cm:
                 plot.refuse_other_kinds(["--formats", "png", d])
-            self.assertIn("a.csv is a ends figure; the R backend draws IR figures only", str(cm.exception.code))
+            self.assertIn("a.csv is a ends figure; the R backend draws ir, uvvis, gc figures", str(cm.exception.code))
             self.assertEqual(plot.r_target(["--out", "x", "--dpi", "300", d, "--formats", "png"]), d)
             rscript = shutil.which("Rscript")
             if rscript:   # the R script refuses on its own too (it can be run without irspec)
                 r = subprocess.run([rscript, plot.r_script_path(), d, "--formats", "png"],
                                    capture_output=True, text=True)
                 self.assertNotEqual(r.returncode, 0)
-                self.assertIn("a.csv is a ends figure; this script draws IR figures only", r.stderr)
+                self.assertIn("a.csv is a ends figure; this script draws ir, uvvis, gc figures", r.stderr)
 
 
 class Ownership(unittest.TestCase):

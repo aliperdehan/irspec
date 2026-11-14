@@ -171,8 +171,8 @@ a UV-Vis figure: absorbance against wavelength over the scan's own range (nulabr
 manifest as `peaks`, where they are edited as IR's are, and each is labelled above its band.
 The figure gets the `ymax` that leaves room for those labels unless the manifest sets one;
 `xmin`/`xmax` crop it, and then the picks outside the crop are left out. `irspec edit … peak`
-edits these picks too (see below). `irspec plot` draws UV-Vis figures with matplotlib;
-the R backend does not draw them yet. A folder may hold IR and UV-Vis spectra together.
+edits these picks too (see below). `irspec plot` draws UV-Vis figures too, with matplotlib or R.
+A folder may hold IR and UV-Vis spectra together.
 
 ### Gas chromatograms
 
@@ -212,8 +212,8 @@ the tables; `session --json` lists their paths.
 
 `session --preview`, `preview FILE.RAW --json` and `--ascii` show the trace and its labels;
 `edit … set ymax=900000` and `unset ymax` edit limits. Edit named requests in `compounds`
-in the manifest; `edit … peak` is for IR. `irspec plot` draws GC figures with matplotlib,
-gap and all; the R backend refuses them so far: use the PDF from `session` there.
+in the manifest; `edit … peak` is for IR. `irspec plot` draws GC figures with matplotlib or R,
+the crop's gap included.
 
 ### QUANT-IR gas-phase files
 
@@ -521,7 +521,7 @@ the y axis starts and stops. They differ in the y tick spacing (pgfplots' rule
 is its own), in antialiasing, and in where the caption sits, so *the same
 figure*, not the same pixels. The TeX version remains the reference.
 
-UV-Vis and GC figures (matplotlib so far) are drawn the same way, with their
+UV-Vis and GC figures are drawn the same way, with their
 labels standing above the band as nulabreport's `\labplot[kind=uvvis]` and
 `\chromatogram` place them: the x value as the peak list gives it (GC: two
 decimals), the compound's name on the line above it, a grey leader from just
@@ -607,8 +607,9 @@ moved here without changing what they compute. The tests
   (frame and tick positions read from the PDF on six y ranges); the matplotlib
   figure's line data, limits, label texts and positions are compared with the
   CSV and the peak list; the R script's limits and ticks are compared with the
-  Python ones; the UV-Vis and GC labels of the matplotlib PDF (baseline, line
-  spacing, leader) are measured as the TeX figure's were and held to them.
+  Python ones; the UV-Vis and GC labels of the matplotlib PDF and the R SVG
+  (baseline, line spacing, leader) are measured as the TeX figure's were and
+  held to them.
 
 Three more checks run on the author's own coursework folders (the environment
 variable `IRSPEC_LR6_IR` points at them) and are skipped everywhere else; they

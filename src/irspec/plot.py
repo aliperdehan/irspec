@@ -24,6 +24,7 @@ from importlib import resources
 from .export import ExportError
 
 BACKENDS = ("matplotlib", "r")
+R_KINDS = ("ir", "uvvis", "gc")   # what data/irspec.R draws (its KINDS table)
 
 
 def r_script_path():
@@ -46,7 +47,7 @@ def r_target(argv):
 
 
 def refuse_other_kinds(argv):
-    """The R script draws IR figures only: say so before R starts, for a figure of another kind."""
+    """The R script draws the kinds in R_KINDS: say so before R starts, for a figure of another kind."""
     import os
 
     from .figure import FIGURES_NAME, read_figures
@@ -61,9 +62,9 @@ def refuse_other_kinds(argv):
     except ValueError as e:
         raise ExportError(str(e))
     for f in figures:
-        if f.kind != "ir":
-            raise ExportError(f"{f.csv} is a {f.kind} figure; the R backend draws IR figures only "
-                              f"so far (use the PDF: irspec session)")
+        if f.kind not in R_KINDS:
+            raise ExportError(f"{f.csv} is a {f.kind} figure; the R backend draws "
+                              f"{', '.join(R_KINDS)} figures (use the PDF: irspec session)")
 
 
 def run_r(argv):

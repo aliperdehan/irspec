@@ -228,7 +228,7 @@ class R(unittest.TestCase):
         r = subprocess.run(["Rscript", str(R_SCRIPT), str(self.folder), "--layout"],
                            capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
-        lo, hi, ticks = r.stdout.split()
+        lo, hi, ticks = r.stdout.split()[:3]
         figs, folder = read_figures(self.folder / "figures.json")
         x, y = layout.window(*mpl.read_plain(os.path.join(folder, figs[0].csv)))
         plo, phi = layout.ylimits(y, figs[0].ymin)

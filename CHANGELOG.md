@@ -2,6 +2,15 @@
 
 irspec follows the rules in the README's "Versioning" section. Newest first.
 
+## 0.3.11 (2026-11-15)
+
+`irspec plot --backend r` draws UV-Vis and GC figures too.
+
+- The R script draws them as the matplotlib backend does: labels above the band at the measured
+  TeX positions, the GC crop's gap, the `600 000` y ticks and the kinds' minor x ticks. The trace
+  is clipped to the frame and the labels are not.
+- `irspec.R --layout` also prints each figure's x limits and x ticks. IR figures are unchanged.
+
 ## 0.3.10 (2026-11-14)
 
 `irspec plot` draws UV-Vis and GC figures with matplotlib.
